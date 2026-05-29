@@ -1,0 +1,19 @@
+# 로그
+*.log
+
+# 진단/임시 파일
+diag_marker.txt
+
+# 토큰/시크릿 (혹시 파일로 저장할 경우 대비)
+*.token
+token.txt
+.env
+
+# Claude Code 로컬 설정
+.claude/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
