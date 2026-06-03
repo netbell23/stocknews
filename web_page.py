@@ -69,6 +69,10 @@ def generate_html(report: dict, out_path: str) -> str:
   header {{ padding:22px 18px 6px; }}
   header h1 {{ margin:0; font-size:22px; }}
   header .ts {{ color:var(--sub); font-size:13px; margin-top:4px; }}
+  header .navlink {{ display:inline-block; margin-top:10px; padding:7px 13px;
+                    background:#1f2630; border:1px solid #2c3644; border-radius:9px;
+                    color:#4dabf7; text-decoration:none; font-size:13px; font-weight:600; }}
+  header .navlink:hover {{ background:#243040; }}
   main {{ padding:8px 14px 40px; max-width:1100px; margin:0 auto; }}
   section {{ margin-top:18px; }}
   section h2 {{ font-size:16px; color:var(--sub); font-weight:600;
@@ -89,6 +93,7 @@ def generate_html(report: dict, out_path: str) -> str:
   <header>
     <h1>📈 오늘의 시황</h1>
     <div class="ts">{report['generated_at']} 기준 · 데이터: Yahoo Finance</div>
+    <a class="navlink" href="correlation.html">🔗 자산·환율·주가 상관관계 분석 보기 →</a>
   </header>
   <main>
     {''.join(cards_html)}

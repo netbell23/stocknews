@@ -16,12 +16,12 @@ def _git(args, cwd):
 
 def publish_page(base_dir: str) -> bool:
     # 변경사항 없으면 조용히 종료
-    status = _git(["status", "--porcelain", "docs/index.html"], base_dir)
+    status = _git(["status", "--porcelain", "docs"], base_dir)
     if status.returncode == 0 and not status.stdout.strip():
         print("배포: 변경 없음 (skip)")
         return True
 
-    _git(["add", "docs/index.html"], base_dir)
+    _git(["add", "docs"], base_dir)
     from datetime import datetime
     msg = f"데이터 업데이트 {datetime.now():%Y-%m-%d %H:%M}"
     commit = _git(["commit", "-m", msg], base_dir)

@@ -55,6 +55,7 @@ KAKAO_REFRESH_TOKEN = os.environ.get("KAKAO_REFRESH_TOKEN", "")
 
 # GitHub Pages 로 배포될 그래프 페이지 주소 (카톡 메시지 링크)
 PAGE_URL = os.environ.get("STOCKNEWS_PAGE_URL", "https://netbell23.github.io/stocknews/")
+CORR_URL = os.environ.get("STOCKNEWS_CORR_URL", "https://netbell23.github.io/stocknews/correlation.html")
 
 # 조회 항목 정의: (그룹, 표시이름, 티커, 단위, 소수자릿수, 배수)
 #  - 배수: JPY 처럼 100엔 단위로 보여주고 싶을 때 사용
@@ -162,6 +163,7 @@ def build_message(report: dict) -> str:
             )
         lines.append("")
     lines.append(f"📉 그래프 자세히 보기\n{PAGE_URL}")
+    lines.append(f"\n🔗 금·환율·유가 vs 5개국 증시 상관관계\n{CORR_URL}")
     return "\n".join(lines)
 
 
@@ -243,6 +245,15 @@ if __name__ == "__main__":
         print(f"웹페이지 생성: {out}")
     except Exception as e:
         print(f"[웹페이지 생성 실패] {e}")
+
+    # 상관관계 분석 페이지 생성 (docs/correlation.html)
+    try:
+        from correlation import analyze, generate_corr_html
+        cdata = analyze()
+        cout = generate_corr_html(cdata, os.path.join(BASE_DIR, "docs", "correlation.html"))
+        print(f"상관관계 페이지 생성: {cout}")
+    except Exception as e:
+        print(f"[상관관계 페이지 생성 실패] {e}")
 
     # GitHub Pages 로 자동 배포 (push 자격증명이 있으면 성공)
     try:
