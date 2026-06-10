@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>주요 이슈 & 일정</title>
+<style>
+  :root { --bg:#0f1115; --card:#1a1d24; --line:#272b34; --txt:#e6e8eb; --sub:#9aa0ab; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--txt);
+         font-family:-apple-system,'Segoe UI','Malgun Gothic',sans-serif; }
+  header { padding:22px 18px 6px; }
+  header h1 { margin:0; font-size:22px; }
+  header .ts { color:var(--sub); font-size:13px; margin-top:4px; }
+  header a.back { display:inline-block; margin-top:10px; color:#4dabf7;
+                  text-decoration:none; font-size:13px; }
+  main { padding:8px 14px 40px; max-width:900px; margin:0 auto; }
+  section.box { margin-top:18px; background:var(--card); border:1px solid var(--line);
+                border-radius:14px; padding:16px; }
+  h2 { font-size:16px; margin:0 0 12px; }
+  .empty { color:var(--sub); font-size:14px; margin:4px 0; }
+  .mover { display:flex; align-items:center; gap:12px; padding:9px 0;
+           border-bottom:1px solid var(--line); }
+  .mover:last-child { border-bottom:0; }
+  .mname { flex:1; font-weight:600; }
+  .mname small { color:var(--sub); font-weight:400; margin-left:7px; font-size:12px; }
+  .mpct { font-weight:700; font-variant-numeric:tabular-nums; min-width:74px; text-align:right; }
+  .mnote { color:var(--sub); font-size:12px; min-width:130px; text-align:right; }
+  .chips { display:flex; flex-wrap:wrap; gap:10px; }
+  .chip { background:#11151b; border:1px solid var(--line); border-radius:10px;
+          padding:9px 12px; display:flex; flex-direction:column; gap:2px; min-width:120px; }
+  .chip b { font-size:14px; } .chip span { color:var(--sub); font-size:12px; }
+  .chip em { color:#ffd43b; font-style:normal; font-size:12px; font-weight:700; }
+  .newsblock { margin-top:14px; }
+  .newsblock h3 { font-size:14px; color:var(--sub); margin:0 0 8px;
+                  border-left:3px solid #4dabf7; padding-left:8px; }
+  ul.news { list-style:none; margin:0; padding:0; }
+  ul.news li { padding:8px 0; border-bottom:1px solid #20242c; }
+  ul.news li:last-child { border-bottom:0; }
+  ul.news a { color:var(--txt); text-decoration:none; font-size:14px; line-height:1.45; }
+  ul.news a:hover { color:#4dabf7; }
+  ul.news .meta { display:block; color:var(--sub); font-size:11px; margin-top:3px; }
+  footer { text-align:center; color:var(--sub); font-size:12px; padding:20px; }
+</style>
+</head>
+<body>
+  <header>
+    <h1>📰 주요 이슈 & 일정</h1>
+    <div class="ts">2026-06-10 09:55 기준 · 뉴스: Google News</div>
+    <a class="back" href="index.html">← 시황 그래프로 돌아가기</a>
+  </header>
+  <main>
+    <section class="box">
+      <h2>⚡ 오늘의 변곡점</h2>
+      <div class="mover"><span class="mname">리노공업<small>반도체</small></span><span class="mpct" style="color:#e8453c">+16.33%</span><span class="mnote">급등 · 변동성 대비 2.5배</span></div><div class="mover"><span class="mname">금<small>원자재</small></span><span class="mpct" style="color:#1c6dd0">-2.53%</span><span class="mnote">급락 · 변동성 대비 2.1배</span></div><div class="mover"><span class="mname">KOSDAQ<small>지수</small></span><span class="mpct" style="color:#e8453c">+7.20%</span><span class="mnote">급등 · 변동성 대비 1.9배</span></div><div class="mover"><span class="mname">원익IPS<small>반도체</small></span><span class="mpct" style="color:#e8453c">+13.54%</span><span class="mnote">급등 · 변동성 대비 1.3배</span></div><div class="mover"><span class="mname">KOSPI<small>지수</small></span><span class="mpct" style="color:#e8453c">+5.14%</span><span class="mnote">급등 · 변동성 대비 1.3배</span></div>
+    </section>
+
+    <section class="box">
+      <h2>📅 다가오는 실적 발표</h2>
+      <div class="chips"><div class="chip"><b>삼성전자</b><span>2026-07-29</span><em>D-49</em></div><div class="chip"><b>SK하이닉스</b><span>2026-07-29</span><em>D-49</em></div><div class="chip"><b>한미반도체</b><span>2026-08-06</span><em>D-57</em></div><div class="chip"><b>컴투스</b><span>2026-08-12</span><em>D-63</em></div></div>
+    </section>
+
+    <section class="box">
+      <h2>🗞️ 주요 뉴스 헤드라인</h2>
+      <section class="newsblock"><h3>국내 증시·경제</h3><ul class="news"><li><a href="https://news.google.com/rss/articles/CBMicEFVX3lxTE1keW1DU0VjeFdHbDBiaWJtWE9KLW8ydE9hb2Z0MGRBSVVWTVhuN1VjYlhKT2dLYjBXb3EwZU5EQ2htMW83TTRPVGpZaDd2T01KY0VEcUlfRjhWZDdfSDlPM3BhMDVWOWNaMDVqSk1CZV8?oc=5" target="_blank" rel="noopener">美 반도체 랠리 끝났나…옵션시장에서 추가 하락 베팅 급증</a><span class="meta">연합인포맥스 · 2시간 전</span></li><li><a href="https://news.google.com/rss/articles/CBMiUEFVX3lxTE1GOVdxMnlaMElxUDNWR09ONmVGU3Q4MzBBNmJ2WHl4aXZzRFl0NnF3TDBNX3BYRWMwbExmeEpqcUhpZVUteWp5SnFzaHdGUFh2?oc=5" target="_blank" rel="noopener">[속보]뉴욕증시,반도체 반등 실패…삼전닉스 또?</a><span class="meta">문화일보 · 3시간 전</span></li><li><a href="https://news.google.com/rss/articles/CBMingFBVV95cUxPVDhKT0NWNlBwYXB4Q1c4TGtlUXNkZG9rYmN1TElFa1lCOXhHWEQtdjE0ZzZXZmFCYjcxNUN5S0lsWldfVmhWYkV1d3E2Q0Zoc3lrY01FaWp3UUMzd2VqX2xXb1JPa0xZcHZJeGlsUnZoTFozYUxFVG1sekVPZVd0SVItZFlMUW1kN3A5NUNyWHJoeEtYOUFNRFNUMHk4dw?oc=5" target="_blank" rel="noopener">크게 출렁인 뉴욕 증시…나스닥 1% 하락</a><span class="meta">조선일보 · 4시간 전</span></li><li><a href="https://news.google.com/rss/articles/CBMiWkFVX3lxTFBkNzhXdS1CWFd3bk1Yb0xySHlZWWRYYzNOZ2JsRUdmc1JqUzQ4blgybUpZa3dsWnlMMENySVlhbXJadFFBaUxJWXFvRGhUbU5xMmN1cTlGcmlaZ9IBX0FVX3lxTE9tWDluN1dIOFduTnNHdldJbjZkRGhSc3dZa0w4bzR3Nnc4MGthdXF3bVBJcWRrQkN2bTFUVWc4V3VSc0VUV01SeVp4eEJFVHUyQ0JfSlRFYTRUQ1Fyb0xF?oc=5" target="_blank" rel="noopener">삼전·닉스 “아는 바 없다” 선 그었지만···호남에 반도체 공장 설립 가능성 제기</a><span class="meta">경향신문 · 11시간 전</span></li><li><a href="https://news.google.com/rss/articles/CBMidEFVX3lxTFAtYTlPc1hQYk9ISU0wN3VkenhhR3Vub2NXbnVraGFQWE16eklFSFVsQ3o4bmVuT0d6V1p4VUgtbmtDZ1M3UnZkNUtwdlRqcHZoaGRMYnF0QklhMG1lUVhlZFctRWE1ekNUeHJYcHZ3dlpSVjI50gF0QVVfeXFMTkg5dndTMk1hQjZ5bWpzY3FURmxvSTUxYzdkbjQzdUg2NWx0ajV5WmR5Yk1oT2NVUlNROEItY1hBYzB5UVdOanY3aE5GOGdtLWJfWDI2QjVld3dxbFFpZmt3bDNMbkpQY3dGdTBNQXJjdVFOcVQ?oc=5" target="_blank" rel="noopener">코스피 급락 이틀 동안 개인보유 주식 3천억 원 &#x27;강제처분&#x27;</a><span class="meta">MBC 뉴스 · 15시간 전</span></li></ul></section><section class="newsblock"><h3>금리·중앙은행</h3><ul class="news"><li><a href="https://news.google.com/rss/articles/CBMiWkFVX3lxTFBZQ1lCcU9RRV9YWWhmbkRxQTFPVW9QZE9ybWdKeTFnNnNUcEtVNlVyOWE5UU5pd25YQ1UwajVXZmt1QWdYc1ljSkZKeTVnUXU2eTBKaW5aYzdMd9IBX0FVX3lxTE9BVmp3V1h2NldTNmlhNGpzejA0ckdOSkhuT0w4YzhjSHI3ZURLcXNvc3YyNHY5UmdCRGNaTDBOa0QxZlZTWlkwa1NYMXBoU2NyOWpWTFhKdGFWcXU0dGpJ?oc=5" target="_blank" rel="noopener">일본은행, 이달 금리 1.0%로 인상 유력···31년 만의 최고수준</a><span class="meta">경향신문 · 44분 전</span></li><li><a href="https://news.google.com/rss/articles/CBMiiAFBVV95cUxORkZ6ZDEycHlOLUYwamR2MjU3MFRJQVJkYndVWHl2THhqNkluLVoyN3FVQjA5bk5tWFpCa2ZjWGhoNVRCaGttblA3eHFlNDd6eHRzbm5mNDVxMzNxMzU2Qy1Zb1k3em5rV0d1ZmpvT0dQS3hMQTBzWl85UnZpTldhMS1PMDdMMk8y?oc=5" target="_blank" rel="noopener">일본은행, 6월 회의서 기준금리 1%로 인상 유력…&quot;국채 매입 감축은 중단 검토“</a><span class="meta">글로벌이코노믹 · 4시간 전</span></li><li><a href="https://news.google.com/rss/articles/CBMiWkFVX3lxTE1UdDlQX1VKREhFYXZablBmLTBFMjFzVnhjLXljVjdMRzd6d2FiVHljVFZrM09Wdzg2OGM1eVMxNWxOOXQzTUhWVnBxV3hOLXJVRGJ0YnZSU1VJUdIBVEFVX3lxTE5OdUhhVUFNV1FtUkZOekZMc0ZOUDlmSVNCdEcwZzhnU21HYnRPN200ZUtxQWg3WDZqVXJNVHdxSU1KMkpmSWdqTTExTXQ2Nk5aeUgzVA?oc=5" target="_blank" rel="noopener">일본은행 이달 금리인상, 31년만에 금리 1% 시대 연다</a><span class="meta">한국경제 · 1시간 전</span></li><li><a href="https://news.google.com/rss/articles/CBMicEFVX3lxTE8wSnhvTjRPTEFKVmFaSmlsb29zdFVDU2NYc1FHalNtc2JHSjlrbXlEdGhTQ2lNcTVKZWhwODVYaE4tb1lQYnhYdERxUXI4eXlvRXhPdjdlR0RoZmNaczZkUWVpOFl5cWlRVGZHQWhJVWM?oc=5" target="_blank" rel="noopener">골드만삭스 &quot;연준, 올해 금리 인하 없다&quot;</a><span class="meta">연합인포맥스 · 1일 전</span></li><li><a href="https://news.google.com/rss/articles/CBMiaEFVX3lxTFAydFdWS05sNC1VZVB1U0c3aEJqOTlvWmpfUmxucl94eGFPbDFiZG55SjRTeG9aSmRxa3EweFdyLU9kV181YUQ0enhyRGdIUlZGTTRsb3M2cTVaZi1OczMwWm4wcUNwWFFU0gFuQVVfeXFMT0FHZUcwZ2Y1c2Q0Wkh1NWQ5UTY2X1huS2hTcWVvdlFyMkEwR25pbm5GQ3NOUlpXSHBrTTRITjlVMk5uWTNrR2pScnpGNmJWblUtR05pMkF3cjhCVW1BVVIwbm5CZnJTWV9rNjluUlE?oc=5" target="_blank" rel="noopener">지표·전문가는 &#x27;美금리인상&#x27; 가리켰다… 16일 FOMC 주목 - 머니투데이</a><span class="meta">머니투데이 · 1일 전</span></li></ul></section><section class="newsblock"><h3>글로벌 증시</h3><ul class="news"><li><a href="https://news.google.com/rss/articles/CBMi1gFBVV95cUxPQ2hNV1VWS3lZajVFUmx1bGJ4Mm12VFp0Qkw3UGlCZnBXcmlhVE5YZ3E4TDNfQmI2ZzdSVnVFTng5X0g1RWxRX0ZwVGw3UVpHSGNINGtMWUliaE05NUR5dnFCam5QXzZZM3RGR1ZkLW9ya3ZfNk1WUWRLTE9LdWk2NVF4Qk1HcjNGTjdBaDdSQVdTTVdDT1R4T2FRTllxYVhiSmRiQlNBSno4TU5lWjRPMzhEZ29oWFJuX0JjMXhhTXRYLVlxandnUW10QTEydVlwOU5kV2ZB?oc=5" target="_blank" rel="noopener">Stock market today: Dow, S&amp;P 500, Nasdaq futures fall as US launches strikes against Iran</a><span class="meta">Yahoo Finance · 1시간 전</span></li><li><a href="https://news.google.com/rss/articles/CBMiowFBVV95cUxQWGJ1bl83a1ZCa082M2NZNkdvamdjX2pNODlzalRUN0NiaEMtbXl4QTdlNkhGZTE0T3QzVmxHcjJ4OE9YZnFPbm0xWDdIckNobWVFN0oyZUoxTXNUeUhrdUtWQnFNQ1NCcjJ0MGprRm80eG9lM2NzMUpPcWdKNlJDNmNqLU5jZlBrVjdsUEtSeWhqVEdzdTRnSmtFWFBhb3RTemVV?oc=5" target="_blank" rel="noopener">S&amp;P 500, Nasdaq fall as tech selling resumes, Trump vows to respond to downed US helicopter</a><span class="meta">Reuters · 1시간 전</span></li><li><a href="https://news.google.com/rss/articles/CBMic0FVX3lxTE9CWVVEZVFjVHF4U0hLR2dtM2NwUUZVcVV6dldsM2M1dElUQ0kzZVJwN2lPZDhJSnRybzNmN19PWWRxMG81dktyQkd5VUtyeVdwS0wxQzR1dUVrcmhTTk96TzQ3bkNOTmVQNUNiTVlWMWdfTFU?oc=5" target="_blank" rel="noopener">Markets whipsaw as AI sell-off resumes</a><span class="meta">CNN · 7시간 전</span></li><li><a href="https://news.google.com/rss/articles/CBMiqwFBVV95cUxNWWtqOUZjRl9sN004azF3ekxYQzc3dHdQUk44UXRTOEhpWVFJWHpmcUgxTnRTNTBHRVlJT1dBMkRPbUI4eklyVW9JajdTbXA1WDBkUHJRQXVzZG95UmpQRzJyV3R3NGNha2hqNE1uWnJRLVFrcnhFZkZVNmFjS2U1blh5TVctMWx0bjY3Rkphb2xFWlRyQ1lScE5vZWhaOEZQX2NGQkRvOXF1cFU?oc=5" target="_blank" rel="noopener">Stock Market Today: Nasdaq Ends Off Steeper Loss, Dow Rises After Downturn; Credo Technology Advances</a><span class="meta">Investor&#x27;s Business Daily · 4시간 전</span></li><li><a href="https://news.google.com/rss/articles/CBMicEFVX3lxTFAtOUxxRXl6Vkh2ZFRLMTI0WkdBV1NxT0RnczZEbmtHNmdMclBzS2I4ZEZyQUpJMFd1MWFiMFIyWEVEdnFKYUlBTVFHWGV4TmxlaE9QWHJ1SmsxanhINTJhTEx5TV91TFpNRnhHemxCU3M?oc=5" target="_blank" rel="noopener">Earnings, not valuations, are fuelling the US stock market</a><span class="meta">Financial Times · 20시간 전</span></li></ul></section><section class="newsblock"><h3>지정학·전쟁·재난</h3><ul class="news"><li><a href="https://news.google.com/rss/articles/CBMickFVX3lxTFBqT3NFUFNPbmk0S0N2TENYYnc4dGlZVjdMLU9xaXVZY3hNczRfb21jMmxjcUpoZ3RCZ1ZseEtIMi1iZFpFWnpsTnhpZG5fTV9YR2pnaGxLZGpWQzUtQXhVcWhHWDgwbXdxem9jbzRJWkgwZw?oc=5" target="_blank" rel="noopener">국제유가, 중동 지정학 우려 완화 속 하락…WTI 90.124 달러</a><span class="meta">KB Think · 19시간 전</span></li><li><a href="https://news.google.com/rss/articles/CBMibkFVX3lxTE5DUjBTY01zY2RuTDJGclFNekhWcWQ1ODc0cDhZUjExZi1GTURFcGhfQ3V4ZWxFRWN2RnNKVFBnZWE3b2tQWGFscUdyM0NoMzhSQXB4aHBVWkVKQWNMWXpfTE1JSnRZd3BGXzg4ZXpn?oc=5" target="_blank" rel="noopener">에너지경제연구원, ‘지정학 리스크와 에너지 안보’ 정책세미나 개최</a><span class="meta">산업인뉴스 · 22시간 전</span></li><li><a href="https://news.google.com/rss/articles/CBMiakFVX3lxTFBkYk8yNE9GbGRIdDYwMVZrbmJ5WHpLTm9RbVd0eTlUeDNlZkNIVnNCRHZYWE5oS0YxQWdBMjE0MFZXRXhHX0JJaVA4U1dEWkRtRFhxakdISndGRWJYOWJMTjN0LTIwajNNNnc?oc=5" target="_blank" rel="noopener">유가 폭등·지정학 리스크에 날개 꺾인 항공업계… IATA &quot;올해 순이익 반토막&quot;</a><span class="meta">파이낸스스코프 · 2일 전</span></li><li><a href="https://news.google.com/rss/articles/CBMiVEFVX3lxTE95eXRvc2hfa0U3bXFoMEwtSTNaaEp1dHpYdklnQlVvcVZkQlVaMVRCalQyVlVhTUVLQjVBci0yWEZtR2p0UWN2dUJRN2dfYnNOVEtKQQ?oc=5" target="_blank" rel="noopener">금 투자의 성공 방식 [환율·금리·지정학 리스크 분석과 투자방식]</a><span class="meta">매일경제 · 17시간 전</span></li><li><a href="https://news.google.com/rss/articles/CBMiuwJBVV95cUxOa2ZTSE1oajV2V0lhSEFNQlNRaTdDbTJScC1uRUdIZmFMUkdZVVgxNFJzQ2NIVlJTZ2wyYnl2TDlyLWI2c0xxdklpZGdRTjNvMmxlRGZtVFozX1liY0xMVWJscFpOU0hTMjlUQTQ1Y0V0NWFqN3ZqaWY2UlA0OG5VLWpQRlNxc2N3NkVEanoyZEJ1ejFZaUpEbF9jTGZvbHdZUVd2UjJUQXVUc1dlZjREOEt2VlpfYXIzNEFyRFhmYzhMVTlia3ZkMjlLeVJjWW9IRWNMSzVqZGRkVXI5YXZFdkcyT0JHSnhWMXpBUTNITm9iSjJoWFUxZkhYNGxHQlozWTdzM0NBdWJYeXlHWGVQTGZ0SXMyMlQ4UFNoZG8tVTlDY1J2Sk9lOG15cXNmaDRZSVNoMVRob2hBMjQ?oc=5" target="_blank" rel="noopener">OCBC, ECB의 ‘보험성’ 금리 인상은 이미 반영…유가·지정학 불안이 리스크 키우며 유로화 상단 제한</a><span class="meta">VT Markets · 17시간 전</span></li></ul></section>
+    </section>
+  </main>
+  <footer>헤드라인은 Google News 검색 결과입니다 · 정보 제공용이며 투자 판단의 책임은 본인에게</footer>
+</body>
+</html>

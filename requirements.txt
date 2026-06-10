@@ -1,3 +1,5 @@
 yfinance>=0.2.40
 requests>=2.31.0
 pandas>=2.0.0
+lxml>=5.0.0   # yfinance 실적 일정(get_earnings_dates) 조회에 필요
+yt-dlp>=2024.1.0   # 무료(self-hosted) TikTok/Instagram 숏츠 수집용 (선택)

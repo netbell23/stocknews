@@ -93,7 +93,8 @@ def generate_html(report: dict, out_path: str) -> str:
   <header>
     <h1>📈 오늘의 시황</h1>
     <div class="ts">{report['generated_at']} 기준 · 데이터: Yahoo Finance</div>
-    <a class="navlink" href="correlation.html">🔗 자산·환율·주가 상관관계 분석 보기 →</a>
+    <a class="navlink" href="correlation.html">🔗 상관관계 분석 →</a>
+    <a class="navlink" href="issues.html">📰 주요 이슈 & 일정 →</a>
   </header>
   <main>
     {''.join(cards_html)}

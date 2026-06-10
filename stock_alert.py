@@ -56,6 +56,7 @@ KAKAO_REFRESH_TOKEN = os.environ.get("KAKAO_REFRESH_TOKEN", "")
 # GitHub Pages 로 배포될 그래프 페이지 주소 (카톡 메시지 링크)
 PAGE_URL = os.environ.get("STOCKNEWS_PAGE_URL", "https://netbell23.github.io/stocknews/")
 CORR_URL = os.environ.get("STOCKNEWS_CORR_URL", "https://netbell23.github.io/stocknews/correlation.html")
+ISSUES_URL = os.environ.get("STOCKNEWS_ISSUES_URL", "https://netbell23.github.io/stocknews/issues.html")
 
 # 조회 항목 정의: (그룹, 표시이름, 티커, 단위, 소수자릿수, 배수)
 #  - 배수: JPY 처럼 100엔 단위로 보여주고 싶을 때 사용
@@ -255,6 +256,18 @@ if __name__ == "__main__":
     except Exception as e:
         print(f"[상관관계 페이지 생성 실패] {e}")
 
+    # 주요 이슈 정리 (변곡점/실적/뉴스) → docs/issues.html
+    issues_summary = ""
+    try:
+        import issues as _issues
+        from issues_page import generate_issues_html
+        idata = _issues.build_issues(report)
+        iout = generate_issues_html(idata, os.path.join(BASE_DIR, "docs", "issues.html"))
+        print(f"이슈 페이지 생성: {iout}")
+        issues_summary = _issues.build_issues_summary(idata)
+    except Exception as e:
+        print(f"[이슈 정리 실패] {e}")
+
     # GitHub Pages 로 자동 배포 (push 자격증명이 있으면 성공)
     try:
         from publish import publish_page
@@ -263,6 +276,8 @@ if __name__ == "__main__":
         print(f"[배포 건너뜀] {e}")
 
     msg = build_message(report)
+    if issues_summary:
+        msg += "\n\n" + issues_summary + f"\n🗞️ 이슈 상세\n{ISSUES_URL}"
     print("\n" + msg)
 
     print("\n카카오톡 전송 중...")
