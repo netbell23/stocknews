@@ -194,18 +194,24 @@ def refresh_access_token() -> str | None:
         if not new_token:
             print(f"[토큰 갱신 실패] {body}")
             return None
-        import subprocess
-        subprocess.run(
-            ["powershell", "-NoProfile", "-Command",
-             f'[Environment]::SetEnvironmentVariable("KAKAO_ACCESS_TOKEN","{new_token}","User")'],
-            check=False,
-        )
-        if new_rf := body.get("refresh_token"):
-            subprocess.run(
-                ["powershell", "-NoProfile", "-Command",
-                 f'[Environment]::SetEnvironmentVariable("KAKAO_REFRESH_TOKEN","{new_rf}","User")'],
-                check=False,
-            )
+        # Windows 로컬 실행 시에만 새 토큰을 User 환경변수에 영구 저장(베스트에포트).
+        # GitHub Actions(리눅스)에서는 매 실행마다 refresh_token 으로 갱신하므로 저장 불필요.
+        if os.name == "nt":
+            try:
+                import subprocess
+                subprocess.run(
+                    ["powershell", "-NoProfile", "-Command",
+                     f'[Environment]::SetEnvironmentVariable("KAKAO_ACCESS_TOKEN","{new_token}","User")'],
+                    check=False,
+                )
+                if new_rf := body.get("refresh_token"):
+                    subprocess.run(
+                        ["powershell", "-NoProfile", "-Command",
+                         f'[Environment]::SetEnvironmentVariable("KAKAO_REFRESH_TOKEN","{new_rf}","User")'],
+                        check=False,
+                    )
+            except Exception as e:
+                print(f"[토큰 저장 건너뜀] {e}")
         print("✓ 액세스 토큰 자동 갱신 완료")
         return new_token
     except Exception as e:
@@ -272,20 +278,33 @@ if __name__ == "__main__":
     except Exception as e:
         print(f"[이슈 정리 실패] {e}")
 
-    # GitHub Pages 로 자동 배포 (push 자격증명이 있으면 성공)
-    try:
-        from publish import publish_page
-        publish_page(BASE_DIR)
-    except Exception as e:
-        print(f"[배포 건너뜀] {e}")
+    # GitHub Pages 배포:
+    #  - GitHub Actions 에서는 deploy-pages 액션이 docs/ 를 배포하므로 git push 생략
+    #  - 로컬에서는 publish.py 가 docs/ 변경분을 커밋·푸시
+    in_actions = os.environ.get("GITHUB_ACTIONS") == "true"
+    if not in_actions:
+        try:
+            from publish import publish_page
+            publish_page(BASE_DIR)
+        except Exception as e:
+            print(f"[배포 건너뜀] {e}")
 
     msg = build_message(report)
     if issues_summary:
         msg += "\n\n" + issues_summary + "\n  ※ 전체 이슈·뉴스는 위 '주요 이슈·실적·뉴스' 링크"
     print("\n" + msg)
 
+    # STOCKNEWS_SEND=0 이면 페이지만 갱신하고 카톡 전송은 건너뜀(장중 10분 갱신용)
+    if os.environ.get("STOCKNEWS_SEND", "1") != "1":
+        print("\n(STOCKNEWS_SEND=0) 페이지만 갱신, 카톡 전송 생략")
+        raise SystemExit(0)
+
     print("\n카카오톡 전송 중...")
-    ok = send_kakao(msg, KAKAO_ACCESS_TOKEN)
+    # 액세스 토큰이 없거나(클라우드) 만료됐으면 먼저 갱신
+    token = KAKAO_ACCESS_TOKEN
+    if not token or token == "YOUR_ACCESS_TOKEN_HERE":
+        token = refresh_access_token() or token
+    ok = send_kakao(msg, token)
     if not ok:
         print("전송 실패 — 토큰 갱신 후 재시도합니다...")
         new_token = refresh_access_token()
@@ -296,4 +315,6 @@ if __name__ == "__main__":
         print("✓ 전송 완료")
     else:
         print("✗ 전송 실패 — 토큰/권한 설정을 확인하세요")
-        raise SystemExit(1)
+        # Actions 에서는 전송 실패해도 페이지 배포는 진행되도록 종료코드 0
+        if not in_actions:
+            raise SystemExit(1)

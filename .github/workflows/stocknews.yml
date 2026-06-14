@@ -1,0 +1,55 @@
+name: StockNews
+
+on:
+  schedule:
+    # 시간은 UTC. 한국(KST) = UTC + 9
+    - cron: "*/10 0-6 * * 1-5"   # 장중 페이지 갱신: KST 09:00~15:50, 월~금, 10분 간격
+    - cron: "30 23 * * 0-4"      # 아침 카톡: KST 08:30, 월~금 (UTC 일~목 23:30)
+  workflow_dispatch:             # 수동 실행(테스트)
+
+# Pages 배포 권한
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# 동시 실행 방지 (이전 실행 취소하지 않고 큐잉)
+concurrency:
+  group: stocknews-pages
+  cancel-in-progress: false
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    env:
+      # 아침 cron 또는 수동 실행일 때만 카톡 전송(=1), 장중 갱신은 페이지만(=0)
+      STOCKNEWS_SEND: ${{ (github.event_name == 'workflow_dispatch' || github.event.schedule == '30 23 * * 0-4') && '1' || '0' }}
+      KAKAO_REST_API_KEY: ${{ secrets.KAKAO_REST_API_KEY }}
+      KAKAO_CLIENT_SECRET: ${{ secrets.KAKAO_CLIENT_SECRET }}
+      KAKAO_REFRESH_TOKEN: ${{ secrets.KAKAO_REFRESH_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Build pages (and send Kakao on morning run)
+        run: python stock_alert.py
+
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: docs
+
+      - name: Deploy to GitHub Pages
+        id: deploy
+        uses: actions/deploy-pages@v4
