@@ -10,6 +10,7 @@
 - **관심종목**: 컴투스, 신라젠
 - **상관관계 분석**: 금·유가·달러(환율)와 미국·일본·한국·중국·유럽 증시의 1년 수익률 상관계수
 - **주요 이슈 정리**: 변곡점 자동감지 + 다가오는 실적 발표 일정 + 국내/글로벌/지정학 뉴스 헤드라인
+- **제작지원 공고**: KOCCA·NIPA·RAPA 사업공고에서 영상·인터랙티브·게임·AI 제작지원 키워드 매칭 공고 수집
 
 📊 그래프 페이지: https://netbell23.github.io/stocknews/
 🔗 상관관계 분석: https://netbell23.github.io/stocknews/correlation.html
@@ -22,6 +23,7 @@
 | `web_page.py` | Chart.js 그래프 웹페이지(`docs/index.html`) 생성 |
 | `correlation.py` | 금·유가·환율 vs 5개국 증시 상관관계 분석 → `docs/correlation.html` (단독 실행 가능) |
 | `issues.py` / `issues_page.py` | 변곡점·실적일정·뉴스 수집 → `docs/issues.html` (무료, Google News RSS) |
+| `gov_notices.py` | KOCCA·NIPA·RAPA 사업공고 스크래핑 + 키워드 필터 (영상·게임·AI 제작지원) |
 | `publish.py` | `docs/` 변경분을 GitHub 에 자동 커밋·푸시 (best-effort) |
 | `get_kakao_token.py` | 최초 1회 카카오 토큰 발급 |
 | `refresh_token.py` | 토큰 수동 갱신 (보통 불필요 — stock_alert.py가 자동 갱신) |
