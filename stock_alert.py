@@ -149,6 +149,12 @@ def _fmt_value(v: float, dec: int) -> str:
 
 def build_message(report: dict) -> str:
     lines = [f"📈 오늘의 시황 — {report['generated_at']}\n"]
+    # 링크는 카톡이 긴 메시지를 접어도 항상 보이도록 '맨 위'에 모아둔다
+    lines.append("🔗 바로가기")
+    lines.append(f"· 시황 그래프\n  {PAGE_URL}")
+    lines.append(f"· 자산·환율·주가 상관관계\n  {CORR_URL}")
+    lines.append(f"· 주요 이슈·실적·뉴스\n  {ISSUES_URL}")
+    lines.append("")
     for grp in report["groups"]:
         if not grp["items"]:
             continue
@@ -163,9 +169,7 @@ def build_message(report: dict) -> str:
                 f"{a} {sign}{chg} ({sign}{it['pct']:.2f}%)"
             )
         lines.append("")
-    lines.append(f"📉 그래프 자세히 보기\n{PAGE_URL}")
-    lines.append(f"\n🔗 금·환율·유가 vs 5개국 증시 상관관계\n{CORR_URL}")
-    return "\n".join(lines)
+    return "\n".join(lines).rstrip()
 
 
 # ──────────────────────────────────────────────
@@ -277,7 +281,7 @@ if __name__ == "__main__":
 
     msg = build_message(report)
     if issues_summary:
-        msg += "\n\n" + issues_summary + f"\n🗞️ 이슈 상세\n{ISSUES_URL}"
+        msg += "\n\n" + issues_summary + "\n  ※ 전체 이슈·뉴스는 위 '주요 이슈·실적·뉴스' 링크"
     print("\n" + msg)
 
     print("\n카카오톡 전송 중...")

@@ -180,11 +180,20 @@ def build_issues(report: dict) -> dict:
     for title, q, hl, gl, ceid in NEWS_QUERIES:
         news.append({"category": title, "items": fetch_news(q, hl, gl, ceid)})
 
+    print("이슈 수집: 제작지원 공고(KOCCA/NIPA/RAPA)...")
+    try:
+        import gov_notices
+        notices = gov_notices.fetch_notices()
+    except Exception as e:
+        print(f"[공고 수집 실패] {e}")
+        notices = []
+
     return {
         "generated_at": datetime.now().strftime("%Y-%m-%d %H:%M"),
         "movers": movers,
         "earnings": earnings,
         "news": news,
+        "notices": notices,
     }
 
 
@@ -206,6 +215,15 @@ def build_issues_summary(data: dict, corr_url: str = "") -> str:
     for sec in data["news"]:
         if sec["items"] and sec["category"] in ("국내 증시·경제", "지정학·전쟁·재난"):
             lines.append(f"  • [{sec['category']}] {sec['items'][0]['title'][:32]}")
+    # 제작지원 공고 (KOCCA/NIPA/RAPA)
+    notices = data.get("notices") or []
+    if notices:
+        lines.append("")
+        lines.append("🏛️ 영상·게임·AI 제작지원 공고")
+        for it in notices[:3]:
+            lines.append(f"  • [{it['agency']}] {it['title'][:32]}")
+        if len(notices) > 3:
+            lines.append(f"  • 외 {len(notices)-3}건 (이슈 페이지 참고)")
     return "\n".join(lines)
 
 

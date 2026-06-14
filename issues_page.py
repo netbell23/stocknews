@@ -58,6 +58,25 @@ def generate_issues_html(data: dict, out_path: str) -> str:
         )
     news_html = "".join(news_sections)
 
+    # 제작지원 공고 (KOCCA/NIPA/RAPA)
+    notices = data.get("notices") or []
+    if notices:
+        badge = {"KOCCA": "#e8453c", "NIPA": "#1971c2", "RAPA": "#2f9e44"}
+        lis = []
+        for it in notices:
+            color = badge.get(it["agency"], "#868e96")
+            kw = _esc(it.get("keyword", ""))
+            lis.append(
+                f'<li><a href="{_esc(it["link"])}" target="_blank" rel="noopener">'
+                f'<span class="agbadge" style="background:{color}">{_esc(it["agency"])}</span>'
+                f'{_esc(it["title"])}</a>'
+                f'<span class="meta">키워드: {kw}</span></li>'
+            )
+        notices_html = f'<ul class="news notices">{"".join(lis)}</ul>'
+    else:
+        notices_html = ('<p class="empty">오늘은 영상·인터랙티브·게임·AI 제작지원 관련 '
+                        '신규 공고가 없습니다.</p>')
+
     html = f"""<!DOCTYPE html>
 <html lang="ko">
 <head>
@@ -100,6 +119,8 @@ def generate_issues_html(data: dict, out_path: str) -> str:
   ul.news a {{ color:var(--txt); text-decoration:none; font-size:14px; line-height:1.45; }}
   ul.news a:hover {{ color:#4dabf7; }}
   ul.news .meta {{ display:block; color:var(--sub); font-size:11px; margin-top:3px; }}
+  .agbadge {{ display:inline-block; color:#fff; font-size:11px; font-weight:700;
+             padding:1px 7px; border-radius:6px; margin-right:8px; vertical-align:middle; }}
   footer {{ text-align:center; color:var(--sub); font-size:12px; padding:20px; }}
 </style>
 </head>
@@ -118,6 +139,11 @@ def generate_issues_html(data: dict, out_path: str) -> str:
     <section class="box">
       <h2>📅 다가오는 실적 발표</h2>
       {earnings_html}
+    </section>
+
+    <section class="box">
+      <h2>🏛️ 영상·게임·AI 제작지원 공고 <small style="color:var(--sub);font-size:12px;font-weight:400">KOCCA · NIPA · RAPA</small></h2>
+      {notices_html}
     </section>
 
     <section class="box">
