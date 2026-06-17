@@ -2,10 +2,11 @@ name: StockNews
 
 on:
   schedule:
-    # 시간은 UTC. 한국(KST) = UTC + 9
+    # 페이지 갱신(카톡 X). 시간은 UTC, KST = UTC + 9. GitHub cron 은 지연될 수 있음.
     - cron: "0 0 * * 1-5"        # 장 시작 페이지 갱신: KST 09:00, 월~금
     - cron: "50 6 * * 1-5"       # 장 마감 페이지 갱신: KST 15:50, 월~금
-    - cron: "30 23 * * 0-4"      # 아침 카톡: KST 08:30, 월~금 (UTC 일~목 23:30)
+  repository_dispatch:           # 외부 cron(cron-job.org 등)이 정시에 호출 → 아침 카톡 전송
+    types: [morning-kakao]
   workflow_dispatch:             # 수동 실행(테스트)
 
 # Pages 배포 권한
@@ -26,8 +27,9 @@ jobs:
       name: github-pages
       url: ${{ steps.deploy.outputs.page_url }}
     env:
-      # 아침 cron 또는 수동 실행일 때만 카톡 전송(=1), 장중 갱신은 페이지만(=0)
-      STOCKNEWS_SEND: ${{ (github.event_name == 'workflow_dispatch' || github.event.schedule == '30 23 * * 0-4') && '1' || '0' }}
+      # 외부 호출(repository_dispatch) 또는 수동 실행일 때만 카톡 전송(=1).
+      # schedule(페이지 갱신)은 전송 안 함(=0).
+      STOCKNEWS_SEND: ${{ (github.event_name == 'repository_dispatch' || github.event_name == 'workflow_dispatch') && '1' || '0' }}
       KAKAO_REST_API_KEY: ${{ secrets.KAKAO_REST_API_KEY }}
       KAKAO_CLIENT_SECRET: ${{ secrets.KAKAO_CLIENT_SECRET }}
       KAKAO_REFRESH_TOKEN: ${{ secrets.KAKAO_REFRESH_TOKEN }}
