@@ -2,16 +2,21 @@ name: StockNews
 
 on:
   schedule:
-    # 페이지 갱신(카톡 X). 시간은 UTC, KST = UTC + 9. GitHub cron 은 지연될 수 있음.
-    - cron: "0 0 * * 1-5"        # 장 시작 페이지 갱신: KST 09:00, 월~금
-    - cron: "50 6 * * 1-5"       # 장 마감 페이지 갱신: KST 15:50, 월~금
-  repository_dispatch:           # 외부 cron(cron-job.org 등)이 정시에 호출 → 아침 카톡 전송
+    # 시간은 UTC, KST = UTC + 9. GitHub cron 은 지연·누락될 수 있어 아침은 여러 번 재시도.
+    # 아침 카톡(KST 08:07/08:27/08:47, 월~금) — 오프피크 분, 3회 시도 + 중복발송 방지
+    - cron: "7 23 * * 0-4"
+    - cron: "27 23 * * 0-4"
+    - cron: "47 23 * * 0-4"
+    # 페이지 갱신(카톡 X)
+    - cron: "0 0 * * 1-5"        # 장 시작: KST 09:00, 월~금
+    - cron: "50 6 * * 1-5"       # 장 마감: KST 15:50, 월~금
+  repository_dispatch:           # (선택) 외부 cron 이 호출 → 아침 카톡. 위 schedule 과 중복돼도 방지됨
     types: [morning-kakao]
-  workflow_dispatch:             # 수동 실행(테스트)
+  workflow_dispatch:             # 수동 실행(테스트, 항상 발송)
 
-# Pages 배포 권한
+# Pages 배포 권한 + 발송기록(state) 커밋용 contents:write
 permissions:
-  contents: read
+  contents: write
   pages: write
   id-token: write
 
@@ -27,9 +32,8 @@ jobs:
       name: github-pages
       url: ${{ steps.deploy.outputs.page_url }}
     env:
-      # 외부 호출(repository_dispatch) 또는 수동 실행일 때만 카톡 전송(=1).
-      # schedule(페이지 갱신)은 전송 안 함(=0).
-      STOCKNEWS_SEND: ${{ (github.event_name == 'repository_dispatch' || github.event_name == 'workflow_dispatch') && '1' || '0' }}
+      # 아침 cron(3종)·외부호출·수동실행이면 카톡 전송(=1). 페이지 갱신 cron 은 전송 안 함(=0).
+      STOCKNEWS_SEND: ${{ (github.event_name == 'repository_dispatch' || github.event_name == 'workflow_dispatch' || contains(fromJSON('["7 23 * * 0-4","27 23 * * 0-4","47 23 * * 0-4"]'), github.event.schedule)) && '1' || '0' }}
       KAKAO_REST_API_KEY: ${{ secrets.KAKAO_REST_API_KEY }}
       KAKAO_CLIENT_SECRET: ${{ secrets.KAKAO_CLIENT_SECRET }}
       KAKAO_REFRESH_TOKEN: ${{ secrets.KAKAO_REFRESH_TOKEN }}
@@ -46,6 +50,18 @@ jobs:
 
       - name: Build pages (and send Kakao on morning run)
         run: python stock_alert.py
+
+      - name: Save send marker (dedup)
+        if: ${{ env.STOCKNEWS_SEND == '1' }}
+        continue-on-error: true
+        run: |
+          if [ -n "$(git status --porcelain state/last_sent.txt)" ]; then
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add state/last_sent.txt
+            git commit -m "발송 기록 $(TZ=Asia/Seoul date +%Y-%m-%d)"
+            git push
+          fi
 
       - uses: actions/configure-pages@v5
 

@@ -6,7 +6,7 @@ GitHub Pages 용 그래프 웹페이지(docs/index.html)를 생성한다.
 import sys
 import requests
 import yfinance as yf
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 import json
 import os
 
@@ -305,6 +305,20 @@ if __name__ == "__main__":
         print("\n(STOCKNEWS_SEND=0) 페이지만 갱신, 카톡 전송 생략")
         raise SystemExit(0)
 
+    # 하루 1회 중복 발송 방지(아침 cron 을 여러 번 재시도하므로).
+    # 자동 트리거(schedule/repository_dispatch)만 dedup, 수동(workflow_dispatch)은 항상 발송.
+    _STATE_PATH = os.path.join(BASE_DIR, "state", "last_sent.txt")
+    _today_kst = datetime.now(timezone(timedelta(hours=9))).strftime("%Y-%m-%d")
+    _dedup = os.environ.get("GITHUB_EVENT_NAME", "") in ("schedule", "repository_dispatch")
+    if _dedup:
+        try:
+            with open(_STATE_PATH, encoding="utf-8-sig") as f:
+                if f.read().strip() == _today_kst:
+                    print(f"\n오늘({_today_kst}) 이미 발송됨 — 중복 방지로 건너뜀")
+                    raise SystemExit(0)
+        except FileNotFoundError:
+            pass
+
     print("\n카카오톡 전송 중...")
     # 액세스 토큰이 없거나(클라우드) 만료됐으면 먼저 갱신
     token = KAKAO_ACCESS_TOKEN
@@ -319,6 +333,11 @@ if __name__ == "__main__":
 
     if ok:
         print("✓ 전송 완료")
+        # 성공 시 오늘 발송 기록(중복 방지용). 워크플로가 이 파일을 커밋·푸시함.
+        if _dedup:
+            os.makedirs(os.path.dirname(_STATE_PATH), exist_ok=True)
+            with open(_STATE_PATH, "w", encoding="utf-8") as f:
+                f.write(_today_kst)
     else:
         print("✗ 전송 실패 — 토큰/권한 설정을 확인하세요")
         # Actions 에서는 전송 실패해도 페이지 배포는 진행되도록 종료코드 0
