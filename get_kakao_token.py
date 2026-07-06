@@ -8,14 +8,21 @@
 5. 이 스크립트 실행 → 브라우저에서 로그인 후 리다이렉트된 URL 복사
 """
 
+import os
+import subprocess
 import urllib.parse
 import webbrowser
 import requests
 
-REST_API_KEY = input("REST API 키를 입력하세요: ").strip()
-# 카카오 앱 > 보안 > Client Secret 이 '사용함(ON)' 이면 입력, 아니면 그냥 Enter
-CLIENT_SECRET = input("Client Secret (없으면 그냥 Enter): ").strip()
+# 기존 환경변수를 기본값으로 사용 (그냥 Enter 치면 기존 값 재사용)
+_env_key = os.environ.get("KAKAO_REST_API_KEY", "")
+_env_sec = os.environ.get("KAKAO_CLIENT_SECRET", "")
+REST_API_KEY = (input(f"REST API 키 (Enter=기존값 재사용): ").strip() or _env_key).strip()
+CLIENT_SECRET = (input(f"Client Secret (Enter=기존값 재사용, 없으면 빈칸): ").strip() or _env_sec).strip()
 REDIRECT_URI = "http://localhost"
+if not REST_API_KEY:
+    print("REST API 키가 필요합니다.")
+    raise SystemExit(1)
 
 # 1단계: 인증 코드 받기
 auth_url = (
@@ -58,12 +65,26 @@ if not access_token:
 refresh_token = token_data.get("refresh_token")
 
 print(f"\n✓ 액세스 토큰 발급 성공!")
-print("\n아래 명령들을 그대로 복사해서 PowerShell 에 붙여넣으세요:\n")
-print(f'[System.Environment]::SetEnvironmentVariable("KAKAO_ACCESS_TOKEN", "{access_token}", "User")')
-print(f'[System.Environment]::SetEnvironmentVariable("KAKAO_REST_API_KEY", "{REST_API_KEY}", "User")')
-if CLIENT_SECRET:
-    print(f'[System.Environment]::SetEnvironmentVariable("KAKAO_CLIENT_SECRET", "{CLIENT_SECRET}", "User")')
-if refresh_token:
-    print(f'[System.Environment]::SetEnvironmentVariable("KAKAO_REFRESH_TOKEN", "{refresh_token}", "User")')
-print("\n※ 액세스 토큰은 약 6시간 후 만료됩니다.")
-print("   REST_API_KEY + REFRESH_TOKEN 을 환경변수에 저장해두면 refresh_token.py 로 자동 갱신됩니다.")
+
+
+def _save_user_env(name, val):
+    """Windows User 환경변수에 저장(베스트에포트)"""
+    if not val:
+        return
+    if os.name == "nt":
+        subprocess.run(
+            ["powershell", "-NoProfile", "-Command",
+             f'[Environment]::SetEnvironmentVariable("{name}","{val}","User")'],
+            check=False,
+        )
+
+
+# User 환경변수에 자동 저장 (복사-붙여넣기 불필요)
+_save_user_env("KAKAO_ACCESS_TOKEN", access_token)
+_save_user_env("KAKAO_REST_API_KEY", REST_API_KEY)
+_save_user_env("KAKAO_CLIENT_SECRET", CLIENT_SECRET)
+_save_user_env("KAKAO_REFRESH_TOKEN", refresh_token)
+print("✓ User 환경변수에 자동 저장 완료 (KAKAO_ACCESS_TOKEN / REST_API_KEY / CLIENT_SECRET / REFRESH_TOKEN)")
+print("\n다음 단계: GitHub Secret(KAKAO_REFRESH_TOKEN) 업데이트가 필요합니다.")
+print("  Claude 에게 '토큰 갱신했어, GitHub Secret 업데이트해줘' 라고 하면 자동으로 반영합니다.")
+print("  (수동: https://github.com/netbell23/stocknews/settings/secrets/actions )")
