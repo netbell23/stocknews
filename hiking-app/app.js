@@ -95,7 +95,7 @@ function ensureFirebaseSession() {
       unsub();
       try {
         if (!user) user = (await fbAuth.signInAnonymously()).user;
-        if (profile.authType !== 'google') {
+        if (profile.authType === 'guest' || !profile.authType) {
           profile.id = user.uid;
           store.set('profile', profile);
         }
@@ -105,26 +105,37 @@ function ensureFirebaseSession() {
   });
 }
 
+const AUTH_LABELS = { google: '🔵 Google 계정', apple: '⚫ Apple 계정', guest: '👤 게스트 모드' };
 function openLoginSheet() {
-  const canGoogle = firebaseReady();
+  const canLogin = firebaseReady();
   openSheet(`
     <h2>🥾 두마음 산악회에 오신 걸 환영해요</h2>
-    <div class="muted" style="font-size:13px;margin-bottom:18px;line-height:1.5">Google로 로그인하면 다음에 다시 접속해도 같은 계정으로 알아볼 수 있고, 랭킹에도 이름이 표시돼요. 로그인 없이 게스트로도 바로 쓸 수 있어요.</div>
-    <button class="btn btn-block" style="background:#fff;border:1.5px solid var(--line);color:var(--ink);margin-bottom:10px" onclick="loginWithGoogle()" ${canGoogle ? '' : 'disabled'}>🔵 Google로 계속하기</button>
-    ${canGoogle ? '' : '<div class="muted" style="font-size:11px;margin:-4px 0 12px">(Google 로그인은 아직 설정 전이에요)</div>'}
+    <div class="muted" style="font-size:13px;margin-bottom:18px;line-height:1.5">로그인하면 다음에 다시 접속해도 같은 계정으로 알아볼 수 있고, 랭킹에도 이름이 표시돼요. 로그인 없이 게스트로도 바로 쓸 수 있어요.</div>
+    <button class="btn btn-block" style="background:#fff;border:1.5px solid var(--line);color:var(--ink);margin-bottom:10px" onclick="loginWithGoogle()" ${canLogin ? '' : 'disabled'}>🔵 Google로 계속하기</button>
+    <button class="btn btn-block" style="background:#000;color:#fff;margin-bottom:10px" onclick="loginWithApple()" ${canLogin ? '' : 'disabled'}>🍎 Apple로 계속하기</button>
+    ${canLogin ? '' : '<div class="muted" style="font-size:11px;margin:-4px 0 12px">(로그인은 아직 설정 전이에요)</div>'}
     <button class="btn btn-ghost btn-block" onclick="continueAsGuest()">👤 게스트로 시작하기</button>
   `);
 }
 function continueAsGuest() { closeSheet(); }
-async function loginWithGoogle() {
-  if (!fbAuth) { toast('Google 로그인이 아직 설정되지 않았어요'); return; }
+function getAuthProvider(kind) {
+  if (kind === 'google') return new firebase.auth.GoogleAuthProvider();
+  if (kind === 'apple') {
+    const p = new firebase.auth.OAuthProvider('apple.com');
+    p.addScope('email'); p.addScope('name');
+    return p;
+  }
+  return null;
+}
+async function loginWithProvider(kind) {
+  if (!fbAuth) { toast('로그인이 아직 설정되지 않았어요'); return; }
   try {
-    const { user } = await fbAuth.signInWithPopup(new firebase.auth.GoogleAuthProvider());
+    const { user } = await fbAuth.signInWithPopup(getAuthProvider(kind));
     profile.id = user.uid;
     profile.name = user.displayName || profile.name;
     profile.photoURL = user.photoURL || null;
     profile.email = user.email || null;
-    profile.authType = 'google';
+    profile.authType = kind;
     store.set('profile', profile);
     closeSheet();
     if (currentTab === 'me') renderProfile();
@@ -132,11 +143,15 @@ async function loginWithGoogle() {
     syncLeaderboard();
   } catch (e) {
     console.error(e);
-    toast('로그인에 실패했어요');
+    if (e.code === 'auth/popup-closed-by-user') { /* 사용자가 그냥 닫음 — 조용히 무시 */ }
+    else if (e.code === 'auth/operation-not-allowed') toast(`${kind === 'apple' ? 'Apple' : 'Google'} 로그인이 아직 설정 전이에요`);
+    else toast('로그인에 실패했어요');
   }
 }
+function loginWithGoogle() { return loginWithProvider('google'); }
+function loginWithApple() { return loginWithProvider('apple'); }
 async function logout() {
-  if (profile.authType === 'google' && fbAuth) { try { await fbAuth.signOut(); } catch {} }
+  if (profile.authType !== 'guest' && fbAuth) { try { await fbAuth.signOut(); } catch {} }
   profile = randomGuestProfile();
   store.set('profile', profile);
   await ensureFirebaseSession();
@@ -604,19 +619,34 @@ function deleteRecord(id) {
    산 안내
    ========================================================================= */
 let guideFilter = 'all';
+let guideQuery = '';
 function renderGuide() {
   const v = $('#view-guide');
-  const list = guideFilter === 'all' ? MOUNTAINS : MOUNTAINS.filter(m => m.level === guideFilter);
   v.innerHTML = `
     <div class="pad pad-b">
+      <input id="guideSearchInput" class="search-input" placeholder="🔍 산 이름·지역 검색 (예: 지리산, 강원)" value="${escapeHtml(guideQuery)}">
       <div class="chip-row">
         ${['all','easy','mid','hard'].map(f => `<div class="chip ${guideFilter===f?'on':''}" data-f="${f}">${f==='all'?'전체':LEVELS[f]}</div>`).join('')}
       </div>
-      ${list.map(mtnCard).join('')}
+      <div id="guideList"></div>
       <div class="muted center" style="font-size:11px;margin-top:8px">코스 거리·시간은 참고용입니다. 기상·통제 정보는 국립공원공단을 확인하세요.</div>
     </div>`;
-  $$('.chip', v).forEach(c => c.onclick = () => { guideFilter = c.dataset.f; renderGuide(); });
-  $$('.mtn-card', v).forEach(el => el.onclick = () => openMountain(el.dataset.id));
+  renderGuideList();
+  $$('.chip', v).forEach(c => c.onclick = () => {
+    guideFilter = c.dataset.f;
+    $$('.chip', v).forEach(x => x.classList.toggle('on', x.dataset.f === guideFilter));
+    renderGuideList();
+  });
+  const input = $('#guideSearchInput');
+  input.oninput = () => { guideQuery = input.value; renderGuideList(); };
+}
+function renderGuideList() {
+  const q = guideQuery.trim();
+  let list = guideFilter === 'all' ? MOUNTAINS : MOUNTAINS.filter(m => m.level === guideFilter);
+  if (q) list = list.filter(m => m.name.includes(q) || m.region.includes(q));
+  const listEl = $('#guideList');
+  listEl.innerHTML = list.length ? list.map(mtnCard).join('') : `<div class="empty"><div class="big">🔍</div>검색 결과가 없어요</div>`;
+  $$('.mtn-card', listEl).forEach(el => el.onclick = () => openMountain(el.dataset.id));
 }
 function mtnCard(m) {
   return `<div class="card"><div class="mtn-card" data-id="${m.id}">
@@ -1136,13 +1166,13 @@ function renderProfile() {
       <div class="card center" style="padding-top:22px">
         <div class="room-ava" style="width:72px;height:72px;border-radius:50%;font-size:32px;margin:0 auto 12px;background:${profile.color};overflow:hidden">${profile.photoURL ? `<img src="${profile.photoURL}" style="width:100%;height:100%;object-fit:cover">` : escapeHtml(profile.name[0])}</div>
         <div style="font-size:20px;font-weight:800">${escapeHtml(profile.name)}</div>
-        <div class="muted" style="font-size:11px;margin-top:2px">${profile.authType === 'google' ? `🔵 Google 계정${profile.email ? ` · ${escapeHtml(profile.email)}` : ''}` : '👤 게스트 모드'}</div>
+        <div class="muted" style="font-size:11px;margin-top:2px">${AUTH_LABELS[profile.authType] || AUTH_LABELS.guest}${(profile.authType !== 'guest' && profile.email) ? ` · ${escapeHtml(profile.email)}` : ''}</div>
         <div class="muted" style="font-size:12px;margin-top:4px">두마음 산악회와 함께한 산행 ${recs.length}회</div>
         <div class="row" style="justify-content:center;gap:8px;margin-top:12px">
           <button class="btn btn-ghost btn-sm" onclick="openEditProfile()">프로필 수정</button>
-          ${profile.authType === 'google'
+          ${profile.authType !== 'guest'
             ? `<button class="btn btn-ghost btn-sm" onclick="logout()">로그아웃</button>`
-            : `<button class="btn btn-ghost btn-sm" onclick="openLoginSheet()">Google 로그인</button>`}
+            : `<button class="btn btn-ghost btn-sm" onclick="openLoginSheet()">로그인</button>`}
         </div>
       </div>
       <div class="card rank-card">
@@ -1277,4 +1307,4 @@ document.addEventListener('DOMContentLoaded', init);
 // 전역 노출 (인라인 onclick 용)
 Object.assign(window, { closeSheet, saveRec, deleteRecord, shareToChat, focusOnMap, openCreateRoom, createRoom,
   openEditProfile, saveProfile, exportData, switchTab, openRoom, shareLocation,
-  openLoginSheet, continueAsGuest, loginWithGoogle, logout, openLeaderboardSheet });
+  openLoginSheet, continueAsGuest, loginWithGoogle, loginWithApple, logout, openLeaderboardSheet });
