@@ -149,6 +149,31 @@ body { display: flex; flex-direction: column; }
 .stat-box .v { font-size: 22px; font-weight: 800; color: var(--green-700); }
 .stat-box .l { font-size: 11px; color: var(--ink-soft); margin-top: 3px; }
 
+/* ===== 계급 카드 / 뱃지 / 랭킹 ===== */
+.rank-card .bar { height: 8px; border-radius: 999px; background: var(--line); overflow: hidden; }
+.rank-card .bar .fill { height: 100%; background: linear-gradient(90deg, var(--green-500), var(--green-700)); border-radius: 999px; transition: width .4s; }
+.rank-top { display: flex; align-items: center; gap: 10px; }
+.rank-badge {
+  flex: 0 0 auto; background: linear-gradient(135deg, var(--green-700), var(--green-500)); color: #fff;
+  font-weight: 800; font-size: 14px; padding: 8px 12px; border-radius: 12px;
+}
+.rank-name { flex: 1; min-width: 0; }
+.rank-name .n { font-weight: 800; font-size: 15px; }
+.badge-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+.badge-tile { text-align: center; cursor: pointer; padding: 6px 2px; border-radius: 12px; opacity: .45; }
+.badge-tile.on { opacity: 1; background: var(--green-50); }
+.badge-tile .ic { font-size: 26px; }
+.badge-tile .t { font-size: 10px; font-weight: 700; margin-top: 4px; line-height: 1.25; color: var(--ink-soft); }
+.badge-tile.on .t { color: var(--green-700); }
+.lb-row { display: flex; align-items: center; gap: 10px; padding: 9px 4px; border-bottom: 1px solid var(--line); }
+.lb-row:last-child { border-bottom: none; }
+.lb-row.mine { background: var(--green-50); border-radius: 12px; }
+.lb-rank { flex: 0 0 26px; text-align: center; font-weight: 800; font-size: 14px; color: var(--ink-soft); }
+.lb-info { flex: 1; min-width: 0; }
+.lb-info .n { font-weight: 700; font-size: 13px; }
+.lb-info .r { font-size: 11px; color: var(--ink-soft); margin-top: 1px; }
+.lb-km { flex: 0 0 auto; font-weight: 800; font-size: 14px; color: var(--green-700); }
+
 /* ===== 완등맵 (스크래치맵) ===== */
 #scratchMap { position: absolute; inset: 0; background: #dde6df; }
 .fog-canvas { position: absolute; top: 0; left: 0; z-index: 500; pointer-events: none; }

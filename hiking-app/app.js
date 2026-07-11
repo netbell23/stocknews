@@ -74,19 +74,42 @@ ensureProfile();
 /* =========================================================================
    로그인 (Firebase Auth — Google) / 게스트
    ========================================================================= */
-let fbAuth = null;
+let fbAuth = null, fbDb = null;
 function firebaseReady() {
   return typeof firebase !== 'undefined' && typeof FIREBASE_CONFIG !== 'undefined' && FIREBASE_CONFIG.apiKey && FIREBASE_CONFIG.apiKey !== 'YOUR_API_KEY';
 }
 try {
-  if (firebaseReady()) { firebase.initializeApp(FIREBASE_CONFIG); fbAuth = firebase.auth(); }
+  if (firebaseReady()) {
+    firebase.initializeApp(FIREBASE_CONFIG);
+    fbAuth = firebase.auth();
+    if (firebase.firestore) fbDb = firebase.firestore();
+  }
 } catch (e) { console.warn('Firebase 초기화 실패', e); }
+
+// 게스트도 Firebase 익명 인증으로 로그인시켜 랭킹(Firestore)에 안전하게 기록을 올릴 수 있게 한다.
+// (Firestore 보안 규칙이 request.auth.uid == 문서id 를 요구하므로, 실제 firebase 세션이 있어야 본인 기록을 쓸 수 있다)
+function ensureFirebaseSession() {
+  if (!fbAuth) return Promise.resolve(null);
+  return new Promise(resolve => {
+    const unsub = fbAuth.onAuthStateChanged(async user => {
+      unsub();
+      try {
+        if (!user) user = (await fbAuth.signInAnonymously()).user;
+        if (profile.authType !== 'google') {
+          profile.id = user.uid;
+          store.set('profile', profile);
+        }
+        resolve(user);
+      } catch (e) { console.warn('익명 로그인 실패', e); resolve(null); }
+    });
+  });
+}
 
 function openLoginSheet() {
   const canGoogle = firebaseReady();
   openSheet(`
     <h2>🥾 두마음 산악회에 오신 걸 환영해요</h2>
-    <div class="muted" style="font-size:13px;margin-bottom:18px;line-height:1.5">Google로 로그인하면 다음에 다시 접속해도 같은 계정으로 알아볼 수 있어요. 로그인 없이 게스트로도 바로 쓸 수 있어요.</div>
+    <div class="muted" style="font-size:13px;margin-bottom:18px;line-height:1.5">Google로 로그인하면 다음에 다시 접속해도 같은 계정으로 알아볼 수 있고, 랭킹에도 이름이 표시돼요. 로그인 없이 게스트로도 바로 쓸 수 있어요.</div>
     <button class="btn btn-block" style="background:#fff;border:1.5px solid var(--line);color:var(--ink);margin-bottom:10px" onclick="loginWithGoogle()" ${canGoogle ? '' : 'disabled'}>🔵 Google로 계속하기</button>
     ${canGoogle ? '' : '<div class="muted" style="font-size:11px;margin:-4px 0 12px">(Google 로그인은 아직 설정 전이에요)</div>'}
     <button class="btn btn-ghost btn-block" onclick="continueAsGuest()">👤 게스트로 시작하기</button>
@@ -106,17 +129,20 @@ async function loginWithGoogle() {
     closeSheet();
     if (currentTab === 'me') renderProfile();
     toast(`${profile.name}님, 환영해요 👋`);
+    syncLeaderboard();
   } catch (e) {
     console.error(e);
     toast('로그인에 실패했어요');
   }
 }
-function logout() {
-  if (profile.authType === 'google' && fbAuth) fbAuth.signOut().catch(() => {});
+async function logout() {
+  if (profile.authType === 'google' && fbAuth) { try { await fbAuth.signOut(); } catch {} }
   profile = randomGuestProfile();
   store.set('profile', profile);
+  await ensureFirebaseSession();
   renderProfile();
   toast('로그아웃했어요 (게스트 모드)');
+  syncLeaderboard();
 }
 
 /* =========================================================================
@@ -466,6 +492,7 @@ function saveRec() {
     toast('기록이 저장되었어요 🎉');
   }
   if (scratchMap) { refreshScratchData(); renderScratchMarkers(); drawScratchLayer(); }
+  syncLeaderboard();
   switchTab('records');
 }
 
@@ -652,11 +679,113 @@ function setManualClimbed(id, on) {
   if (scratchMap) { renderScratchMarkers(); drawScratchLayer(); }
   const listEl = $('#mtnChecklist');
   if (listEl) { listEl.innerHTML = renderChecklistRows(checklistQuery); bindChecklistRows(); }
+  syncLeaderboard();
 }
 function getClimbedSet() {
   const s = getAutoClimbedSet();
   for (const id of getManualSet()) s.add(id);
   return s;
+}
+
+/* =========================================================================
+   계급(1~100단계) · 뱃지 · 랭킹(Firestore)
+   ========================================================================= */
+// 계급 구간: 레벨 구간마다 다음 레벨까지 필요한 누적 거리(km)가 달라진다 (뒤로 갈수록 험난해짐)
+const RANK_TIERS = [
+  { min: 1,  max: 10,  name: '새싹 산꾼',    stepKm: 5   },
+  { min: 11, max: 25,  name: '도전하는 산꾼', stepKm: 10  },
+  { min: 26, max: 45,  name: '능선 등반가',   stepKm: 20  },
+  { min: 46, max: 70,  name: '베테랑 산악인', stepKm: 30  },
+  { min: 71, max: 90,  name: '명산 마스터',   stepKm: 50  },
+  { min: 91, max: 99,  name: '그랜드마스터',  stepKm: 100 },
+  { min: 100, max: 100, name: '산신령',       stepKm: Infinity },
+];
+function tierOfLevel(lv) { return RANK_TIERS.find(t => lv >= t.min && lv <= t.max); }
+// LEVEL_REQ[lv] = 그 레벨에 도달하는 데 필요한 누적 거리(km). LEVEL_REQ[1] = 0
+const LEVEL_REQ = (() => {
+  const req = [0, 0];
+  for (let lv = 2; lv <= 100; lv++) req[lv] = req[lv - 1] + tierOfLevel(lv - 1).stepKm;
+  return req;
+})();
+function getLevelInfo(totalKm) {
+  let level = 1;
+  for (let lv = 2; lv <= 100; lv++) { if (totalKm >= LEVEL_REQ[lv]) level = lv; else break; }
+  const tier = tierOfLevel(level);
+  const floor = LEVEL_REQ[level], ceil = level < 100 ? LEVEL_REQ[level + 1] : floor;
+  const progress = level >= 100 ? 1 : clamp((totalKm - floor) / (ceil - floor), 0, 1);
+  return { level, tierName: tier.name, floor, ceil, progress, totalKm, maxed: level >= 100 };
+}
+
+const BADGES = [
+  { id: 'first_climb', emoji: '🥾', name: '첫 발걸음',    desc: '첫 산행 기록',              check: c => c.recordCount >= 1 },
+  { id: 'climb_10',    emoji: '🎒', name: '열정 산꾼',     desc: '산행 기록 10회',            check: c => c.recordCount >= 10 },
+  { id: 'climb_50',    emoji: '🏕️', name: '베테랑 산꾼',   desc: '산행 기록 50회',            check: c => c.recordCount >= 50 },
+  { id: 'peaks_10',    emoji: '⛰️', name: '명산 10정복',   desc: '100대 명산 10곳 완등',       check: c => c.climbedCount >= 10 },
+  { id: 'peaks_30',    emoji: '🏔️', name: '명산 30정복',   desc: '100대 명산 30곳 완등',       check: c => c.climbedCount >= 30 },
+  { id: 'peaks_50',    emoji: '🗻', name: '명산 반백 정복', desc: '100대 명산 50곳 완등',       check: c => c.climbedCount >= 50 },
+  { id: 'peaks_100',   emoji: '👑', name: '100대 명산 완주', desc: '100대 명산 전체 완등',       check: c => c.climbedCount >= 100 },
+  { id: 'big3',        emoji: '🌋', name: '3대 명산 정복',  desc: '한라산·지리산·설악산 완등',   check: c => ['halla','jiri','seorak'].every(id => c.climbed.has(id)) },
+  { id: 'dist_42',     emoji: '🏃', name: '마라톤 산꾼',   desc: '누적 거리 42.195km 돌파',    check: c => c.totalKm >= 42.195 },
+  { id: 'dist_100',    emoji: '💯', name: '100km 클럽',    desc: '누적 거리 100km 돌파',       check: c => c.totalKm >= 100 },
+  { id: 'dist_500',    emoji: '🚀', name: '500km 클럽',    desc: '누적 거리 500km 돌파',       check: c => c.totalKm >= 500 },
+  { id: 'gain_everest', emoji: '🏆', name: '에베레스트 클럽', desc: '누적 상승고도 8,849m 돌파', check: c => c.totalGainM >= 8849 },
+  { id: 'level_max',   emoji: '🧙', name: '산신령',        desc: '계급 100단계(만렙) 달성',    check: c => c.level >= 100 },
+];
+
+function computeMyStats() {
+  const recs = store.get('records', []);
+  const total = recs.reduce((a, r) => ({ dist: a.dist + r.dist, gain: a.gain + r.gain }), { dist: 0, gain: 0 });
+  const climbed = getClimbedSet();
+  const totalKm = total.dist / 1000;
+  const levelInfo = getLevelInfo(totalKm);
+  const ctx = { recordCount: recs.length, climbedCount: climbed.size, climbed, totalKm, totalGainM: total.gain, level: levelInfo.level };
+  const badges = BADGES.filter(b => b.check(ctx));
+  return { totalKm, totalGainM: total.gain, recordCount: recs.length, climbedCount: climbed.size, levelInfo, badges };
+}
+
+async function syncLeaderboard() {
+  if (!fbDb || !fbAuth || !fbAuth.currentUser) return;
+  try {
+    const stats = computeMyStats();
+    await fbDb.collection('leaderboard').doc(fbAuth.currentUser.uid).set({
+      name: profile.name, color: profile.color, photoURL: profile.photoURL || null, authType: profile.authType,
+      totalKm: Math.round(stats.totalKm * 100) / 100, totalGainM: Math.round(stats.totalGainM),
+      recordCount: stats.recordCount, climbedCount: stats.climbedCount,
+      level: stats.levelInfo.level, tierName: stats.levelInfo.tierName, badgeCount: stats.badges.length,
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+    }, { merge: true });
+  } catch (e) { console.warn('랭킹 동기화 실패', e); }
+}
+
+async function openLeaderboardSheet() {
+  openSheet(`<h2>🏆 전체 랭킹</h2><div id="lbBody" class="muted center" style="padding:30px 0">불러오는 중…</div>`);
+  if (!fbDb) {
+    $('#lbBody').outerHTML = `<div class="empty"><div class="big">🏆</div>랭킹 기능은 아직 설정 전이에요<br><span style="font-size:12px">(Firebase Firestore 연결이 필요해요)</span></div>`;
+    return;
+  }
+  try {
+    const snap = await fbDb.collection('leaderboard').orderBy('totalKm', 'desc').limit(50).get();
+    const rows = [];
+    let rank = 0;
+    snap.forEach(doc => {
+      rank++;
+      const d = doc.data();
+      const mine = fbAuth && fbAuth.currentUser && doc.id === fbAuth.currentUser.uid;
+      rows.push(`<div class="lb-row ${mine ? 'mine' : ''}">
+        <div class="lb-rank">${rank <= 3 ? ['🥇','🥈','🥉'][rank-1] : rank}</div>
+        <div class="room-ava" style="width:36px;height:36px;font-size:15px;background:${d.color || '#8b968f'};overflow:hidden">${d.photoURL ? `<img src="${d.photoURL}" style="width:100%;height:100%;object-fit:cover">` : escapeHtml((d.name||'?')[0])}</div>
+        <div class="lb-info">
+          <div class="n">${escapeHtml(d.name || '이름없음')}${mine ? ' <span class="muted" style="font-size:11px">(나)</span>' : ''}</div>
+          <div class="r">Lv.${d.level || 1} ${escapeHtml(d.tierName || '')} · 완등 ${d.climbedCount || 0}곳</div>
+        </div>
+        <div class="lb-km">${(d.totalKm || 0).toFixed(1)}<span class="muted" style="font-size:11px">km</span></div>
+      </div>`);
+    });
+    $('#lbBody').outerHTML = rows.length ? `<div id="lbBody">${rows.join('')}</div>` : `<div class="empty"><div class="big">🏆</div>아직 랭킹에 아무도 없어요<br>첫 산행을 기록해보세요!</div>`;
+  } catch (e) {
+    console.error(e);
+    $('#lbBody').outerHTML = `<div class="empty"><div class="big">⚠️</div>랭킹을 불러오지 못했어요<br><span style="font-size:12px">${escapeHtml(e.message || '')}</span></div>`;
+  }
 }
 
 let scratchMap, scratchCanvas, scratchCtx, scratchMarkers = [];
@@ -999,6 +1128,8 @@ const chatNet = {
 function renderProfile() {
   const recs = store.get('records', []);
   const total = recs.reduce((a, r) => ({ dist: a.dist + r.dist, gain: a.gain + r.gain, dur: a.dur + r.dur }), { dist: 0, gain: 0, dur: 0 });
+  const stats = computeMyStats();
+  const li = stats.levelInfo;
   const v = $('#view-me');
   v.innerHTML = `
     <div class="pad pad-b">
@@ -1013,6 +1144,24 @@ function renderProfile() {
             ? `<button class="btn btn-ghost btn-sm" onclick="logout()">로그아웃</button>`
             : `<button class="btn btn-ghost btn-sm" onclick="openLoginSheet()">Google 로그인</button>`}
         </div>
+      </div>
+      <div class="card rank-card">
+        <div class="rank-top">
+          <div class="rank-badge">Lv.${li.level}</div>
+          <div class="rank-name">
+            <div class="n">${li.tierName}</div>
+            <div class="muted" style="font-size:11px">${li.maxed ? '최고 계급 달성!' : `다음 계급까지 ${(li.ceil - li.totalKm).toFixed(1)}km`}</div>
+          </div>
+          <button class="btn btn-ghost btn-sm" onclick="openLeaderboardSheet()">🏆 랭킹</button>
+        </div>
+        <div class="bar" style="margin-top:10px"><div class="fill" style="width:${Math.round(li.progress*100)}%"></div></div>
+      </div>
+      <div class="section-title">뱃지 ${stats.badges.length}/${BADGES.length}</div>
+      <div class="card badge-grid">
+        ${BADGES.map(b => {
+          const on = stats.badges.some(x => x.id === b.id);
+          return `<div class="badge-tile ${on ? 'on' : ''}" data-name="${escapeHtml(b.name)}" data-desc="${escapeHtml(b.desc)}"><div class="ic">${on ? b.emoji : '🔒'}</div><div class="t">${escapeHtml(b.name)}</div></div>`;
+        }).join('')}
       </div>
       <div class="stat-grid">
         <div class="stat-box"><div class="v">${(total.dist/1000).toFixed(1)}</div><div class="l">총 거리(km)</div></div>
@@ -1032,6 +1181,7 @@ function renderProfile() {
       </div>
     </div>`;
   $('#tileSel').onchange = e => { setTile(e.target.value); toast('지도 타입을 바꿨어요'); };
+  $$('.badge-tile', v).forEach(el => el.onclick = () => toast(`${el.classList.contains('on') ? '🏅' : '🔒'} ${el.dataset.name} — ${el.dataset.desc}`));
 }
 function openEditProfile() {
   openSheet(`
@@ -1118,10 +1268,13 @@ function init() {
 
   // 첫 방문이면 로그인/게스트 선택 시트 표시
   if (isFirstRun) setTimeout(openLoginSheet, 400);
+
+  // Firebase 세션 확보 후 랭킹 동기화 (설정 안 돼 있으면 조용히 무시됨)
+  ensureFirebaseSession().then(() => syncLeaderboard());
 }
 document.addEventListener('DOMContentLoaded', init);
 
 // 전역 노출 (인라인 onclick 용)
 Object.assign(window, { closeSheet, saveRec, deleteRecord, shareToChat, focusOnMap, openCreateRoom, createRoom,
   openEditProfile, saveProfile, exportData, switchTab, openRoom, shareLocation,
-  openLoginSheet, continueAsGuest, loginWithGoogle, logout });
+  openLoginSheet, continueAsGuest, loginWithGoogle, logout, openLeaderboardSheet });
