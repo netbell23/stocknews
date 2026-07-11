@@ -1,5 +1,5 @@
 /* =========================================================================
-   산벗 — 통합 서버 (선택 사항)
+   두마음 산악회 — 통합 서버 (선택 사항)
    - 정적 파일(index.html 등) 서빙: http://<내IP>:8787
    - 단톡 실시간 중계: 같은 주소의 WebSocket (포트 8787)
    실행:  node server.js
@@ -85,7 +85,7 @@ server.listen(PORT, () => {
   const ips = [];
   for (const name of Object.keys(nets))
     for (const ni of nets[name]) if (ni.family === 'IPv4' && !ni.internal) ips.push(ni.address);
-  console.log('🥾 산벗 서버 실행 중!');
+  console.log('🥾 두마음 산악회 서버 실행 중!');
   console.log(`   - 이 기기:     http://localhost:${PORT}`);
   ips.forEach(ip => console.log(`   - 같은 와이파이: http://${ip}:${PORT}  ← 휴대폰에서 이 주소로 접속`));
   console.log('   (단톡 실시간 중계 포함. 종료: Ctrl+C)');

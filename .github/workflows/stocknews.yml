@@ -63,6 +63,12 @@ jobs:
             git push
           fi
 
+      - name: Copy 두마음 산악회 app into docs
+        run: |
+          rm -rf docs/hiking-app
+          mkdir -p docs/hiking-app
+          rsync -a --exclude='.claude' hiking-app/ docs/hiking-app/
+
       - uses: actions/configure-pages@v5
 
       - uses: actions/upload-pages-artifact@v3

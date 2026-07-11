@@ -1,7 +1,7 @@
 {
-  "name": "산벗 — 산행 안내·기록",
-  "short_name": "산벗",
-  "description": "트랭글·스트라바 스타일 산행 GPS 기록 + 산행자 단톡 앱",
+  "name": "두마음 산악회 — 산행 안내·기록",
+  "short_name": "두마음산악회",
+  "description": "두마음 산악회 — 산행 GPS 기록 + 100대 명산 완등 스크래치맵 + 산행자 단톡 앱",
   "start_url": "./index.html",
   "display": "standalone",
   "orientation": "portrait",

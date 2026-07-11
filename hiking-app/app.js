@@ -1,5 +1,5 @@
 /* =========================================================================
-   산벗 (SanBeot) — 산행 안내·기록 + 단톡 모바일 웹앱
+   두마음 산악회 — 산행 안내·기록 + 단톡 모바일 웹앱
    - 지도/GPS: Leaflet + OpenStreetMap (API 키 불필요)
    - 저장: localStorage
    - 단톡: WebSocket 서버 있으면 실시간 연결, 없으면 BroadcastChannel+localStorage 폴백
@@ -62,13 +62,62 @@ function fmtDate(ts) {
    ========================================================================= */
 const COLORS = ['#2e8b4f', '#3b82f6', '#e5484d', '#f0a020', '#8b5cf6', '#0ea5a4', '#ec4899', '#64748b'];
 let profile = store.get('profile', null);
+const isFirstRun = !profile;
+function randomGuestProfile() {
+  return { id: uid(), name: '두마음' + Math.floor(Math.random() * 9000 + 1000), color: COLORS[Math.floor(Math.random()*COLORS.length)], authType: 'guest' };
+}
 function ensureProfile() {
-  if (!profile) {
-    profile = { id: uid(), name: '산벗' + Math.floor(Math.random() * 9000 + 1000), color: COLORS[Math.floor(Math.random()*COLORS.length)] };
-    store.set('profile', profile);
-  }
+  if (!profile) { profile = randomGuestProfile(); store.set('profile', profile); }
 }
 ensureProfile();
+
+/* =========================================================================
+   로그인 (Firebase Auth — Google) / 게스트
+   ========================================================================= */
+let fbAuth = null;
+function firebaseReady() {
+  return typeof firebase !== 'undefined' && typeof FIREBASE_CONFIG !== 'undefined' && FIREBASE_CONFIG.apiKey && FIREBASE_CONFIG.apiKey !== 'YOUR_API_KEY';
+}
+try {
+  if (firebaseReady()) { firebase.initializeApp(FIREBASE_CONFIG); fbAuth = firebase.auth(); }
+} catch (e) { console.warn('Firebase 초기화 실패', e); }
+
+function openLoginSheet() {
+  const canGoogle = firebaseReady();
+  openSheet(`
+    <h2>🥾 두마음 산악회에 오신 걸 환영해요</h2>
+    <div class="muted" style="font-size:13px;margin-bottom:18px;line-height:1.5">Google로 로그인하면 다음에 다시 접속해도 같은 계정으로 알아볼 수 있어요. 로그인 없이 게스트로도 바로 쓸 수 있어요.</div>
+    <button class="btn btn-block" style="background:#fff;border:1.5px solid var(--line);color:var(--ink);margin-bottom:10px" onclick="loginWithGoogle()" ${canGoogle ? '' : 'disabled'}>🔵 Google로 계속하기</button>
+    ${canGoogle ? '' : '<div class="muted" style="font-size:11px;margin:-4px 0 12px">(Google 로그인은 아직 설정 전이에요)</div>'}
+    <button class="btn btn-ghost btn-block" onclick="continueAsGuest()">👤 게스트로 시작하기</button>
+  `);
+}
+function continueAsGuest() { closeSheet(); }
+async function loginWithGoogle() {
+  if (!fbAuth) { toast('Google 로그인이 아직 설정되지 않았어요'); return; }
+  try {
+    const { user } = await fbAuth.signInWithPopup(new firebase.auth.GoogleAuthProvider());
+    profile.id = user.uid;
+    profile.name = user.displayName || profile.name;
+    profile.photoURL = user.photoURL || null;
+    profile.email = user.email || null;
+    profile.authType = 'google';
+    store.set('profile', profile);
+    closeSheet();
+    if (currentTab === 'me') renderProfile();
+    toast(`${profile.name}님, 환영해요 👋`);
+  } catch (e) {
+    console.error(e);
+    toast('로그인에 실패했어요');
+  }
+}
+function logout() {
+  if (profile.authType === 'google' && fbAuth) fbAuth.signOut().catch(() => {});
+  profile = randomGuestProfile();
+  store.set('profile', profile);
+  renderProfile();
+  toast('로그아웃했어요 (게스트 모드)');
+}
 
 /* =========================================================================
    산 데이터 (안내)
@@ -953,10 +1002,16 @@ function renderProfile() {
   v.innerHTML = `
     <div class="pad pad-b">
       <div class="card center" style="padding-top:22px">
-        <div class="room-ava" style="width:72px;height:72px;border-radius:50%;font-size:32px;margin:0 auto 12px;background:${profile.color}">${escapeHtml(profile.name[0])}</div>
+        <div class="room-ava" style="width:72px;height:72px;border-radius:50%;font-size:32px;margin:0 auto 12px;background:${profile.color};overflow:hidden">${profile.photoURL ? `<img src="${profile.photoURL}" style="width:100%;height:100%;object-fit:cover">` : escapeHtml(profile.name[0])}</div>
         <div style="font-size:20px;font-weight:800">${escapeHtml(profile.name)}</div>
-        <div class="muted" style="font-size:12px;margin-top:4px">산벗과 함께한 산행 ${recs.length}회</div>
-        <button class="btn btn-ghost btn-sm" style="margin-top:12px;flex:0 0 auto" onclick="openEditProfile()">프로필 수정</button>
+        <div class="muted" style="font-size:11px;margin-top:2px">${profile.authType === 'google' ? `🔵 Google 계정${profile.email ? ` · ${escapeHtml(profile.email)}` : ''}` : '👤 게스트 모드'}</div>
+        <div class="muted" style="font-size:12px;margin-top:4px">두마음 산악회와 함께한 산행 ${recs.length}회</div>
+        <div class="row" style="justify-content:center;gap:8px;margin-top:12px">
+          <button class="btn btn-ghost btn-sm" onclick="openEditProfile()">프로필 수정</button>
+          ${profile.authType === 'google'
+            ? `<button class="btn btn-ghost btn-sm" onclick="logout()">로그아웃</button>`
+            : `<button class="btn btn-ghost btn-sm" onclick="openLoginSheet()">Google 로그인</button>`}
+        </div>
       </div>
       <div class="stat-grid">
         <div class="stat-box"><div class="v">${(total.dist/1000).toFixed(1)}</div><div class="l">총 거리(km)</div></div>
@@ -967,10 +1022,10 @@ function renderProfile() {
       <div class="card">
         <div class="kv"><span class="k">지도 타입</span><span class="v"><select id="tileSel" style="border:none;font-weight:700;color:var(--green-700)"><option value="topo"${curTile==='topo'?' selected':''}>등고선(지형도)</option><option value="street"${curTile==='street'?' selected':''}>일반 지도</option></select></span></div>
         <div class="kv"><span class="k">기록 데이터</span><span class="v"><a class="link" onclick="exportData()">내보내기</a></span></div>
-        <div class="kv"><span class="k">앱 정보</span><span class="v muted" style="font-weight:600">산벗 v1.0</span></div>
+        <div class="kv"><span class="k">앱 정보</span><span class="v muted" style="font-weight:600">두마음 산악회 v1.0</span></div>
       </div>
       <div class="muted center" style="font-size:11px;line-height:1.6;margin-top:8px">
-        🥾 산벗(SanBeot) — 트랭글·스트라바 스타일 산행 기록 앱<br>
+        🥾 두마음 산악회 — 트랭글·스트라바 스타일 산행 기록 앱<br>
         GPS·지도는 OpenStreetMap / OpenTopoMap 기반입니다.<br>
         안전한 산행 되세요!
       </div>
@@ -1059,9 +1114,13 @@ function init() {
 
   // 서비스워커
   if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(()=>{});
+
+  // 첫 방문이면 로그인/게스트 선택 시트 표시
+  if (isFirstRun) setTimeout(openLoginSheet, 400);
 }
 document.addEventListener('DOMContentLoaded', init);
 
 // 전역 노출 (인라인 onclick 용)
 Object.assign(window, { closeSheet, saveRec, deleteRecord, shareToChat, focusOnMap, openCreateRoom, createRoom,
-  openEditProfile, saveProfile, exportData, switchTab, openRoom, shareLocation });
+  openEditProfile, saveProfile, exportData, switchTab, openRoom, shareLocation,
+  openLoginSheet, continueAsGuest, loginWithGoogle, logout });

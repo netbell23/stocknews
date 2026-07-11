@@ -1,4 +1,4 @@
-# 산벗 실행 스크립트
+# 두마음 산악회 실행 스크립트
 # 사용법: 이 폴더에서 PowerShell로  ./start.ps1  실행
 $ErrorActionPreference = 'Stop'
 Set-Location $PSScriptRoot
