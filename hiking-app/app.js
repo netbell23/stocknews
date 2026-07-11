@@ -289,12 +289,16 @@ for (const m of MOUNTAINS) {
 /* =========================================================================
    라우팅 (하단 탭)
    ========================================================================= */
-let currentTab = 'map';
-function switchTab(tab) {
+let currentTab = 'home';
+function switchTab(tab, opts) {
+  opts = opts || {};
+  const changed = tab !== currentTab;
   currentTab = tab;
   $('#chatScreen').classList.remove('active'); // 단톡방이 열려있으면 탭 전환 시 닫아준다
   $$('.view').forEach(v => v.classList.toggle('active', v.id === 'view-' + tab));
   $$('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === tab));
+  if (!opts.fromHistory && changed) pushNavState('tab', tab);
+  if (tab === 'home') renderHome();
   if (tab === 'map') setTimeout(() => map && map.invalidateSize(), 60);
   if (tab === 'records') renderRecords();
   if (tab === 'guide') renderGuide();
@@ -306,6 +310,29 @@ function switchTab(tab) {
     setTimeout(() => { scratchMap.invalidateSize(); renderScratchMarkers(); drawScratchLayer(); }, 60);
   }
 }
+
+/* =========================================================================
+   뒤로가기 — 폰/브라우저 뒤로가기 버튼이 앱을 벗어나지 않고 이전 화면(탭/시트/단톡방)으로 이동
+   ========================================================================= */
+let suppressHistoryPush = false;
+function pushNavState(navType, tab) {
+  if (suppressHistoryPush) return;
+  history.pushState({ navType, tab: tab || currentTab }, '');
+}
+window.addEventListener('popstate', e => {
+  if ($('#sheetBackdrop').classList.contains('active')) {
+    $('#sheetBackdrop').classList.remove('active');
+    return;
+  }
+  if ($('#chatScreen').classList.contains('active')) {
+    $('#chatScreen').classList.remove('active');
+    activeRoom = null;
+    renderRooms();
+    return;
+  }
+  const tab = (e.state && e.state.tab) || 'home';
+  if (tab !== currentTab) switchTab(tab, { fromHistory: true });
+});
 
 /* =========================================================================
    지도
@@ -613,6 +640,74 @@ function deleteRecord(id) {
   if (!confirm('이 기록을 삭제할까요?')) return;
   store.set('records', store.get('records', []).filter(r => r.id !== id));
   closeSheet(); renderRecords(); toast('기록을 삭제했어요');
+}
+
+/* =========================================================================
+   홈 (달력 + 최근 다녀온 산)
+   ========================================================================= */
+let homeCalMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+const WEEKDAYS_KR = ['일', '월', '화', '수', '목', '금', '토'];
+function renderHome() {
+  const v = $('#view-home');
+  const recs = store.get('records', []);
+  const now = new Date();
+  const thisMonthCount = recs.filter(r => { const d = new Date(r.date); return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth(); }).length;
+  const climbedCount = getClimbedSet().size;
+  v.innerHTML = `
+    <div class="pad pad-b">
+      <div class="card home-hero">
+        <div class="hh-title">${escapeHtml(profile.name)}님, 안녕하세요 🥾</div>
+        <div class="hh-sub">${thisMonthCount > 0 ? `이번 달 ${thisMonthCount}번 산에 다녀오셨어요` : '이번 달엔 아직 산행 기록이 없어요'}</div>
+        <div class="stat-grid" style="margin-top:12px">
+          <div class="stat-box"><div class="v">${recs.length}</div><div class="l">총 산행</div></div>
+          <div class="stat-box"><div class="v">${climbedCount}</div><div class="l">완등한 산</div></div>
+          <div class="stat-box"><div class="v">${thisMonthCount}</div><div class="l">이번 달</div></div>
+        </div>
+        <button class="btn btn-primary btn-block" style="margin-top:12px" onclick="switchTab('map')">🥾 산행 시작하기</button>
+      </div>
+      <div class="card">
+        <div class="cal-header">
+          <button class="cal-nav" id="calPrev">‹</button>
+          <div class="cal-title" id="calTitle"></div>
+          <button class="cal-nav" id="calNext">›</button>
+        </div>
+        <div class="cal-grid cal-weekdays">${WEEKDAYS_KR.map(w => `<div>${w}</div>`).join('')}</div>
+        <div class="cal-grid" id="calDays"></div>
+      </div>
+      <div class="section-title">🕓 최근 다녀온 산</div>
+      <div id="homeRecent">${recs.length ? recs.slice(0, 5).map(recCard).join('') : `<div class="empty"><div class="big">🥾</div>아직 다녀온 산이 없어요.<br>산행을 기록하면 여기 표시돼요!</div>`}</div>
+    </div>`;
+  renderHomeCalendar();
+  $('#calPrev').onclick = () => { homeCalMonth = new Date(homeCalMonth.getFullYear(), homeCalMonth.getMonth() - 1, 1); renderHomeCalendar(); };
+  $('#calNext').onclick = () => { homeCalMonth = new Date(homeCalMonth.getFullYear(), homeCalMonth.getMonth() + 1, 1); renderHomeCalendar(); };
+  $$('.rec-item', v).forEach(el => el.onclick = () => openRecordDetail(el.dataset.id));
+}
+function renderHomeCalendar() {
+  const recs = store.get('records', []);
+  const y = homeCalMonth.getFullYear(), m = homeCalMonth.getMonth();
+  const recsByDay = {};
+  recs.forEach(r => {
+    const d = new Date(r.date);
+    if (d.getFullYear() === y && d.getMonth() === m) (recsByDay[d.getDate()] ||= []).push(r);
+  });
+  const today = new Date();
+  const isThisMonth = today.getFullYear() === y && today.getMonth() === m;
+  const startWeekday = new Date(y, m, 1).getDay();
+  const daysInMonth = new Date(y, m + 1, 0).getDate();
+  $('#calTitle').textContent = `${y}년 ${m + 1}월`;
+  let cells = '';
+  for (let i = 0; i < startWeekday; i++) cells += `<div class="cal-cell empty"></div>`;
+  for (let day = 1; day <= daysInMonth; day++) {
+    const hit = recsByDay[day];
+    const isToday = isThisMonth && today.getDate() === day;
+    cells += `<div class="cal-cell ${hit ? 'has-rec' : ''} ${isToday ? 'today' : ''}" data-day="${day}"><span class="dnum">${day}</span>${hit ? '<span class="cal-dot"></span>' : ''}</div>`;
+  }
+  $('#calDays').innerHTML = cells;
+  $$('.cal-cell.has-rec', $('#calDays')).forEach(el => el.onclick = () => openDayRecords(recsByDay[+el.dataset.day]));
+}
+function openDayRecords(dayRecs) {
+  openSheet(`<h2>📅 ${fmtDate(dayRecs[0].date).slice(0, 10)} 산행</h2>${dayRecs.map(recCard).join('')}`);
+  $$('.rec-item', $('#sheet')).forEach(el => el.onclick = () => openRecordDetail(el.dataset.id));
 }
 
 /* =========================================================================
@@ -993,11 +1088,13 @@ function openRoom(id) {
   $('#chatScreen').classList.add('active');
   renderMessages();
   setTimeout(() => $('#chatInput').focus(), 100);
+  pushNavState('chat');
 }
 function closeRoom() {
   $('#chatScreen').classList.remove('active');
   activeRoom = null;
   renderRooms();
+  if (!suppressHistoryPush && history.state && history.state.navType === 'chat') history.back();
 }
 function renderMessages() {
   const body = $('#chatBody');
@@ -1250,8 +1347,12 @@ function openSheet(html) {
   const bd = $('#sheetBackdrop');
   $('#sheet').innerHTML = `<div class="grip"></div>` + html;
   bd.classList.add('active');
+  pushNavState('sheet');
 }
-function closeSheet() { $('#sheetBackdrop').classList.remove('active'); }
+function closeSheet() {
+  $('#sheetBackdrop').classList.remove('active');
+  if (!suppressHistoryPush && history.state && history.state.navType === 'sheet') history.back();
+}
 
 /* =========================================================================
    기타
@@ -1262,6 +1363,8 @@ function escapeHtml(s) { return String(s ?? '').replace(/[&<>"']/g, c => ({ '&':
    초기화
    ========================================================================= */
 function init() {
+  history.replaceState({ navType: 'tab', tab: 'home' }, '');
+  renderHome();
   initMap();
   chatNet.init();
   updateChatBadge();
