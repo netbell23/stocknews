@@ -251,6 +251,7 @@ for (const m of MOUNTAINS) {
 let currentTab = 'map';
 function switchTab(tab) {
   currentTab = tab;
+  $('#chatScreen').classList.remove('active'); // 단톡방이 열려있으면 탭 전환 시 닫아준다
   $$('.view').forEach(v => v.classList.toggle('active', v.id === 'view-' + tab));
   $$('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === tab));
   if (tab === 'map') setTimeout(() => map && map.invalidateSize(), 60);
