@@ -86,10 +86,37 @@ try {
   }
 } catch (e) { console.warn('Firebase 초기화 실패', e); }
 
+function applyAuthUser(user, kind) {
+  profile.id = user.uid;
+  profile.name = user.displayName || profile.name;
+  profile.photoURL = user.photoURL || null;
+  profile.email = user.email || null;
+  profile.authType = kind;
+  store.set('profile', profile);
+}
+
 // 게스트도 Firebase 익명 인증으로 로그인시켜 랭킹(Firestore)에 안전하게 기록을 올릴 수 있게 한다.
 // (Firestore 보안 규칙이 request.auth.uid == 문서id 를 요구하므로, 실제 firebase 세션이 있어야 본인 기록을 쓸 수 있다)
-function ensureFirebaseSession() {
-  if (!fbAuth) return Promise.resolve(null);
+async function ensureFirebaseSession() {
+  if (!fbAuth) return null;
+  // 모바일에서는 팝업 로그인이 자주 막혀서 signInWithRedirect를 쓴다 —
+  // 로그인 성공 시 페이지 전체가 이동했다가 돌아오므로, 여기서 그 결과를 받아 처리한다.
+  try {
+    const result = await fbAuth.getRedirectResult();
+    if (result && result.user) {
+      const providerId = result.credential && result.credential.providerId;
+      const kind = providerId === 'apple.com' ? 'apple' : providerId === 'google.com' ? 'google' : null;
+      if (kind) {
+        applyAuthUser(result.user, kind);
+        if (currentTab === 'me') renderProfile();
+        toast(`${profile.name}님, 환영해요 👋`);
+      }
+    }
+  } catch (e) {
+    console.error('리다이렉트 로그인 처리 실패', e);
+    if (e.code === 'auth/operation-not-allowed') toast(`로그인이 아직 설정 전이에요`);
+    else if (e.code && e.code !== 'auth/no-auth-event') toast('로그인에 실패했어요');
+  }
   return new Promise(resolve => {
     const unsub = fbAuth.onAuthStateChanged(async user => {
       unsub();
@@ -129,22 +156,13 @@ function getAuthProvider(kind) {
 }
 async function loginWithProvider(kind) {
   if (!fbAuth) { toast('로그인이 아직 설정되지 않았어요'); return; }
+  // 모바일 브라우저는 팝업이 자주 막혀서 리다이렉트 방식 사용 — 성공하면 페이지가
+  // 통째로 이동했다가 돌아오고, 이후 처리는 ensureFirebaseSession()의 getRedirectResult에서 한다.
   try {
-    const { user } = await fbAuth.signInWithPopup(getAuthProvider(kind));
-    profile.id = user.uid;
-    profile.name = user.displayName || profile.name;
-    profile.photoURL = user.photoURL || null;
-    profile.email = user.email || null;
-    profile.authType = kind;
-    store.set('profile', profile);
-    closeSheet();
-    if (currentTab === 'me') renderProfile();
-    toast(`${profile.name}님, 환영해요 👋`);
-    syncLeaderboard();
+    await fbAuth.signInWithRedirect(getAuthProvider(kind));
   } catch (e) {
     console.error(e);
-    if (e.code === 'auth/popup-closed-by-user') { /* 사용자가 그냥 닫음 — 조용히 무시 */ }
-    else if (e.code === 'auth/operation-not-allowed') toast(`${kind === 'apple' ? 'Apple' : 'Google'} 로그인이 아직 설정 전이에요`);
+    if (e.code === 'auth/operation-not-allowed') toast(`${kind === 'apple' ? 'Apple' : 'Google'} 로그인이 아직 설정 전이에요`);
     else toast('로그인에 실패했어요');
   }
 }
