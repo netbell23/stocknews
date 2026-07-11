@@ -262,6 +262,7 @@ body { display: flex; flex-direction: column; }
 .tag.hard { background: #fde8e8; color: #c0392b; }
 .tag.mid  { background: #fff2dd; color: #a86310; }
 .tag.easy { background: #e6f6ec; color: #1f6b3a; }
+.tag.src  { background: #eef2ff; color: #4f46e5; }
 .chip-row { display: flex; gap: 8px; overflow-x: auto; padding: 2px 0 6px; margin-bottom: 4px; -ms-overflow-style: none; scrollbar-width: none; }
 .chip-row::-webkit-scrollbar { display: none; }
 .chip { flex: 0 0 auto; font-size: 13px; padding: 8px 14px; border-radius: 999px; background: #fff; box-shadow: var(--shadow); font-weight: 600; cursor: pointer; border: 1.5px solid transparent; }

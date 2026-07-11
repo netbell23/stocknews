@@ -296,12 +296,99 @@ const MOUNTAINS = [
 ];
 const LEVELS = { easy: '쉬움', mid: '보통', hard: '어려움' };
 // 높이 기반 기본값 채우기 (상세 정보가 없는 산은 자동으로 등급·예상시간·설명을 부여)
-for (const m of MOUNTAINS) {
-  if (!m.level) m.level = m.h < 700 ? 'easy' : m.h < 1300 ? 'mid' : 'hard';
+function applyMountainDefaults(m) {
+  if (m.h != null) {
+    if (!m.level) m.level = m.h < 700 ? 'easy' : m.h < 1300 ? 'mid' : 'hard';
+    if (!m.time) m.time = m.h < 700 ? '2~3시간' : m.h < 1300 ? '3~5시간' : '5~8시간';
+  } else {
+    if (!m.level) m.level = 'mid';
+    if (!m.time) m.time = '코스에 따라 다름';
+  }
   if (!m.emoji) m.emoji = m.level === 'hard' ? '🏔️' : m.level === 'mid' ? '⛰️' : '🌲';
-  if (!m.time)  m.time  = m.h < 700 ? '2~3시간' : m.h < 1300 ? '3~5시간' : '5~8시간';
   if (!m.courses) m.courses = ['주등산로 → 정상'];
-  if (!m.desc) m.desc = `산림청이 선정한 100대 명산 중 하나로, ${m.region} 지역을 대표하는 산입니다.`;
+  if (!m.desc) {
+    m.desc = m.source === 'community'
+      ? `${m.addedByName || '회원'}님이 등록한 산입니다.`
+      : m.source === 'extra'
+        ? `${m.region || ''} 지역에서 즐겨 찾는 등산 코스입니다.`
+        : `산림청이 선정한 100대 명산 중 하나로, ${m.region} 지역을 대표하는 산입니다.`;
+  }
+  return m;
+}
+for (const m of MOUNTAINS) applyMountainDefaults(m);
+
+// 100대 명산 외에, 도심 근교에서 자주 찾는 인기 등산 코스 (완등맵 진행률에는 포함되지 않음 — 산안내·검색·체크에서만 노출)
+const EXTRA_MOUNTAINS = [
+  { id:'cheonggye', name:'청계산', h:618, region:'서울·경기 성남', lat:37.4270, lng:127.0556, source:'extra' },
+  { id:'gwangyo', name:'광교산', h:582, region:'경기 수원·용인', lat:37.3396, lng:127.0353, source:'extra' },
+  { id:'acha', name:'아차산', h:295, region:'서울 광진', lat:37.5554, lng:127.1010, source:'extra' },
+  { id:'inwang', name:'인왕산', h:338, region:'서울 종로', lat:37.5805, lng:126.9585, source:'extra' },
+  { id:'ansan-seoul', name:'안산', h:296, region:'서울 서대문', lat:37.5763, lng:126.9276, source:'extra' },
+  { id:'umyeon', name:'우면산', h:293, region:'서울 서초', lat:37.4720, lng:126.9989, source:'extra' },
+  { id:'daemo', name:'대모산', h:293, region:'서울 강남', lat:37.4830, lng:127.0658, source:'extra' },
+  { id:'yongma', name:'용마산', h:348, region:'서울 중랑', lat:37.5680, lng:127.0940, source:'extra' },
+  { id:'surak', name:'수락산', h:638, region:'서울 노원·경기 의정부', lat:37.6820, lng:127.0800, source:'extra' },
+  { id:'bulam', name:'불암산', h:508, region:'서울 노원', lat:37.6570, lng:127.0740, source:'extra' },
+  { id:'geomdan', name:'검단산', h:657, region:'경기 하남', lat:37.5150, lng:127.2460, source:'extra' },
+  { id:'namhan', name:'남한산', h:522, region:'경기 하남·성남·광주', lat:37.4783, lng:127.1817, source:'extra' },
+  { id:'yebong', name:'예봉산', h:683, region:'경기 남양주', lat:37.5980, lng:127.2900, source:'extra' },
+  { id:'ungil', name:'운길산', h:610, region:'경기 남양주', lat:37.5920, lng:127.3200, source:'extra' },
+  { id:'jangsan-busan', name:'장산', h:634, region:'부산 해운대', lat:35.1890, lng:129.1800, source:'extra' },
+];
+for (const m of EXTRA_MOUNTAINS) applyMountainDefaults(m);
+
+// 회원이 직접 등록한 산 (Firestore customMountains 컬렉션, 미설정 시 이 기기에만 저장)
+let CUSTOM_MOUNTAINS = [];
+function allMountainsPool() { return [...MOUNTAINS, ...EXTRA_MOUNTAINS, ...CUSTOM_MOUNTAINS]; }
+function findMountain(id) { return allMountainsPool().find(m => m.id === id); }
+
+async function loadCustomMountains() {
+  const local = store.get('customMountains', []);
+  local.forEach(m => { m.source = 'community'; applyMountainDefaults(m); });
+  if (!fbDb) { CUSTOM_MOUNTAINS = local; return; }
+  try {
+    const snap = await fbDb.collection('customMountains').get();
+    const remote = snap.docs.map(d => applyMountainDefaults({ id: 'c-' + d.id, source: 'community', ...d.data() }));
+    // 이 기기에서만 로컬로 저장했던(Firestore 설정 전) 항목 중 원격에 없는 것만 같이 보여준다
+    const remoteIds = new Set(remote.map(m => m.id));
+    CUSTOM_MOUNTAINS = remote.concat(local.filter(m => !remoteIds.has(m.id)));
+  } catch (e) { console.warn('회원 등록 산 불러오기 실패', e); CUSTOM_MOUNTAINS = local; }
+}
+function openAddMountainSheet() {
+  openSheet(`
+    <h2>➕ 산 등록하기</h2>
+    <div class="muted" style="font-size:12px;margin-bottom:14px">100대 명산 목록에 없는 산도 등록해서 검색·체크할 수 있어요.${fbDb ? ' 등록하면 다른 회원도 검색할 수 있어요.' : ''}</div>
+    <div class="field"><label>산 이름</label><input id="newMtnName" placeholder="예: 청계산" maxlength="20"></div>
+    <div class="field"><label>지역 (선택)</label><input id="newMtnRegion" placeholder="예: 서울·경기" maxlength="30"></div>
+    <div class="muted" style="font-size:11px;margin:-6px 0 14px">${lastFix ? '📍 현재 위치를 좌표로 함께 등록해요 (완등맵 지도에는 표시되지 않고, 검색·체크에서만 쓰여요).' : '📍 GPS 위치를 못 찾아서 좌표 없이 등록돼요 — 검색·체크는 그대로 가능해요.'}</div>
+    <button class="btn btn-primary btn-block" onclick="saveCustomMountain()">등록하기</button>
+  `);
+}
+async function saveCustomMountain() {
+  const name = $('#newMtnName').value.trim();
+  if (!name) { toast('산 이름을 입력해주세요'); return; }
+  const region = $('#newMtnRegion').value.trim();
+  const data = { name, region: region || null, lat: lastFix ? lastFix.lat : null, lng: lastFix ? lastFix.lng : null };
+  try {
+    let m;
+    if (fbDb && fbAuth && fbAuth.currentUser) {
+      const ref = await fbDb.collection('customMountains').add({
+        ...data, addedBy: fbAuth.currentUser.uid, addedByName: profile.name, createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+      });
+      m = applyMountainDefaults({ id: 'c-' + ref.id, source: 'community', addedByName: profile.name, ...data });
+    } else {
+      m = applyMountainDefaults({ id: 'local-' + uid(), source: 'community', addedByName: profile.name, ...data });
+      const local = store.get('customMountains', []);
+      local.push(m);
+      store.set('customMountains', local);
+    }
+    CUSTOM_MOUNTAINS.push(m);
+    closeSheet();
+    toast(`✅ ${m.name} 등록 완료!`);
+    if (currentTab === 'guide') renderGuideList();
+    const listEl = $('#mtnChecklist');
+    if (listEl) { listEl.innerHTML = renderChecklistRows(checklistQuery); bindChecklistRows(); }
+  } catch (e) { console.error(e); toast('등록에 실패했어요'); }
 }
 
 /* =========================================================================
@@ -522,7 +609,7 @@ function openSaveSheet() {
 function guessMountainName(fix) {
   if (!fix) return null;
   let best = null, bd = Infinity;
-  for (const m of MOUNTAINS) {
+  for (const m of allMountainsPool()) {
     const d = haversine(fix, m);
     if (d < bd) { bd = d; best = m; }
   }
@@ -546,8 +633,8 @@ function saveRec() {
   const afterClimbed = getClimbedSet();
   const newlyClimbed = [...afterClimbed].filter(id => !beforeClimbed.has(id));
   if (newlyClimbed.length) {
-    const first = MOUNTAINS.find(m => m.id === newlyClimbed[0]);
-    toast(`🎉 ${first.name} 완등맵 스크래치 완료!`);
+    const first = findMountain(newlyClimbed[0]);
+    toast(first ? `🎉 ${first.name} 완등 체크 완료!` : '기록이 저장되었어요 🎉');
   } else {
     toast('기록이 저장되었어요 🎉');
   }
@@ -670,7 +757,7 @@ function renderHome() {
   const recs = store.get('records', []);
   const now = new Date();
   const thisMonthCount = recs.filter(r => { const d = new Date(r.date); return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth(); }).length;
-  const climbedCount = getClimbedSet().size;
+  const climbedCount = getOfficialClimbedSet().size;
   v.innerHTML = `
     <div class="pad pad-b">
       <div class="card home-hero">
@@ -852,7 +939,7 @@ function openCreateEventSheet(defaultDateStr) {
     <div class="field"><label>날짜</label><input type="date" id="evDate" value="${def}"></div>
     <div class="field"><label>시간 (선택)</label><input type="time" id="evTime"></div>
     <div class="field"><label>산 이름 (선택)</label><input id="evMountain" list="mtnListDatalist" placeholder="예: 북한산 — 직접 입력도 가능"></div>
-    <datalist id="mtnListDatalist">${MOUNTAINS.map(m => `<option value="${escapeHtml(m.name)}">`).join('')}</datalist>
+    <datalist id="mtnListDatalist">${allMountainsPool().map(m => `<option value="${escapeHtml(m.name)}">`).join('')}</datalist>
     <div class="field"><label>제목</label><input id="evTitle" placeholder="예: 주말 정기 산행" maxlength="40"></div>
     <div class="field"><label>메모 (선택)</label><textarea id="evMemo" rows="2" placeholder="집합 장소, 준비물 등"></textarea></div>
     <button class="btn btn-primary btn-block" onclick="saveEvent()">일정 등록</button>
@@ -864,7 +951,7 @@ async function saveEvent() {
   if (!fbAuth || !fbAuth.currentUser) { toast('일정을 만들려면 로그인/게스트 상태가 필요해요'); return; }
   const time = $('#evTime').value;
   const mountainName = $('#evMountain').value.trim();
-  const mtn = MOUNTAINS.find(m => m.name === mountainName);
+  const mtn = allMountainsPool().find(m => m.name === mountainName);
   const title = ($('#evTitle').value.trim()) || (mountainName ? `${mountainName} 산행` : '산행 일정');
   const memo = $('#evMemo').value.trim();
   try {
@@ -891,11 +978,12 @@ function renderGuide() {
   const v = $('#view-guide');
   v.innerHTML = `
     <div class="pad pad-b">
-      <input id="guideSearchInput" class="search-input" placeholder="🔍 산 이름·지역 검색 (예: 지리산, 강원)" value="${escapeHtml(guideQuery)}">
+      <input id="guideSearchInput" class="search-input" placeholder="🔍 산 이름·지역 검색 (예: 지리산, 청계산, 강원)" value="${escapeHtml(guideQuery)}">
       <div class="chip-row">
         ${['all','easy','mid','hard'].map(f => `<div class="chip ${guideFilter===f?'on':''}" data-f="${f}">${f==='all'?'전체':LEVELS[f]}</div>`).join('')}
       </div>
       <div id="guideList"></div>
+      <button class="btn btn-ghost btn-block" style="margin-top:6px" onclick="openAddMountainSheet()">➕ 목록에 없는 산 등록하기</button>
       <div class="muted center" style="font-size:11px;margin-top:8px">코스 거리·시간은 참고용입니다. 기상·통제 정보는 국립공원공단을 확인하세요.</div>
     </div>`;
   renderGuideList();
@@ -909,35 +997,39 @@ function renderGuide() {
 }
 function renderGuideList() {
   const q = guideQuery.trim();
-  let list = guideFilter === 'all' ? MOUNTAINS : MOUNTAINS.filter(m => m.level === guideFilter);
-  if (q) list = list.filter(m => m.name.includes(q) || m.region.includes(q));
+  const pool = allMountainsPool();
+  let list = guideFilter === 'all' ? pool : pool.filter(m => m.level === guideFilter);
+  if (q) list = list.filter(m => m.name.includes(q) || (m.region && m.region.includes(q)));
   const listEl = $('#guideList');
-  listEl.innerHTML = list.length ? list.map(mtnCard).join('') : `<div class="empty"><div class="big">🔍</div>검색 결과가 없어요</div>`;
+  listEl.innerHTML = list.length ? list.map(mtnCard).join('') : `<div class="empty"><div class="big">🔍</div>검색 결과가 없어요<br><span style="font-size:12px">아래 버튼으로 직접 등록해보세요</span></div>`;
   $$('.mtn-card', listEl).forEach(el => el.onclick = () => openMountain(el.dataset.id));
 }
 function mtnCard(m) {
+  const srcTag = m.source === 'community' ? '<span class="tag src">회원 등록</span>' : m.source === 'extra' ? '<span class="tag src">인기 코스</span>' : '';
   return `<div class="card"><div class="mtn-card" data-id="${m.id}">
     <div class="mtn-emoji">${m.emoji}</div>
     <div class="mtn-info">
-      <div class="n">${m.name} <span class="muted" style="font-size:12px;font-weight:600">${m.h.toLocaleString()}m</span></div>
-      <div class="r">📍 ${m.region} · ⏱ ${m.time}</div>
-      <div class="tags"><span class="tag ${m.level}">${LEVELS[m.level]}</span><span class="tag">코스 ${m.courses.length}개</span></div>
+      <div class="n">${escapeHtml(m.name)} ${m.h != null ? `<span class="muted" style="font-size:12px;font-weight:600">${m.h.toLocaleString()}m</span>` : ''}</div>
+      <div class="r">📍 ${escapeHtml(m.region || '위치 정보 없음')} · ⏱ ${m.time}</div>
+      <div class="tags"><span class="tag ${m.level}">${LEVELS[m.level]}</span><span class="tag">코스 ${m.courses.length}개</span>${srcTag}</div>
     </div>
   </div></div>`;
 }
 function openMountain(id) {
-  const m = MOUNTAINS.find(x => x.id === id);
+  const m = findMountain(id);
+  if (!m) { toast('산 정보를 찾을 수 없어요'); return; }
   openSheet(`
-    <h2>${m.emoji} ${m.name} <span class="muted" style="font-size:15px">${m.h.toLocaleString()}m</span></h2>
-    <div class="muted" style="font-size:13px;margin-bottom:12px">📍 ${m.region} · 난이도 ${LEVELS[m.level]} · 예상 ${m.time}</div>
-    <div id="mtnMap" class="card detail-map" style="padding:0;overflow:hidden"></div>
-    <div class="card"><div class="muted" style="line-height:1.6">${m.desc}</div></div>
+    <h2>${m.emoji} ${escapeHtml(m.name)} ${m.h != null ? `<span class="muted" style="font-size:15px">${m.h.toLocaleString()}m</span>` : ''}</h2>
+    <div class="muted" style="font-size:13px;margin-bottom:12px">📍 ${escapeHtml(m.region || '위치 정보 없음')} · 난이도 ${LEVELS[m.level]} · 예상 ${m.time}</div>
+    ${m.lat != null ? `<div id="mtnMap" class="card detail-map" style="padding:0;overflow:hidden"></div>` : ''}
+    <div class="card"><div class="muted" style="line-height:1.6">${escapeHtml(m.desc)}</div></div>
     <div class="card">
       <h3>대표 코스</h3>
-      ${m.courses.map(c => `<div class="kv"><span class="k">🥾</span><span class="v" style="font-weight:600;text-align:right">${c}</span></div>`).join('')}
+      ${m.courses.map(c => `<div class="kv"><span class="k">🥾</span><span class="v" style="font-weight:600;text-align:right">${escapeHtml(c)}</span></div>`).join('')}
     </div>
-    <button class="btn btn-primary btn-block" onclick="closeSheet();focusOnMap(${m.lat},${m.lng})">🗺️ 지도에서 보기</button>
+    ${m.lat != null ? `<button class="btn btn-primary btn-block" onclick="closeSheet();focusOnMap(${m.lat},${m.lng})">🗺️ 지도에서 보기</button>` : ''}
   `);
+  if (m.lat == null) return;
   setTimeout(() => {
     const mm = L.map('mtnMap', { zoomControl: false, attributionControl: false }).setView([m.lat, m.lng], 12);
     L.tileLayer(TILES.topo.url, { maxZoom: 17, subdomains: 'abc' }).addTo(mm);
@@ -956,7 +1048,7 @@ const CLIMB_RADIUS = 2000; // 산 정상 기준 2km 이내 GPS 기록이면 '완
 function getAutoClimbedSet() {
   const recs = store.get('records', []);
   const climbed = new Set();
-  for (const m of MOUNTAINS) {
+  for (const m of allMountainsPool()) {
     const hit = recs.some(r => {
       if (r.name && r.name.includes(m.name)) return true;
       if (!r.points || !r.points.length) return false;
@@ -982,6 +1074,11 @@ function getClimbedSet() {
   const s = getAutoClimbedSet();
   for (const id of getManualSet()) s.add(id);
   return s;
+}
+// 100대 명산으로만 한정한 완등 집합 (완등맵 진행률·뱃지는 청계산 같은 추가/회원등록 산을 세지 않음)
+function getOfficialClimbedSet() {
+  const officialIds = new Set(MOUNTAINS.map(m => m.id));
+  return new Set([...getClimbedSet()].filter(id => officialIds.has(id)));
 }
 
 /* =========================================================================
@@ -1032,7 +1129,7 @@ const BADGES = [
 function computeMyStats() {
   const recs = store.get('records', []);
   const total = recs.reduce((a, r) => ({ dist: a.dist + r.dist, gain: a.gain + r.gain }), { dist: 0, gain: 0 });
-  const climbed = getClimbedSet();
+  const climbed = getOfficialClimbedSet();
   const totalKm = total.dist / 1000;
   const levelInfo = getLevelInfo(totalKm);
   const ctx = { recordCount: recs.length, climbedCount: climbed.size, climbed, totalKm, totalGainM: total.gain, level: levelInfo.level };
@@ -1087,7 +1184,7 @@ async function openLeaderboardSheet() {
 
 let scratchMap, scratchCanvas, scratchCtx, scratchMarkers = [];
 let scratchClimbed = new Set(), scratchAuto = new Set();
-function refreshScratchData() { scratchAuto = getAutoClimbedSet(); scratchClimbed = getClimbedSet(); }
+function refreshScratchData() { scratchAuto = getAutoClimbedSet(); scratchClimbed = getOfficialClimbedSet(); }
 
 function initScratchMap() {
   scratchMap = L.map('scratchMap', { zoomControl: false, attributionControl: false }).setView([36.3, 127.8], 7);
@@ -1152,9 +1249,10 @@ function openMountainChecklist() {
   checklistQuery = '';
   openSheet(`
     <h2>🏅 완등 체크리스트</h2>
-    <div class="muted" style="font-size:12px;margin-bottom:10px">GPS 기록이 없어도 예전에 다녀온 산은 검색해서 직접 체크하면 완등맵에 표시돼요.</div>
-    <input id="mtnSearchInput" class="search-input" placeholder="산 이름·지역 검색 (예: 북한산, 강원)">
+    <div class="muted" style="font-size:12px;margin-bottom:10px">GPS 기록이 없어도 예전에 다녀온 산은 검색해서 직접 체크하면 완등맵에 표시돼요. 100대 명산 외에 청계산·아차산 같은 인기 코스도 검색돼요.</div>
+    <input id="mtnSearchInput" class="search-input" placeholder="산 이름·지역 검색 (예: 북한산, 청계산, 강원)">
     <div id="mtnChecklist" class="checklist"></div>
+    <button class="btn btn-ghost btn-block" style="margin-top:10px" onclick="openAddMountainSheet()">➕ 목록에 없는 산 등록하기</button>
   `);
   const listEl = $('#mtnChecklist');
   listEl.innerHTML = renderChecklistRows('');
@@ -1169,16 +1267,18 @@ function openMountainChecklist() {
 }
 function renderChecklistRows(q) {
   const query = (q || '').trim();
-  const list = query ? MOUNTAINS.filter(m => m.name.includes(query) || m.region.includes(query)) : MOUNTAINS;
-  if (!list.length) return `<div class="empty" style="padding:24px 0"><div class="big">🔍</div>검색 결과가 없어요</div>`;
+  const pool = allMountainsPool();
+  const list = query ? pool.filter(m => m.name.includes(query) || (m.region && m.region.includes(query))) : pool;
+  if (!list.length) return `<div class="empty" style="padding:24px 0"><div class="big">🔍</div>검색 결과가 없어요<br><span style="font-size:12px">아래 버튼으로 직접 등록해보세요</span></div>`;
   const manual = getManualSet();
   return list.map(m => {
     const auto = scratchAuto.has(m.id);
     const on = auto || manual.has(m.id);
+    const srcTag = m.source === 'community' ? ' · <span class="tag src">회원 등록</span>' : m.source === 'extra' ? ' · <span class="tag src">인기 코스</span>' : '';
     return `<div class="chk-row">
       <div class="chk-info" data-id="${m.id}">
-        <div class="n">${m.emoji} ${m.name} <span class="muted" style="font-size:11px;font-weight:600">${Math.round(m.h)}m</span></div>
-        <div class="r">📍 ${m.region}${auto ? ' · <span class="tag">GPS 기록</span>' : ''}</div>
+        <div class="n">${m.emoji} ${escapeHtml(m.name)} ${m.h != null ? `<span class="muted" style="font-size:11px;font-weight:600">${Math.round(m.h)}m</span>` : ''}</div>
+        <div class="r">📍 ${escapeHtml(m.region || '위치 정보 없음')}${auto ? ' · <span class="tag">GPS 기록</span>' : ''}${srcTag}</div>
       </div>
       <button class="chk-btn ${on ? 'on' : ''}" data-id="${m.id}" ${auto ? 'disabled title="GPS 산행 기록에서 자동으로 인식됐어요"' : ''}>✓</button>
     </div>`;
@@ -1191,7 +1291,8 @@ function bindChecklistRows() {
       const id = btn.dataset.id;
       const nowOn = !btn.classList.contains('on');
       setManualClimbed(id, nowOn);
-      toast(nowOn ? `✅ ${MOUNTAINS.find(m => m.id === id).name} 완등 체크!` : '체크를 해제했어요');
+      const m = findMountain(id);
+      toast(nowOn ? `✅ ${m ? m.name : ''} 완등 체크!` : '체크를 해제했어요');
     };
   });
   $$('.chk-info', $('#mtnChecklist')).forEach(el => {
@@ -1576,6 +1677,9 @@ function init() {
 
   // Firebase 세션 확보 후 랭킹 동기화 (설정 안 돼 있으면 조용히 무시됨)
   ensureFirebaseSession().then(() => syncLeaderboard());
+
+  // 회원 등록 산 불러오기 (100대 명산 외 검색용)
+  loadCustomMountains().then(() => { if (currentTab === 'guide') renderGuideList(); });
 }
 document.addEventListener('DOMContentLoaded', init);
 
@@ -1583,4 +1687,4 @@ document.addEventListener('DOMContentLoaded', init);
 Object.assign(window, { closeSheet, saveRec, deleteRecord, shareToChat, focusOnMap, openCreateRoom, createRoom,
   openEditProfile, saveProfile, exportData, switchTab, openRoom, shareLocation,
   openLoginSheet, continueAsGuest, loginWithGoogle, loginWithApple, logout, openLeaderboardSheet,
-  openCreateEventSheet, saveEvent, deleteEvent });
+  openCreateEventSheet, saveEvent, deleteEvent, openAddMountainSheet, saveCustomMountain });

@@ -37,12 +37,18 @@
               allow write: if request.auth != null && request.auth.uid == userId;
             }
           }
+          match /customMountains/{mountainId} {
+            allow read: if true;
+            allow create: if request.auth != null;
+            allow update, delete: if request.auth != null && request.auth.uid == resource.data.addedBy;
+          }
         }
       }
-      (누구나 랭킹·일정은 볼 수 있고, 본인 랭킹 기록은 본인만, 일정은 만든 사람만
-       수정/삭제할 수 있습니다. 일정 참여(participants)는 각자 자기 몫만 등록/취소
-       가능 — 홈 탭의 "산행 일정 만들기"·"참여하기" 기능에 필요한 규칙입니다.
-       이름/색상/거리 등 필요한 정보만 저장하며, 이메일은 저장하지 않습니다.)
+      (누구나 랭킹·일정·등록된 산은 볼 수 있고, 본인 랭킹 기록은 본인만, 일정·등록한
+       산은 만든/등록한 사람만 수정/삭제할 수 있습니다. 일정 참여(participants)는
+       각자 자기 몫만 등록/취소 가능 — 홈 탭의 "산행 일정 만들기"·"참여하기", 산안내/
+       완등맵의 "산 등록하기" 기능에 필요한 규칙입니다. 이름/색상/거리 등 필요한
+       정보만 저장하며, 이메일은 저장하지 않습니다.)
 
    4) 프로젝트 설정(⚙️) → 일반 탭 → 맨 아래 "내 앱" → 웹 앱 추가(</> 아이콘) → 앱 닉네임 아무거나 입력
    5) 발급되는 firebaseConfig 값을 아래 FIREBASE_CONFIG 자리에 그대로 붙여넣기
