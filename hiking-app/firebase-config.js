@@ -39,10 +39,10 @@
       예) netbell23.github.io (GitHub Pages 주소)
    ========================================================================= */
 const FIREBASE_CONFIG = {
-  apiKey: 'YOUR_API_KEY',
-  authDomain: 'YOUR_PROJECT.firebaseapp.com',
-  projectId: 'YOUR_PROJECT',
-  storageBucket: 'YOUR_PROJECT.appspot.com',
-  messagingSenderId: 'YOUR_SENDER_ID',
-  appId: 'YOUR_APP_ID',
+  apiKey: 'AIzaSyC2UOAlCLy6vttn0n6dRQG7_wJAszVVKxc',
+  authDomain: 'domaum.firebaseapp.com',
+  projectId: 'domaum',
+  storageBucket: 'domaum.firebasestorage.app',
+  messagingSenderId: '741966388043',
+  appId: '1:741966388043:web:5272b8ec42f646d1c1a6ce',
 };
