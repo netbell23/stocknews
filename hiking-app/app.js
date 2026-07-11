@@ -691,13 +691,19 @@ function renderHome() {
         </div>
         <div class="cal-grid cal-weekdays">${WEEKDAYS_KR.map(w => `<div>${w}</div>`).join('')}</div>
         <div class="cal-grid" id="calDays"></div>
+        <div class="cal-legend"><span><span class="cal-dot rec"></span> 다녀온 산행</span><span><span class="cal-dot ev"></span> 예정된 일정</span></div>
+        <button class="btn btn-ghost btn-block" style="margin-top:10px" onclick="openCreateEventSheet()">📅 산행 일정 만들기</button>
       </div>
+      <div class="section-title">📌 다가오는 산행 일정</div>
+      <div id="homeUpcoming"><div class="muted center" style="padding:16px 0;font-size:13px">불러오는 중…</div></div>
       <div class="section-title">🕓 최근 다녀온 산</div>
       <div id="homeRecent">${recs.length ? recs.slice(0, 5).map(recCard).join('') : `<div class="empty"><div class="big">🥾</div>아직 다녀온 산이 없어요.<br>산행을 기록하면 여기 표시돼요!</div>`}</div>
     </div>`;
   renderHomeCalendar();
-  $('#calPrev').onclick = () => { homeCalMonth = new Date(homeCalMonth.getFullYear(), homeCalMonth.getMonth() - 1, 1); renderHomeCalendar(); };
-  $('#calNext').onclick = () => { homeCalMonth = new Date(homeCalMonth.getFullYear(), homeCalMonth.getMonth() + 1, 1); renderHomeCalendar(); };
+  refreshHomeEvents();
+  renderUpcomingEvents();
+  $('#calPrev').onclick = () => { homeCalMonth = new Date(homeCalMonth.getFullYear(), homeCalMonth.getMonth() - 1, 1); renderHomeCalendar(); refreshHomeEvents(); };
+  $('#calNext').onclick = () => { homeCalMonth = new Date(homeCalMonth.getFullYear(), homeCalMonth.getMonth() + 1, 1); renderHomeCalendar(); refreshHomeEvents(); };
   $$('.rec-item', v).forEach(el => el.onclick = () => openRecordDetail(el.dataset.id));
 }
 function renderHomeCalendar() {
@@ -717,15 +723,163 @@ function renderHomeCalendar() {
   for (let i = 0; i < startWeekday; i++) cells += `<div class="cal-cell empty"></div>`;
   for (let day = 1; day <= daysInMonth; day++) {
     const hit = recsByDay[day];
+    const evs = homeEventsCache[ymd(new Date(y, m, day))];
     const isToday = isThisMonth && today.getDate() === day;
-    cells += `<div class="cal-cell ${hit ? 'has-rec' : ''} ${isToday ? 'today' : ''}" data-day="${day}"><span class="dnum">${day}</span>${hit ? '<span class="cal-dot"></span>' : ''}</div>`;
+    cells += `<div class="cal-cell ${(hit || evs) ? 'has-item' : ''} ${isToday ? 'today' : ''}" data-day="${day}">
+      <span class="dnum">${day}</span>
+      <span class="cal-dots">${hit ? '<span class="cal-dot rec"></span>' : ''}${evs ? '<span class="cal-dot ev"></span>' : ''}</span>
+    </div>`;
   }
   $('#calDays').innerHTML = cells;
-  $$('.cal-cell.has-rec', $('#calDays')).forEach(el => el.onclick = () => openDayRecords(recsByDay[+el.dataset.day]));
+  $$('.cal-cell.has-item', $('#calDays')).forEach(el => {
+    const day = +el.dataset.day;
+    el.onclick = () => openDayDetail(ymd(new Date(y, m, day)), recsByDay[day], homeEventsCache[ymd(new Date(y, m, day))]);
+  });
 }
-function openDayRecords(dayRecs) {
-  openSheet(`<h2>📅 ${fmtDate(dayRecs[0].date).slice(0, 10)} 산행</h2>${dayRecs.map(recCard).join('')}`);
+function openDayDetail(dateStr, dayRecs, dayEvents) {
+  let html = `<h2>📅 ${dateStr}</h2>`;
+  if (dayEvents && dayEvents.length) html += dayEvents.map(eventCard).join('');
+  if (dayRecs && dayRecs.length) html += `<div class="section-title" style="margin-top:${dayEvents ? 4 : 0}px">완료된 산행 기록</div>` + dayRecs.map(recCard).join('');
+  openSheet(html);
   $$('.rec-item', $('#sheet')).forEach(el => el.onclick = () => openRecordDetail(el.dataset.id));
+  bindEventCards($('#sheet'));
+}
+
+/* =========================================================================
+   산행 일정 (달력 예약 + 참여 태그) — Firestore
+   ========================================================================= */
+function ymd(d) { return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; }
+let homeEventsCache = {}, homeEventsLoadedMonth = null;
+async function loadMonthEvents(monthDate) {
+  if (!fbDb) { homeEventsCache = {}; return; }
+  const y = monthDate.getFullYear(), m = monthDate.getMonth();
+  const key = `${y}-${m}`;
+  if (homeEventsLoadedMonth === key) return;
+  const start = ymd(new Date(y, m, 1)), end = ymd(new Date(y, m + 1, 0));
+  try {
+    const snap = await fbDb.collection('events').where('date', '>=', start).where('date', '<=', end).get();
+    const map = {};
+    snap.forEach(doc => { const ev = { id: doc.id, ...doc.data() }; (map[ev.date] ||= []).push(ev); });
+    homeEventsCache = map;
+    homeEventsLoadedMonth = key;
+  } catch (e) { console.warn('일정 불러오기 실패', e); homeEventsCache = {}; }
+}
+async function refreshHomeEvents() {
+  const monthAtCall = homeCalMonth;
+  await loadMonthEvents(homeCalMonth);
+  if (homeCalMonth === monthAtCall && currentTab === 'home') renderHomeCalendar();
+}
+async function renderUpcomingEvents() {
+  const el = $('#homeUpcoming');
+  if (!el) return;
+  if (!fbDb) { el.innerHTML = `<div class="empty" style="padding:16px 0"><div class="big">📅</div>일정 기능은 아직 설정 전이에요<br><span style="font-size:12px">(Firebase Firestore 연결이 필요해요)</span></div>`; return; }
+  try {
+    const todayStr = ymd(new Date());
+    const snap = await fbDb.collection('events').where('date', '>=', todayStr).orderBy('date').limit(5).get();
+    if (!$('#homeUpcoming')) return; // 그 사이에 다른 탭으로 이동했으면 무시
+    if (snap.empty) { el.innerHTML = `<div class="empty" style="padding:16px 0"><div class="big">📅</div>예정된 산행 일정이 없어요<br><span style="font-size:12px">캘린더 아래 버튼으로 만들어보세요</span></div>`; return; }
+    el.innerHTML = snap.docs.map(d => eventCard({ id: d.id, ...d.data() })).join('');
+    bindEventCards(el);
+  } catch (e) { console.warn('다가오는 일정 로딩 실패', e); el.innerHTML = `<div class="empty" style="padding:16px 0"><div class="big">⚠️</div>일정을 불러오지 못했어요</div>`; }
+}
+function eventCard(ev) {
+  return `<div class="card event-card" data-id="${ev.id}">
+    <div class="ev-top">
+      <div class="mtn-emoji" style="font-size:24px;width:44px;height:44px">${ev.mountainEmoji || '🥾'}</div>
+      <div class="ev-info">
+        <div class="n">${escapeHtml(ev.title)}</div>
+        <div class="r">📅 ${ev.date}${ev.time ? ' · ' + ev.time : ''}${ev.mountainName ? ' · ' + escapeHtml(ev.mountainName) : ''}</div>
+      </div>
+      ${ev.creatorId === (fbAuth && fbAuth.currentUser && fbAuth.currentUser.uid) ? `<button class="btn-icon" title="일정 삭제" onclick="deleteEvent('${ev.id}')">🗑️</button>` : ''}
+    </div>
+    ${ev.memo ? `<div class="muted" style="font-size:12px;margin-top:8px">${escapeHtml(ev.memo)}</div>` : ''}
+    <div class="ev-participants" id="evParts-${ev.id}"><span class="muted" style="font-size:12px">참여자 불러오는 중…</span></div>
+    <button class="btn btn-primary btn-block ev-join-btn" style="margin-top:10px" data-id="${ev.id}">🙋 참여하기</button>
+  </div>`;
+}
+function bindEventCards(scope) {
+  $$('.event-card', scope).forEach(card => {
+    const id = card.dataset.id;
+    loadEventParticipants(id).then(parts => renderEventParticipants(id, parts));
+    const btn = card.querySelector('.ev-join-btn');
+    if (btn) btn.onclick = () => toggleEventJoin(id);
+  });
+}
+async function loadEventParticipants(eventId) {
+  if (!fbDb) return [];
+  try {
+    const snap = await fbDb.collection('events').doc(eventId).collection('participants').get();
+    return snap.docs.map(d => ({ uid: d.id, ...d.data() }));
+  } catch (e) { console.warn(e); return []; }
+}
+function renderEventParticipants(eventId, parts) {
+  const el = document.getElementById(`evParts-${eventId}`);
+  if (!el) return;
+  const myUid = fbAuth && fbAuth.currentUser && fbAuth.currentUser.uid;
+  const joined = parts.some(p => p.uid === myUid);
+  el.innerHTML = parts.length
+    ? `<div class="ev-avatars">${parts.slice(0, 8).map(p => `<div class="ev-ava" style="background:${p.color || '#8b968f'}" title="${escapeHtml(p.name || '')}">${p.photoURL ? `<img src="${p.photoURL}">` : escapeHtml((p.name || '?')[0])}</div>`).join('')}</div><div class="muted" style="font-size:11px;margin-top:4px">${parts.length}명 참여</div>`
+    : `<div class="muted" style="font-size:12px">아직 참여자가 없어요</div>`;
+  const btn = el.parentElement.querySelector('.ev-join-btn');
+  if (btn) { btn.textContent = joined ? '🙋 참여 취소하기' : '🙋 참여하기'; btn.className = 'btn btn-block ev-join-btn ' + (joined ? 'btn-warn' : 'btn-primary'); }
+}
+async function toggleEventJoin(eventId) {
+  if (!fbDb || !fbAuth || !fbAuth.currentUser) { toast('참여하려면 로그인/게스트 상태가 필요해요'); return; }
+  const uid = fbAuth.currentUser.uid;
+  const ref = fbDb.collection('events').doc(eventId).collection('participants').doc(uid);
+  try {
+    const doc = await ref.get();
+    if (doc.exists) { await ref.delete(); toast('참여를 취소했어요'); }
+    else { await ref.set({ name: profile.name, photoURL: profile.photoURL || null, color: profile.color, joinedAt: firebase.firestore.FieldValue.serverTimestamp() }); toast('참여로 등록했어요! 🙋'); }
+    renderEventParticipants(eventId, await loadEventParticipants(eventId));
+  } catch (e) { console.error(e); toast('처리에 실패했어요'); }
+}
+async function deleteEvent(eventId) {
+  if (!confirm('이 산행 일정을 삭제할까요?')) return;
+  try {
+    await fbDb.collection('events').doc(eventId).delete();
+    toast('일정을 삭제했어요');
+    homeEventsLoadedMonth = null;
+    closeSheet();
+    if (currentTab === 'home') { renderHomeCalendar(); refreshHomeEvents(); renderUpcomingEvents(); }
+  } catch (e) { console.error(e); toast('삭제에 실패했어요 (본인이 만든 일정만 삭제할 수 있어요)'); }
+}
+function openCreateEventSheet(defaultDateStr) {
+  if (!fbDb) { toast('산행 일정 기능은 아직 설정 전이에요 (Firestore 필요)'); return; }
+  const def = defaultDateStr || ymd(new Date());
+  openSheet(`
+    <h2>📅 산행 일정 만들기</h2>
+    <div class="field"><label>날짜</label><input type="date" id="evDate" value="${def}"></div>
+    <div class="field"><label>시간 (선택)</label><input type="time" id="evTime"></div>
+    <div class="field"><label>산 이름 (선택)</label><input id="evMountain" list="mtnListDatalist" placeholder="예: 북한산 — 직접 입력도 가능"></div>
+    <datalist id="mtnListDatalist">${MOUNTAINS.map(m => `<option value="${escapeHtml(m.name)}">`).join('')}</datalist>
+    <div class="field"><label>제목</label><input id="evTitle" placeholder="예: 주말 정기 산행" maxlength="40"></div>
+    <div class="field"><label>메모 (선택)</label><textarea id="evMemo" rows="2" placeholder="집합 장소, 준비물 등"></textarea></div>
+    <button class="btn btn-primary btn-block" onclick="saveEvent()">일정 등록</button>
+  `);
+}
+async function saveEvent() {
+  const date = $('#evDate').value;
+  if (!date) { toast('날짜를 선택해주세요'); return; }
+  if (!fbAuth || !fbAuth.currentUser) { toast('일정을 만들려면 로그인/게스트 상태가 필요해요'); return; }
+  const time = $('#evTime').value;
+  const mountainName = $('#evMountain').value.trim();
+  const mtn = MOUNTAINS.find(m => m.name === mountainName);
+  const title = ($('#evTitle').value.trim()) || (mountainName ? `${mountainName} 산행` : '산행 일정');
+  const memo = $('#evMemo').value.trim();
+  try {
+    const ref = await fbDb.collection('events').add({
+      title, date, time: time || null, memo,
+      mountainId: mtn ? mtn.id : null, mountainName: mountainName || null, mountainEmoji: mtn ? mtn.emoji : null,
+      creatorId: fbAuth.currentUser.uid, creatorName: profile.name,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+    });
+    await ref.collection('participants').doc(fbAuth.currentUser.uid).set({ name: profile.name, photoURL: profile.photoURL || null, color: profile.color, joinedAt: firebase.firestore.FieldValue.serverTimestamp() });
+    closeSheet();
+    toast('산행 일정을 등록했어요! 🎉');
+    homeEventsLoadedMonth = null;
+    if (currentTab === 'home') { renderHomeCalendar(); refreshHomeEvents(); renderUpcomingEvents(); }
+  } catch (e) { console.error(e); toast('일정 등록에 실패했어요'); }
 }
 
 /* =========================================================================
@@ -1428,4 +1582,5 @@ document.addEventListener('DOMContentLoaded', init);
 // 전역 노출 (인라인 onclick 용)
 Object.assign(window, { closeSheet, saveRec, deleteRecord, shareToChat, focusOnMap, openCreateRoom, createRoom,
   openEditProfile, saveProfile, exportData, switchTab, openRoom, shareLocation,
-  openLoginSheet, continueAsGuest, loginWithGoogle, loginWithApple, logout, openLeaderboardSheet });
+  openLoginSheet, continueAsGuest, loginWithGoogle, loginWithApple, logout, openLeaderboardSheet,
+  openCreateEventSheet, saveEvent, deleteEvent });
