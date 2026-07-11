@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no">
+  <meta name="theme-color" content="#1f6b3a">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="산벗">
+  <title>산벗 — 산행 안내·기록</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+        integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div id="app">
+  <!-- 헤더 -->
+  <header class="topbar">
+    <span class="logo">🥾</span>
+    <div>
+      <h1>산벗</h1>
+      <div class="sub">산행 안내 · 기록 · 단톡</div>
+    </div>
+    <div class="spacer"></div>
+    <div class="net" id="recBadge" style="display:none"></div>
+  </header>
+
+  <!-- 본문 -->
+  <main class="screen">
+
+    <!-- 지도 -->
+    <section class="view active no-scroll" id="view-map">
+      <div id="map"></div>
+      <div class="map-overlay-top">
+        <div class="gps-badge"><span class="dot" id="gpsDot"></span><span id="gpsText">GPS 신호 찾는 중…</span></div>
+      </div>
+      <button class="map-fab" id="fabLayers" title="지도 전환">🗺️</button>
+      <button class="map-fab" id="fabLocate" title="내 위치">📍</button>
+
+      <div class="rec-panel">
+        <div class="rec-stats">
+          <div class="rec-stat"><div class="v" id="stDist">0<small> m</small></div><div class="l">거리</div></div>
+          <div class="rec-stat"><div class="v" id="stTime" style="font-size:18px">0:00</div><div class="l">시간</div></div>
+          <div class="rec-stat"><div class="v" id="stPace" style="font-size:16px">--'--"</div><div class="l">페이스</div></div>
+          <div class="rec-stat"><div class="v" id="stGain">0<small> m</small></div><div class="l">상승</div></div>
+        </div>
+        <button class="btn btn-primary btn-block" id="btnStart">🥾 산행 기록 시작</button>
+        <div class="rec-actions" id="recRunning" style="display:none">
+          <button class="btn btn-warn" id="btnPause">⏸ 일시정지</button>
+          <button class="btn btn-danger" id="btnStop">⏹ 종료</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- 기록 -->
+    <section class="view" id="view-records"></section>
+    <!-- 산 안내 -->
+    <section class="view" id="view-guide"></section>
+    <!-- 완등맵 (스크래치맵) -->
+    <section class="view no-scroll" id="view-scratch">
+      <div id="scratchMap"></div>
+      <div class="scratch-stat">
+        <div class="bar"><div class="fill" id="scratchFill" style="width:0%"></div></div>
+        <div class="txt"><span><b id="scratchCount">0</b> / 100 완등</span><span id="scratchPct">(0%)</span></div>
+      </div>
+      <button class="map-fab" id="fabChecklist" title="산 검색·체크">🔍</button>
+    </section>
+    <!-- 단톡 -->
+    <section class="view" id="view-chat"></section>
+    <!-- 내 정보 -->
+    <section class="view" id="view-me"></section>
+
+    <!-- 채팅 화면 (오버레이) -->
+    <div class="chat-screen" id="chatScreen">
+      <div class="chat-header">
+        <button class="back" id="chatBack">‹</button>
+        <div>
+          <div class="title" id="chatTitle">단톡방</div>
+          <div class="members">실시간 채팅</div>
+        </div>
+      </div>
+      <div class="chat-body" id="chatBody"></div>
+      <div class="chat-input">
+        <button class="plus" id="chatPlus">＋</button>
+        <textarea id="chatInput" rows="1" placeholder="메시지 입력…"></textarea>
+        <button class="send" id="chatSend">➤</button>
+      </div>
+    </div>
+  </main>
+
+  <!-- 하단 탭 -->
+  <nav class="tabbar">
+    <button class="tab active" data-tab="map"><span class="ic">🗺️</span>지도</button>
+    <button class="tab" data-tab="records"><span class="ic">📊</span>기록</button>
+    <button class="tab" data-tab="guide"><span class="ic">⛰️</span>산안내</button>
+    <button class="tab" data-tab="scratch"><span class="ic">🏅</span>완등맵</button>
+    <button class="tab" data-tab="chat" style="position:relative"><span class="ic">💬</span>단톡<span class="badge-num" id="chatBadge" style="display:none;top:2px;right:18px"></span></button>
+    <button class="tab" data-tab="me"><span class="ic">👤</span>내정보</button>
+  </nav>
+</div>
+
+<!-- 바텀시트 -->
+<div class="sheet-backdrop" id="sheetBackdrop"><div class="sheet" id="sheet"></div></div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+<script src="app.js"></script>
+</body>
+</html>
