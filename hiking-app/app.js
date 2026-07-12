@@ -455,6 +455,7 @@ function initMap() {
   setTile(curTile);
   trackLine = L.polyline([], { color: '#e5484d', weight: 5, opacity: .85, lineCap: 'round', lineJoin: 'round' }).addTo(map);
   startGeolocation();
+  restoreActiveRecording();
 }
 function setTile(name) {
   curTile = name;
@@ -528,6 +529,52 @@ function recordPoint(fix) {
   rec.points.push(fix);
   trackLine.addLatLng([fix.lat, fix.lng]);
   updateRecStats();
+  persistRecSnapshot();
+}
+
+// 산행 기록 중 폰 화면이 꺼지거나 다른 앱으로 전환되면 브라우저가 탭을 통째로
+// 정리(reload)해버릴 수 있다 — rec는 메모리에만 있어서 그대로면 기록이 다 날아감.
+// 그래서 GPS 포인트가 찍힐 때마다 localStorage에 스냅샷을 남기고, 앱이 다시
+// 시작될 때 진행 중이던 기록이 있으면 이어서 복구한다.
+function persistRecSnapshot() {
+  if (!rec.active) return;
+  store.set('activeRecording', {
+    active: rec.active, paused: rec.paused, points: rec.points,
+    dist: rec.dist, gain: rec.gain, loss: rec.loss,
+    startT: rec.startT, elapsed: rec.elapsed, pauseT: rec.pauseT,
+    lastAlt: rec.lastAlt, maxAlt: rec.maxAlt, minAlt: rec.minAlt,
+    savedAt: Date.now(),
+  });
+}
+function clearRecSnapshot() { store.del('activeRecording'); }
+function restoreActiveRecording() {
+  const snap = store.get('activeRecording', null);
+  if (!snap || !snap.active) return;
+  const ageMs = Date.now() - (snap.savedAt || 0);
+  const resume = () => {
+    Object.assign(rec, {
+      active: true, paused: !!snap.paused, points: snap.points || [],
+      dist: snap.dist || 0, gain: snap.gain || 0, loss: snap.loss || 0,
+      startT: snap.startT, elapsed: snap.elapsed || 0, pauseT: snap.pauseT || 0,
+      lastAlt: snap.lastAlt, maxAlt: snap.maxAlt, minAlt: snap.minAlt,
+    });
+    if (rec.paused) rec._pauseStart = Date.now();
+    trackLine.setLatLngs(rec.points.map(p => [p.lat, p.lng]));
+    if (rec.points.length) {
+      const last = rec.points[rec.points.length - 1];
+      setTimeout(() => map.setView([last.lat, last.lng], 16), 60);
+    }
+    recTimer = setInterval(tickRec, 1000);
+    follow = true;
+    updateRecUI();
+    updateRecStats();
+    if (navigator.wakeLock) requestWakeLock();
+    toast('중단됐던 산행 기록을 이어서 불러왔어요 🥾');
+  };
+  // 6시간 이내면 화면이 꺼졌다 돌아온 정도로 보고 자동으로 이어서 기록, 그보다 오래됐으면 확인 후 진행
+  if (ageMs < 6 * 60 * 60 * 1000) resume();
+  else if (confirm(`${Math.round(ageMs / 3600000)}시간 전에 중단된 산행 기록이 있어요. 이어서 기록할까요? (취소하면 삭제됩니다)`)) resume();
+  else clearRecSnapshot();
 }
 
 function startRec() {
@@ -551,6 +598,7 @@ function pauseRec() {
   if (rec.paused) { rec._pauseStart = Date.now(); }
   else { rec.pauseT += Date.now() - rec._pauseStart; }
   updateRecUI();
+  persistRecSnapshot();
 }
 function stopRec() {
   if (rec.dist < 10 && rec.points.length < 3) {
@@ -559,6 +607,7 @@ function stopRec() {
   clearInterval(recTimer); recTimer = null;
   rec.active = false; rec.paused = false;
   releaseWakeLock();
+  clearRecSnapshot();
   openSaveSheet();
   updateRecUI();
 }
