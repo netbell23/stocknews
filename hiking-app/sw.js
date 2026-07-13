@@ -1,6 +1,6 @@
 /* 두마음 산악회 서비스워커 — 앱 셸 캐시 (오프라인 지원, 지도 타일은 캐시하지 않음) */
-const CACHE = 'sanbeot-v15';
-const SHELL = ['./', './index.html', './styles.css', './app.js', './firebase-config.js', './manifest.json'];
+const CACHE = 'sanbeot-v16';
+const SHELL = ['./', './index.html', './styles.css', './app.js', './firebase-config.js', './manifest.json', './icon-192.svg', './icon-512.svg'];
 
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL)).then(() => self.skipWaiting()));

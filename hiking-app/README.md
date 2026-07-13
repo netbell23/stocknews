@@ -44,6 +44,21 @@ Node가 있으면 통합 서버, 없으면 Python 정적 서버(`python -m http.
 ### 뒤로가기 버튼
 폰의 시스템 뒤로가기(또는 브라우저 뒤로가기)를 누르면 앱을 벗어나지 않고 **바텀시트 → 단톡방 → 이전 탭** 순서로 한 단계씩 되돌아갑니다. History API(`pushState`/`popstate`)로 구현돼 있습니다.
 
+## 안드로이드 APK 만들기 (PWABuilder)
+이 앱은 이미 완전한 PWA라, 별도 앱을 새로 만드는 게 아니라 **PWABuilder**로 지금 사이트를 그대로 감싼 설치 파일(APK)을 만들면 됩니다. 무료이고 Play스토어 없이 바로 설치(사이드로딩) 가능합니다.
+
+1. 배포 사이트가 최신 상태인지 확인 — [Actions → Run workflow](https://github.com/netbell23/stocknews/actions/workflows/stocknews.yml) 한 번 실행 (아이콘·manifest 반영을 위해 이번엔 꼭 필요)
+2. https://www.pwabuilder.com 접속 → 주소창에 `https://netbell23.github.io/stocknews/hiking-app/` 입력 → **Start**
+3. 분석이 끝나면 **Android** 카드에서 **"Generate Package"** 클릭
+   - Package ID는 아무거나(예: `kr.domaum.sanakhoe`) 입력해도 됩니다.
+   - Signing key는 "Create new signing key"(자동 생성)를 선택하면 됩니다 — 나중에 Play스토어에도 올리고 싶어지면 이 키를 꼭 백업해두세요(키를 잃어버리면 같은 앱으로 업데이트를 못 올립니다).
+4. 다운로드되는 zip 안에 **`.apk`** 파일이 들어있습니다. 이 파일을 폰으로 옮겨서 설치하면 됩니다.
+   - 폰에서 "출처를 알 수 없는 앱 설치" 권한을 한 번 허용해야 설치됩니다(파일 관리자/브라우저 설정 → 이 소스 허용).
+5. 설치하면 홈 화면에 진짜 앱처럼 아이콘이 생기고, 주소창 없이 전체화면으로 실행됩니다. GPS·로그인·랭킹 등 모든 기능은 웹사이트와 완전히 동일하게 동작합니다(같은 코드를 감싼 것뿐이라, 코드를 업데이트하면 APK 재설치 없이도 바로 반영됩니다 — 다만 앱 아이콘/이름을 바꿀 땐 재생성 필요).
+
+### Play스토어에 정식 등록하려면 (선택)
+위 3번에서 만든 **AAB(Android App Bundle)** 파일과 서명키로 Google Play Console(개발자 계정 $25 1회)에 업로드하면 됩니다. 이땐 위치 정보를 다루는 앱이라 **개인정보처리방침 URL**이 별도로 필요합니다.
+
 ## 단톡 동작 방식
 - **서버(`server.js`) 실행 중**: WebSocket으로 접속자 간 메시지가 **실시간 중계**됩니다(서로 다른 폰끼리 OK).
 - **서버 없이 정적 호스팅**: 같은 브라우저의 탭 간(BroadcastChannel/localStorage)에서만 동기화되는 **로컬 모드**.
