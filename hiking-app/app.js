@@ -114,8 +114,7 @@ async function ensureFirebaseSession() {
     }
   } catch (e) {
     console.error('리다이렉트 로그인 처리 실패', e);
-    if (e.code === 'auth/operation-not-allowed') toast(`로그인이 아직 설정 전이에요`);
-    else if (e.code && e.code !== 'auth/no-auth-event') toast('로그인에 실패했어요');
+    if (e.code && e.code !== 'auth/no-auth-event') alert(`로그인 처리 실패: [${e.code}] ${e.message || e}`);
   }
   return new Promise(resolve => {
     const unsub = fbAuth.onAuthStateChanged(async user => {
@@ -135,12 +134,15 @@ async function ensureFirebaseSession() {
 const AUTH_LABELS = { google: '🔵 Google 계정', apple: '⚫ Apple 계정', guest: '👤 게스트 모드' };
 function openLoginSheet() {
   const canLogin = firebaseReady();
+  const sdkLoaded = typeof firebase !== 'undefined';
   openSheet(`
     <h2>🥾 두마음 산악회에 오신 걸 환영해요</h2>
     <div class="muted" style="font-size:13px;margin-bottom:18px;line-height:1.5">로그인하면 다음에 다시 접속해도 같은 계정으로 알아볼 수 있고, 랭킹에도 이름이 표시돼요. 로그인 없이 게스트로도 바로 쓸 수 있어요.</div>
+    ${canLogin ? '' : `<div class="card" style="background:#fde8e8;box-shadow:none;padding:10px 12px;margin-bottom:14px;color:#c0392b;font-size:12px;font-weight:700">
+      ⚠️ 로그인이 지금 안 돼요 (${sdkLoaded ? 'Firebase 설정 문제' : 'Firebase 스크립트 로딩 실패 — 광고차단·보안앱·네트워크 필터 의심'})
+    </div>`}
     <button class="btn btn-block" style="background:#fff;border:1.5px solid var(--line);color:var(--ink);margin-bottom:10px" onclick="loginWithGoogle()" ${canLogin ? '' : 'disabled'}>🔵 Google로 계속하기</button>
     <button class="btn btn-block" style="background:#000;color:#fff;margin-bottom:10px" onclick="loginWithApple()" ${canLogin ? '' : 'disabled'}>🍎 Apple로 계속하기</button>
-    ${canLogin ? '' : '<div class="muted" style="font-size:11px;margin:-4px 0 12px">(로그인은 아직 설정 전이에요)</div>'}
     <button class="btn btn-ghost btn-block" onclick="continueAsGuest()">👤 게스트로 시작하기</button>
   `);
 }
@@ -155,15 +157,17 @@ function getAuthProvider(kind) {
   return null;
 }
 async function loginWithProvider(kind) {
-  if (!fbAuth) { toast('로그인이 아직 설정되지 않았어요'); return; }
+  if (!fbAuth) { alert('로그인이 아직 설정되지 않았어요 (fbAuth 없음)'); return; }
   // 모바일 브라우저는 팝업이 자주 막혀서 리다이렉트 방식 사용 — 성공하면 페이지가
   // 통째로 이동했다가 돌아오고, 이후 처리는 ensureFirebaseSession()의 getRedirectResult에서 한다.
   try {
     await fbAuth.signInWithRedirect(getAuthProvider(kind));
+    // 정상이면 여기 도달하기 전에 페이지가 이동합니다. 만약 이 아래 줄까지 실행됐다면
+    // 리다이렉트 자체가 시작되지 않았다는 뜻이라 진단용으로 alert를 띄웁니다.
+    alert('로그인 페이지로 이동하지 못했어요 (signInWithRedirect가 조용히 끝남). 브라우저의 리다이렉트/쿠키 차단 설정을 확인해주세요.');
   } catch (e) {
     console.error(e);
-    if (e.code === 'auth/operation-not-allowed') toast(`${kind === 'apple' ? 'Apple' : 'Google'} 로그인이 아직 설정 전이에요`);
-    else toast('로그인에 실패했어요');
+    alert(`로그인 실패: [${e.code || '코드없음'}] ${e.message || e}`);
   }
 }
 function loginWithGoogle() { return loginWithProvider('google'); }
