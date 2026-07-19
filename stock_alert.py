@@ -284,6 +284,14 @@ if __name__ == "__main__":
     except Exception as e:
         print(f"[이슈 정리 실패] {e}")
 
+    # 생활 포털 대시보드 데이터 (docs/portal-data.json)
+    try:
+        from portal_data import write_portal_data
+        pout = write_portal_data(report, os.path.join(BASE_DIR, "docs", "portal-data.json"))
+        print(f"포털 데이터 생성: {pout}")
+    except Exception as e:
+        print(f"[포털 데이터 생성 실패] {e}")
+
     # GitHub Pages 배포:
     #  - GitHub Actions 에서는 deploy-pages 액션이 docs/ 를 배포하므로 git push 생략
     #  - 로컬에서는 publish.py 가 docs/ 변경분을 커밋·푸시

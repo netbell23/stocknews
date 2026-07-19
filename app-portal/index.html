@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>내 생활 포털</title>
-<meta name="description" content="날씨·교통·길찾기·일정·맛집·카페·주차·뉴스·주식·여행 — 매일 쓰는 검색을 한 화면에">
+<meta name="description" content="날씨·교통·버스·일정·뉴스·증시 — 매일 쓰는 정보를 한 화면에">
 <link rel="manifest" href="manifest.json">
 <link rel="icon" href="icon-192.svg" type="image/svg+xml">
 <meta name="theme-color" content="#101418">
@@ -13,12 +13,14 @@
   --bg:#f4f6f9; --card:#ffffff; --text:#1c2430; --sub:#69788c;
   --line:#e3e8ef; --chip:#eef2f7; --chip-text:#41506b; --accent:#2f6fed;
   --shadow:0 1px 3px rgba(20,30,50,.08);
+  --up:#e11d48; --down:#2f6fed;
 }
 @media (prefers-color-scheme: dark){
   :root{
     --bg:#101418; --card:#1a2027; --text:#e8edf4; --sub:#8b98a9;
     --line:#242c36; --chip:#232b35; --chip-text:#aebccf; --accent:#5b8dff;
     --shadow:0 1px 3px rgba(0,0,0,.35);
+    --up:#ff5d7d; --down:#6d9bff;
   }
 }
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
@@ -30,16 +32,22 @@ body{
   max-width:560px; margin:0 auto;
 }
 a{text-decoration:none;color:inherit}
+button{font-family:inherit}
 
 /* 헤더 */
 header{padding:6px 4px 14px}
 .date-row{display:flex;align-items:baseline;justify-content:space-between}
 #today{font-size:.95rem;color:var(--sub);font-weight:600}
 #clock{font-size:.95rem;color:var(--sub);font-variant-numeric:tabular-nums}
-#greet{font-size:1.35rem;font-weight:800;margin-top:6px;letter-spacing:-.02em}
+.greet-row{display:flex;align-items:center;justify-content:space-between;margin-top:6px}
+#greet{font-size:1.3rem;font-weight:800;letter-spacing:-.02em}
+.gear{
+  border:1px solid var(--line);background:var(--card);border-radius:12px;
+  font-size:1.05rem;padding:7px 11px;cursor:pointer;box-shadow:var(--shadow);
+}
 
 /* 검색 */
-.search{display:flex;gap:8px;margin:2px 0 18px}
+.search{display:flex;gap:8px;margin:2px 0 14px}
 .search input{
   flex:1;min-width:0;border:1px solid var(--line);background:var(--card);color:var(--text);
   border-radius:14px;padding:13px 16px;font-size:1rem;outline:none;box-shadow:var(--shadow);
@@ -50,54 +58,133 @@ header{padding:6px 4px 14px}
   padding:0 18px;font-size:1rem;font-weight:700;cursor:pointer;
 }
 
-/* 메뉴 그리드 */
+/* 대시보드 섹션 */
+.sec{
+  background:var(--card);border:1px solid var(--line);border-radius:16px;
+  padding:14px;box-shadow:var(--shadow);margin-bottom:10px;
+}
+.sec h2{display:flex;align-items:center;gap:6px;font-size:.95rem;letter-spacing:-.01em;margin-bottom:10px}
+.sec h2 .sp{flex:1}
+.sec h2 button,.sec h2 a{
+  font-size:.72rem;color:var(--accent);background:none;border:none;font-weight:700;cursor:pointer;padding:2px 4px;
+}
+.muted{color:var(--sub);font-size:.85rem}
+.err{color:var(--up);font-size:.8rem}
+small.hint{display:block;color:var(--sub);font-size:.72rem;margin-top:6px;line-height:1.5}
+.linkbtn{
+  display:inline-block;font-size:.8rem;font-weight:700;color:var(--chip-text);
+  background:var(--chip);border-radius:99px;padding:7px 13px;margin:4px 6px 0 0;
+}
+
+/* 날씨 */
+.wx-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.wx{background:var(--chip);border-radius:12px;padding:11px;min-width:0}
+.wx .nm{font-size:.74rem;color:var(--sub);font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.wx .tp{font-size:1.45rem;font-weight:800;margin:3px 0 1px}
+.wx .ln{font-size:.76rem;margin-top:3px;line-height:1.45}
+.pm-good{color:#1fa055;font-weight:700}.pm-mid{color:#c99a06;font-weight:700}
+.pm-bad{color:#e46a12;font-weight:700}.pm-worst{color:var(--up);font-weight:700}
+
+/* 교통/버스 */
+.big-line{font-size:1.2rem;font-weight:800;margin:2px 0}
+.bus-row{display:flex;align-items:baseline;gap:8px;padding:7px 0;border-bottom:1px solid var(--line);min-width:0}
+.bus-row:last-child{border-bottom:none}
+.bus-row .st{font-size:.78rem;color:var(--sub);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bus-row .tm{font-size:.9rem;font-weight:800;white-space:nowrap}
+.bus-row .tm small{font-weight:600;color:var(--sub)}
+
+/* 일정 */
+.ev{display:flex;gap:10px;padding:6px 0;border-bottom:1px solid var(--line);align-items:baseline}
+.ev:last-child{border-bottom:none}
+.ev .t{font-size:.78rem;color:var(--accent);font-weight:700;white-space:nowrap;font-variant-numeric:tabular-nums}
+.ev .s{font-size:.88rem;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pri-btn{
+  border:none;background:var(--accent);color:#fff;border-radius:12px;
+  padding:10px 16px;font-size:.88rem;font-weight:700;cursor:pointer;
+}
+
+/* 뉴스 */
+.news a{display:block;padding:7px 0;border-bottom:1px solid var(--line)}
+.news a:last-child{border-bottom:none}
+.news .tt{font-size:.88rem;line-height:1.45;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.news .mt{font-size:.7rem;color:var(--sub);margin-top:2px}
+
+/* 증시 */
+.quotes{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.qt{background:var(--chip);border-radius:12px;padding:10px;min-width:0}
+.qt .nm{font-size:.72rem;color:var(--sub);font-weight:700}
+.qt .pr{font-size:1.05rem;font-weight:800;margin-top:2px;font-variant-numeric:tabular-nums}
+.qt .ch{font-size:.75rem;font-weight:700;margin-top:1px;font-variant-numeric:tabular-nums}
+.up{color:var(--up)}.down{color:var(--down)}.flat{color:var(--sub)}
+
+/* 바로가기 그리드 */
+.launch-h{font-size:.95rem;margin:18px 4px 10px;color:var(--sub)}
 .grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
 .card{
   background:var(--card);border:1px solid var(--line);border-radius:16px;
-  padding:14px;box-shadow:var(--shadow);display:flex;flex-direction:column;gap:8px;min-width:0;
+  padding:14px;box-shadow:var(--shadow);display:flex;flex-direction:column;gap:8px;min-width:0;position:relative;
 }
 .card .main{display:flex;align-items:center;gap:10px}
-.card .num{
-  font-size:.68rem;font-weight:700;color:var(--sub);
-  position:absolute;top:10px;right:12px;letter-spacing:.02em;
-}
-.card{position:relative}
+.card .num{font-size:.68rem;font-weight:700;color:var(--sub);position:absolute;top:10px;right:12px}
 .card .icon{
   width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;
-  font-size:24px;flex-shrink:0;
+  font-size:24px;flex-shrink:0;transition:transform .1s;
 }
 .card .t{min-width:0}
 .card .t b{display:block;font-size:1.02rem;letter-spacing:-.01em}
 .card .t span{display:block;font-size:.75rem;color:var(--sub);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .chips{display:flex;flex-wrap:wrap;gap:6px}
-.chips a{
-  font-size:.74rem;font-weight:600;color:var(--chip-text);background:var(--chip);
-  border-radius:99px;padding:5px 10px;
-}
+.chips a{font-size:.74rem;font-weight:600;color:var(--chip-text);background:var(--chip);border-radius:99px;padding:5px 10px}
 .chips a:active{opacity:.7}
 .card .main:active .icon{transform:scale(.94)}
-.icon{transition:transform .1s}
-
-/* 카테고리 아이콘 배경색 */
-.c1 .icon{background:#3d9df31f}
-.c2 .icon{background:#f0433a1f}
-.c3 .icon{background:#2fbd601f}
-.c4 .icon{background:#8b5cf61f}
-.c5 .icon{background:#f579161f}
-.c6 .icon{background:#a2703d1f}
-.c7 .icon{background:#4467d81f}
-.c8 .icon{background:#64748b1f}
-.c9 .icon{background:#e11d481f}
+.c1 .icon{background:#3d9df31f}.c2 .icon{background:#f0433a1f}.c3 .icon{background:#2fbd601f}
+.c4 .icon{background:#8b5cf61f}.c5 .icon{background:#f579161f}.c6 .icon{background:#a2703d1f}
+.c7 .icon{background:#4467d81f}.c8 .icon{background:#64748b1f}.c9 .icon{background:#e11d481f}
 .c10 .icon{background:#0d94881f}
 
 footer{margin-top:22px;text-align:center;font-size:.72rem;color:var(--sub)}
+
+/* 설정 시트 */
+.backdrop{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;z-index:50}
+.backdrop.on{display:flex;align-items:flex-end;justify-content:center}
+.sheet{
+  background:var(--card);width:100%;max-width:560px;max-height:88vh;overflow:auto;
+  border-radius:20px 20px 0 0;padding:18px 16px calc(env(safe-area-inset-bottom) + 18px);
+}
+.sheet h3{font-size:1.05rem;margin-bottom:14px}
+.field{margin-bottom:14px}
+.field label{display:block;font-size:.78rem;font-weight:700;color:var(--sub);margin-bottom:5px}
+.field label b{color:var(--text)}
+.field input{
+  width:100%;border:1px solid var(--line);background:var(--bg);color:var(--text);
+  border-radius:10px;padding:10px 12px;font-size:.9rem;outline:none;
+}
+.field input:focus{border-color:var(--accent)}
+.field .row{display:flex;gap:6px}
+.field .row input{flex:1;min-width:0}
+.field .row button{
+  border:1px solid var(--line);background:var(--chip);color:var(--chip-text);
+  border-radius:10px;padding:0 13px;font-size:.82rem;font-weight:700;cursor:pointer;white-space:nowrap;
+}
+.geo-res{display:flex;flex-direction:column;gap:4px;margin-top:6px}
+.geo-res button{
+  text-align:left;border:1px solid var(--line);background:var(--bg);color:var(--text);
+  border-radius:10px;padding:8px 12px;font-size:.85rem;cursor:pointer;
+}
+.geo-res button:active{background:var(--chip)}
+.btn-row{display:flex;gap:8px;margin-top:16px}
+.btn-row .pri{flex:1;border:none;background:var(--accent);color:#fff;border-radius:12px;padding:12px;font-size:.95rem;font-weight:700;cursor:pointer}
+.btn-row .ghost{border:1px solid var(--line);background:var(--card);color:var(--sub);border-radius:12px;padding:12px 18px;font-size:.95rem;cursor:pointer}
 </style>
 </head>
 <body>
 
 <header>
   <div class="date-row"><span id="today"></span><span id="clock"></span></div>
-  <div id="greet"></div>
+  <div class="greet-row">
+    <div id="greet"></div>
+    <button class="gear" id="btnSettings" title="설정">⚙️</button>
+  </div>
 </header>
 
 <form class="search" id="searchForm">
@@ -105,6 +192,37 @@ footer{margin-top:22px;text-align:center;font-size:.72rem;color:var(--sub)}
   <button type="submit">검색</button>
 </form>
 
+<section class="sec">
+  <h2>🌤 오늘 날씨 <span class="sp"></span><button type="button" data-refresh="wx">새로고침</button></h2>
+  <div id="wxBody" class="wx-grid"><div class="muted">불러오는 중…</div></div>
+</section>
+
+<section class="sec">
+  <h2>🚦 <span id="trTitle">출근길 교통</span> <span class="sp"></span><button type="button" data-refresh="traffic">새로고침</button></h2>
+  <div id="trBody"><div class="muted">불러오는 중…</div></div>
+</section>
+
+<section class="sec">
+  <h2>🚌 <span id="busTitle">버스 도착</span> <span class="sp"></span><button type="button" data-refresh="bus">새로고침</button></h2>
+  <div id="busBody"><div class="muted">불러오는 중…</div></div>
+</section>
+
+<section class="sec">
+  <h2>📅 오늘 일정 <span class="sp"></span><a href="https://calendar.google.com/" target="_blank" rel="noopener">캘린더 열기</a></h2>
+  <div id="calBody"><div class="muted">불러오는 중…</div></div>
+</section>
+
+<section class="sec">
+  <h2>📰 주요 뉴스 <span class="sp"></span><button type="button" data-refresh="news">새로고침</button></h2>
+  <div id="newsBody" class="news"><div class="muted">불러오는 중…</div></div>
+</section>
+
+<section class="sec">
+  <h2>📈 증시·환율 <span class="sp"></span><button type="button" data-refresh="stocks">새로고침</button></h2>
+  <div id="stBody" class="quotes"><div class="muted">불러오는 중…</div></div>
+</section>
+
+<h2 class="launch-h">바로가기</h2>
 <div class="grid">
 
   <div class="card c1">
@@ -226,36 +344,63 @@ footer{margin-top:22px;text-align:center;font-size:.72rem;color:var(--sub)}
 
 <footer>홈 화면에 추가하면 앱처럼 쓸 수 있어요</footer>
 
-<script>
-const DAYS = ['일','월','화','수','목','금','토'];
+<!-- 설정 시트 -->
+<div class="backdrop" id="setBack">
+  <div class="sheet">
+    <h3>⚙️ 설정</h3>
 
-function tick(){
-  const now = new Date();
-  document.getElementById('today').textContent =
-    `${now.getMonth()+1}월 ${now.getDate()}일 (${DAYS[now.getDay()]})`;
-  const h = now.getHours(), m = String(now.getMinutes()).padStart(2,'0');
-  document.getElementById('clock').textContent = `${h}:${m}`;
+    <div class="field">
+      <label>🏠 내 위치 — 현재: <b id="curMy"></b></label>
+      <div class="row">
+        <input id="qMy" placeholder="동네 이름 검색 (예: 기흥)" autocomplete="off">
+        <button type="button" id="sMy">검색</button>
+        <button type="button" id="gpsMy">📍현위치</button>
+      </div>
+      <div id="rMy" class="geo-res"></div>
+    </div>
 
-  let g;
-  if (h < 5)       g = '늦은 밤이에요 🌙';
-  else if (h < 11) g = '좋은 아침입니다 ☀️';
-  else if (h < 14) g = '점심 맛있게 드세요 🍚';
-  else if (h < 18) g = '활기찬 오후 보내세요 💪';
-  else if (h < 22) g = '편안한 저녁입니다 🌆';
-  else             g = '오늘도 수고하셨어요 🌙';
-  // 주말이면 인사말 교체
-  if (now.getDay() === 0 || now.getDay() === 6) g = '즐거운 주말 보내세요 🏞️';
-  document.getElementById('greet').textContent = g;
-}
-tick();
-setInterval(tick, 30 * 1000);
+    <div class="field">
+      <label>🏢 회사 위치 — 현재: <b id="curWork"></b></label>
+      <div class="row">
+        <input id="qWork" placeholder="동네 이름 검색 (예: 강남)" autocomplete="off">
+        <button type="button" id="sWork">검색</button>
+      </div>
+      <div id="rWork" class="geo-res"></div>
+    </div>
 
-document.getElementById('searchForm').addEventListener('submit', e => {
-  e.preventDefault();
-  const q = document.getElementById('q').value.trim();
-  if (!q) return;
-  window.open('https://m.search.naver.com/search.naver?query=' + encodeURIComponent(q), '_blank');
-});
-</script>
+    <div class="field">
+      <label>🚌 버스 정류소 검색어</label>
+      <input id="fBusStop" placeholder="예: 효성해링턴">
+    </div>
+    <div class="field">
+      <label>🚌 버스 노선 번호</label>
+      <input id="fBusRoute" placeholder="예: 1550-1">
+    </div>
+
+    <div class="field">
+      <label>🚦 TMAP appKey <span style="font-weight:400">(실시간 교통 소요시간용 · 선택)</span></label>
+      <input id="fTmap" placeholder="없으면 길찾기 링크만 표시">
+      <small class="hint">openapi.sk.com 가입 → TMAP API 앱 만들면 무료 발급. 붙여넣으면 출근길 예상 소요시간이 실시간으로 떠요.</small>
+    </div>
+    <div class="field">
+      <label>🚌 공공데이터포털 서비스키 <span style="font-weight:400">(버스 도착정보용 · 선택)</span></label>
+      <input id="fBusKey" placeholder="없으면 버스 검색 링크만 표시">
+      <small class="hint">data.go.kr 가입 → "경기도 버스도착정보" + "경기도 버스정류소 조회" + "경기도 버스노선 조회" 활용신청(무료, 자동승인) 후 인증키 붙여넣기.</small>
+    </div>
+    <div class="field">
+      <label>📅 Google OAuth 클라이언트 ID <span style="font-weight:400">(일정 연동용 · 선택)</span></label>
+      <input id="fGcid" placeholder="xxxx.apps.googleusercontent.com">
+      <small class="hint">console.cloud.google.com → API 및 서비스 → 사용자 인증 정보 → OAuth 클라이언트 ID(웹). 승인된 자바스크립트 원본에 이 사이트 주소 추가 + Calendar API 사용 설정.</small>
+    </div>
+
+    <div class="btn-row">
+      <button class="pri" id="setSave">저장</button>
+      <button class="ghost" id="setClose">닫기</button>
+    </div>
+  </div>
+</div>
+
+<!-- app.js 수정 시 v를 올려서 브라우저 캐시 무효화 -->
+<script src="app.js?v=2"></script>
 </body>
 </html>
