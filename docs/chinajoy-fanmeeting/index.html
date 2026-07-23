@@ -3,429 +3,398 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ChinaJoy Main Stage — Star Cast Fan Meeting</title>
+<title>STORYTACO · ChinaJoy 2026 — Booth & Fan Meeting</title>
 <style>
   :root{
-    --neon-pink:#ff2d78;
-    --neon-cyan:#22e0ff;
-    --neon-purple:#8b2dff;
-    --gold:#ffd25a;
-    --ink:#04030a;
-    --stage-glow:rgba(255,45,120,.55);
+    --pink:#ff5f9e;
+    --pink-deep:#e83e86;
+    --pink-soft:#ffe3ef;
+    --mint:#3fb79c;
+    --mint-soft:#dbf3ec;
+    --lav:#8a6cf0;
+    --lav-soft:#ece4ff;
+    --purple:#6a45c4;
+    --cream:#fff4e2;
+    --blue:#245ca6;
+    --ink:#3a3357;
+    --ink-soft:#6a6386;
+    --gold:#ffb43a;
+    --line:rgba(120,100,180,.16);
   }
   *{margin:0;padding:0;box-sizing:border-box;}
   html{scroll-behavior:smooth;}
   body{
-    font-family:"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
-    background:var(--ink);
-    color:#fff;
-    overflow-x:hidden;
-    line-height:1.5;
-  }
-  h1,h2,h3{font-weight:900;letter-spacing:-.5px;line-height:1.02;}
-  section{position:relative;}
-  .wrap{max-width:2200px;margin:0 auto;padding:0 clamp(20px,4vw,90px);}
-  .neon-text{
-    text-shadow:0 0 12px var(--neon-pink),0 0 34px rgba(255,45,120,.6);
-  }
-  .cyan-text{color:var(--neon-cyan);text-shadow:0 0 14px rgba(34,224,255,.7);}
-  .gold-text{color:var(--gold);text-shadow:0 0 16px rgba(255,210,90,.7);}
-
-  /* ============ TOP BAR ============ */
-  .topbar{
-    position:fixed;top:0;left:0;right:0;z-index:100;
-    display:flex;align-items:center;justify-content:space-between;
-    padding:14px clamp(20px,4vw,70px);
-    background:linear-gradient(180deg,rgba(4,3,10,.92),rgba(4,3,10,0));
-    backdrop-filter:blur(6px);
-  }
-  .brand{display:flex;align-items:center;gap:14px;font-weight:900;font-size:clamp(16px,1.5vw,24px);}
-  .brand .cj{
-    background:linear-gradient(135deg,var(--neon-pink),var(--neon-purple));
-    padding:6px 14px;border-radius:10px;letter-spacing:1px;
-    box-shadow:0 0 22px var(--stage-glow);
-  }
-  .nav{display:flex;gap:clamp(14px,2vw,38px);font-weight:700;font-size:15px;}
-  .nav a{color:#d8d3e8;text-decoration:none;transition:.25s;text-transform:uppercase;letter-spacing:1px;}
-  .nav a:hover{color:var(--neon-cyan);text-shadow:0 0 12px var(--neon-cyan);}
-  @media(max-width:820px){.nav{display:none;}}
-
-  /* ============ HERO / MAIN STAGE ============ */
-  .hero{
-    height:100vh;min-height:760px;
-    display:flex;flex-direction:column;justify-content:flex-end;
-    overflow:hidden;
+    font-family:"Segoe UI","Helvetica Neue",Arial,"Malgun Gothic",sans-serif;
+    color:var(--ink);
     background:
-      radial-gradient(120% 90% at 50% 8%,rgba(139,45,255,.55),transparent 55%),
-      radial-gradient(80% 60% at 50% 0%,rgba(255,45,120,.5),transparent 60%),
-      linear-gradient(180deg,#12061f 0%,#1c0730 40%,#070312 100%);
+      radial-gradient(closest-side at 12% 12%,rgba(255,95,158,.16),transparent),
+      radial-gradient(closest-side at 88% 8%,rgba(138,108,240,.16),transparent),
+      radial-gradient(closest-side at 90% 92%,rgba(63,183,156,.16),transparent),
+      radial-gradient(closest-side at 8% 90%,rgba(255,180,58,.14),transparent),
+      linear-gradient(160deg,#fdf0f6 0%,#f2ecff 40%,#e9f7f3 75%,#fff3e6 100%);
+    background-attachment:fixed;
+    -webkit-font-smoothing:antialiased;
   }
-  /* moving spotlight beams */
-  .beams{position:absolute;inset:0;overflow:hidden;pointer-events:none;}
-  .beam{
-    position:absolute;top:-25%;left:50%;
-    width:14vw;height:150%;
-    background:linear-gradient(180deg,rgba(255,255,255,.28),rgba(255,45,120,.05) 60%,transparent);
-    transform-origin:top center;
-    filter:blur(6px);
-    mix-blend-mode:screen;
-  }
-  .beam.b1{--c:var(--neon-cyan);background:linear-gradient(180deg,rgba(34,224,255,.35),transparent 65%);animation:sweep1 7s ease-in-out infinite;}
-  .beam.b2{background:linear-gradient(180deg,rgba(255,45,120,.35),transparent 65%);animation:sweep2 9s ease-in-out infinite;}
-  .beam.b3{background:linear-gradient(180deg,rgba(139,45,255,.35),transparent 65%);animation:sweep3 11s ease-in-out infinite;}
-  .beam.b4{background:linear-gradient(180deg,rgba(255,210,90,.3),transparent 65%);animation:sweep1 8s ease-in-out infinite reverse;}
-  @keyframes sweep1{0%,100%{transform:translateX(-50%) rotate(-22deg);}50%{transform:translateX(-50%) rotate(16deg);}}
-  @keyframes sweep2{0%,100%{transform:translateX(-50%) rotate(20deg);}50%{transform:translateX(-50%) rotate(-18deg);}}
-  @keyframes sweep3{0%,100%{transform:translateX(-50%) rotate(-8deg);}50%{transform:translateX(-50%) rotate(28deg);}}
+  /* floating bokeh */
+  .bokeh{position:fixed;inset:0;overflow:hidden;pointer-events:none;z-index:0;}
+  .bokeh span{position:absolute;border-radius:50%;opacity:.35;filter:blur(1px);
+    background:radial-gradient(circle at 30% 30%,#fff,rgba(255,255,255,0) 70%);
+    animation:float 12s ease-in-out infinite;}
+  @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-26px)}}
 
-  /* LED backdrop grid */
-  .led-wall{
-    position:absolute;top:0;left:0;right:0;height:62%;
-    background:
-      repeating-linear-gradient(90deg,rgba(34,224,255,.05) 0 2px,transparent 2px 40px),
-      repeating-linear-gradient(0deg,rgba(255,45,120,.05) 0 2px,transparent 2px 40px);
-    mask:linear-gradient(180deg,#000 40%,transparent);
-    opacity:.6;
+  .poster{
+    position:relative;z-index:1;
+    max-width:1180px;margin:26px auto;padding:0 clamp(14px,3vw,34px) 30px;
   }
-  .led-title{
-    position:absolute;top:16%;left:0;right:0;text-align:center;
-    font-size:clamp(40px,9vw,160px);font-weight:900;
-    color:transparent;-webkit-text-stroke:2px rgba(255,255,255,.14);
-    letter-spacing:4px;user-select:none;
-  }
+  h1,h2,h3,h4{line-height:1.08;}
+  .accent{font-weight:900;}
 
-  /* stage floor */
-  .stage-floor{
-    position:absolute;bottom:0;left:0;right:0;height:30%;
-    background:linear-gradient(180deg,transparent,rgba(255,45,120,.18) 40%,rgba(139,45,255,.35));
-    transform:perspective(600px) rotateX(48deg);
-    transform-origin:bottom;
-    box-shadow:0 -30px 90px rgba(255,45,120,.4);
+  /* ============ HEADER ============ */
+  .header{display:flex;align-items:flex-start;justify-content:space-between;gap:20px;
+    padding:30px 6px 18px;flex-wrap:wrap;}
+  .brand-title .st{
+    font-size:clamp(44px,7vw,86px);font-weight:900;letter-spacing:1px;color:var(--blue);
+    text-shadow:0 3px 0 rgba(36,92,166,.12);display:flex;align-items:center;gap:14px;
   }
-  .stage-floor::before{
-    content:"";position:absolute;inset:0;
-    background:
-      repeating-linear-gradient(90deg,rgba(34,224,255,.25) 0 2px,transparent 2px 90px),
-      repeating-linear-gradient(0deg,rgba(255,255,255,.12) 0 2px,transparent 2px 70px);
-  }
+  .brand-title .st .spark{color:var(--gold);font-size:.6em;filter:drop-shadow(0 0 6px rgba(255,180,58,.6));}
+  .brand-title .sub{font-size:clamp(26px,4vw,48px);font-weight:800;color:var(--purple);margin-top:2px;}
+  .brand-meta{margin-top:16px;display:inline-flex;align-items:center;gap:14px;flex-wrap:wrap;
+    border:2px solid var(--lav);border-radius:40px;padding:9px 22px;background:rgba(255,255,255,.6);}
+  .brand-meta .cj{font-weight:900;color:var(--blue);letter-spacing:1px;}
+  .brand-meta .dv{width:1px;height:18px;background:var(--line);}
+  .brand-meta .date{font-weight:700;color:var(--ink);}
+  .brand-meta .date b{color:var(--pink-deep);}
+  .badges{display:flex;flex-direction:column;gap:12px;align-items:flex-end;}
+  .badge{padding:12px 22px;border-radius:20px;font-weight:900;color:#fff;text-align:center;
+    box-shadow:0 8px 20px rgba(0,0,0,.12);position:relative;}
+  .badge small{display:block;font-weight:800;opacity:.95;font-size:12px;letter-spacing:1px;}
+  .b-fhuor{background:linear-gradient(135deg,#7bd0ff,#8a6cf0);font-size:19px;}
+  .b-shb{background:linear-gradient(135deg,#5fd6a8,#37b98f);font-size:20px;letter-spacing:1px;}
 
-  /* crowd silhouette */
-  .crowd{position:absolute;bottom:0;left:0;right:0;height:26%;z-index:3;}
-  .crowd svg{width:100%;height:100%;display:block;}
-  .crowd .g1{fill:#05020c;}
-  .crowd .g2{fill:#0c0518;}
-  /* phone lights */
-  .phone{position:absolute;bottom:12%;width:5px;height:5px;border-radius:50%;
-    background:#fff;box-shadow:0 0 10px 3px rgba(255,255,255,.9);z-index:4;
-    animation:twinkle 3s ease-in-out infinite;}
-  @keyframes twinkle{0%,100%{opacity:.25;transform:translateY(0);}50%{opacity:1;transform:translateY(-6px);}}
+  /* ============ SECTION SHELL ============ */
+  section.block{margin-top:26px;}
+  .tab{display:inline-flex;align-items:center;gap:9px;color:#fff;font-weight:900;
+    font-size:clamp(18px,2.4vw,26px);padding:9px 26px 11px;border-radius:16px 16px 0 0;
+    box-shadow:0 -2px 10px rgba(0,0,0,.06);}
+  .tab .di{color:#ffe9a8;}
+  .t-purple{background:linear-gradient(135deg,#7a5cd6,#5a37b0);}
+  .t-pink{background:linear-gradient(135deg,#ff6fa9,#e83e86);}
+  .t-mag{background:linear-gradient(135deg,#e15aa8,#b23a86);}
+  .panel{background:rgba(255,255,255,.72);border:1px solid var(--line);
+    border-radius:0 22px 22px 22px;padding:clamp(16px,2.4vw,26px);
+    box-shadow:0 18px 40px rgba(90,60,150,.08);backdrop-filter:blur(4px);}
 
-  .hero-content{position:relative;z-index:6;text-align:center;padding-bottom:clamp(40px,9vh,120px);}
-  .kicker{
-    display:inline-block;margin-bottom:22px;padding:9px 22px;border-radius:40px;
-    border:1px solid rgba(34,224,255,.5);background:rgba(34,224,255,.08);
-    font-size:clamp(12px,1.1vw,16px);font-weight:800;letter-spacing:3px;text-transform:uppercase;
-    color:var(--neon-cyan);box-shadow:0 0 26px rgba(34,224,255,.35);
+  /* ============ MAIN STAGE ============ */
+  .stage{
+    border-radius:18px;overflow:hidden;position:relative;
+    background:linear-gradient(160deg,#2a1550,#3d1a63 45%,#241243);
+    padding:clamp(16px,2.4vw,26px);
+    box-shadow:inset 0 0 60px rgba(0,0,0,.4);
   }
-  .hero h1{
-    font-size:clamp(46px,8.5vw,150px);
-    background:linear-gradient(120deg,#fff 20%,var(--neon-pink) 55%,var(--neon-cyan));
-    -webkit-background-clip:text;background-clip:text;color:transparent;
-    filter:drop-shadow(0 0 40px rgba(255,45,120,.5));
-  }
-  .hero .sub{
-    margin-top:20px;font-size:clamp(16px,1.8vw,30px);font-weight:600;color:#e9e4fb;
-    text-shadow:0 2px 20px rgba(0,0,0,.7);
-  }
-  .cta-row{margin-top:38px;display:flex;gap:20px;justify-content:center;flex-wrap:wrap;}
-  .btn{
-    padding:17px 40px;border-radius:50px;font-weight:800;font-size:17px;text-decoration:none;
-    text-transform:uppercase;letter-spacing:1.5px;transition:.3s;cursor:pointer;border:none;
-  }
-  .btn-primary{
-    background:linear-gradient(135deg,var(--neon-pink),var(--neon-purple));color:#fff;
-    box-shadow:0 0 30px var(--stage-glow);
-  }
-  .btn-primary:hover{transform:translateY(-3px) scale(1.03);box-shadow:0 0 50px var(--stage-glow);}
-  .btn-ghost{background:rgba(255,255,255,.06);color:#fff;border:1.5px solid rgba(255,255,255,.35);}
-  .btn-ghost:hover{border-color:var(--neon-cyan);color:var(--neon-cyan);}
+  .stage-top{text-align:center;margin-bottom:16px;}
+  .stage-badge{display:inline-block;font-weight:900;letter-spacing:2px;color:#fff;
+    background:linear-gradient(135deg,#3a5cff,#8a3cff);padding:8px 26px;border-radius:10px;
+    font-size:clamp(16px,2vw,24px);box-shadow:0 0 24px rgba(120,80,255,.6);
+    font-style:italic;transform:skewX(-6deg);}
+  .cast-row{display:grid;grid-template-columns:repeat(6,1fr);gap:10px;}
+  @media(max-width:720px){.cast-row{grid-template-columns:repeat(3,1fr);}}
+  .cast{position:relative;border-radius:14px;overflow:hidden;aspect-ratio:3/4.4;
+    background:linear-gradient(180deg,#4b2f7a,#2a1550);
+    border:2px solid rgba(255,255,255,.18);display:flex;align-items:flex-end;justify-content:center;}
+  .cast .ph{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;opacity:.5;}
+  .cast .ph svg{width:56%;height:56%;}
+  .cast .nm{position:relative;z-index:2;width:100%;text-align:center;padding:8px 4px;
+    font-weight:800;font-size:12px;color:#fff;background:linear-gradient(0deg,rgba(20,8,40,.9),transparent);}
+  .cast:nth-child(1){background:linear-gradient(180deg,#ff9ec4,#c95a97);}
+  .cast:nth-child(2){background:linear-gradient(180deg,#a9c6ff,#5f7fd6);}
+  .cast:nth-child(3){background:linear-gradient(180deg,#ffd39e,#d69a5f);}
+  .cast:nth-child(4){background:linear-gradient(180deg,#c6a9ff,#8a5fd6);}
+  .cast:nth-child(5){background:linear-gradient(180deg,#9effd0,#4fb98f);}
+  .cast:nth-child(6){background:linear-gradient(180deg,#ffb0b0,#d66f6f);}
+  .stage-caption{text-align:center;margin-top:16px;}
+  .stage-caption .cn{font-size:clamp(20px,3vw,34px);font-weight:900;color:#fff;
+    text-shadow:0 0 18px rgba(255,95,158,.7);}
+  .stage-caption .cn em{color:var(--gold);font-style:normal;}
+  .stage-caption .en{color:#e7dcff;margin-top:6px;font-weight:600;font-size:15px;}
+  .ai-note{display:block;text-align:right;margin-top:12px;color:rgba(255,255,255,.7);font-size:12px;font-style:italic;}
 
-  /* scrolling marquee ticker */
-  .ticker{
-    position:relative;z-index:7;background:linear-gradient(90deg,var(--neon-pink),var(--neon-purple));
-    padding:12px 0;overflow:hidden;white-space:nowrap;
-  }
-  .ticker .track{display:inline-block;animation:scroll 24s linear infinite;font-weight:800;letter-spacing:2px;font-size:15px;text-transform:uppercase;}
-  .ticker .track span{margin:0 30px;}
-  @keyframes scroll{from{transform:translateX(0);}to{transform:translateX(-50%);}}
+  /* ============ EVENT ============ */
+  .event-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;}
+  @media(max-width:900px){.event-grid{grid-template-columns:1fr;}}
+  .acts{display:grid;grid-template-columns:1fr 1fr;gap:14px;align-content:start;}
+  @media(max-width:520px){.acts{grid-template-columns:1fr;}}
+  .act{border-radius:16px;padding:20px 16px;text-align:center;border:1px solid var(--line);}
+  .a1{background:var(--pink-soft);}
+  .a2{background:var(--mint-soft);}
+  .a3{background:var(--cream);}
+  .a4{background:var(--lav-soft);}
+  .act .ic{font-size:34px;margin-bottom:8px;}
+  .act h4{font-size:16px;font-weight:900;margin-bottom:6px;}
+  .a1 h4{color:var(--pink-deep);} .a2 h4{color:var(--mint);}
+  .a3 h4{color:#d98a1f;} .a4 h4{color:var(--lav);}
+  .act p{font-size:13px;color:var(--ink-soft);line-height:1.45;}
 
-  /* ============ GENERIC SECTION HEAD ============ */
-  .sec-head{text-align:center;margin-bottom:clamp(36px,5vh,72px);}
-  .sec-head .eyebrow{font-size:14px;font-weight:800;letter-spacing:4px;text-transform:uppercase;color:var(--neon-cyan);margin-bottom:14px;}
-  .sec-head h2{font-size:clamp(32px,5vw,80px);}
-  .sec-head p{margin-top:16px;color:#b9b3cc;font-size:clamp(15px,1.3vw,20px);max-width:760px;margin-left:auto;margin-right:auto;}
+  /* schedule */
+  .sched{border-radius:16px;overflow-x:auto;border:1px solid var(--line);background:#fff;}
+  table{width:100%;min-width:440px;border-collapse:collapse;font-size:13px;}
+  thead th{background:var(--cream);padding:12px 8px;font-weight:900;color:var(--ink);border-bottom:2px solid #f0e2c8;}
+  thead th.slash{background:#fff;color:var(--ink-soft);font-weight:700;text-align:left;padding-left:14px;}
+  tbody td{padding:14px 8px;text-align:center;border-bottom:1px solid var(--line);vertical-align:middle;}
+  tbody td.time{font-weight:800;color:var(--ink);background:#faf7ff;white-space:nowrap;}
+  .cell{border-radius:9px;padding:8px 6px;font-weight:800;line-height:1.3;}
+  .cell small{display:block;font-weight:600;font-size:11px;opacity:.85;margin-top:2px;}
+  .c-shb{background:var(--mint-soft);color:var(--mint);}
+  .c-fh{background:var(--pink-soft);color:var(--pink-deep);}
+  .c-stage-shb{background:#cfeee4;color:#1f8f70;}
+  .c-stage-fh{background:#ffd6e6;color:var(--pink-deep);}
 
-  /* ============ EXPERIENCE GRID ============ */
-  .experience{padding:clamp(80px,11vh,160px) 0;background:
-      radial-gradient(90% 60% at 100% 0%,rgba(139,45,255,.25),transparent 60%),
-      radial-gradient(70% 60% at 0% 100%,rgba(34,224,255,.18),transparent 60%),
-      #08040f;}
-  .exp-grid{
-    display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));
-    gap:clamp(20px,2vw,34px);
-  }
-  .card{
-    position:relative;border-radius:26px;overflow:hidden;min-height:420px;
-    display:flex;flex-direction:column;justify-content:flex-end;padding:34px;
-    border:1px solid rgba(255,255,255,.08);
-    transition:.4s;isolation:isolate;
-  }
-  .card::before{content:"";position:absolute;inset:0;z-index:-2;opacity:.9;}
-  .card::after{content:"";position:absolute;inset:0;z-index:-1;
-    background:linear-gradient(180deg,transparent 30%,rgba(4,3,10,.9));}
-  .card:hover{transform:translateY(-10px);border-color:rgba(34,224,255,.5);box-shadow:0 30px 70px rgba(0,0,0,.6),0 0 40px rgba(255,45,120,.25);}
-  .card .icon{font-size:52px;margin-bottom:16px;filter:drop-shadow(0 0 16px rgba(255,255,255,.4));}
-  .card h3{font-size:clamp(24px,2.2vw,34px);margin-bottom:12px;}
-  .card p{color:#d6d0e6;font-size:16px;}
-  .card .tag{position:absolute;top:22px;left:22px;z-index:2;padding:7px 16px;border-radius:30px;
-    font-size:12px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;background:rgba(0,0,0,.5);border:1px solid rgba(255,255,255,.25);}
-  .c-fan::before{background:radial-gradient(120% 120% at 30% 20%,#ff2d78,#8b2dff);}
-  .c-photo::before{background:radial-gradient(120% 120% at 70% 20%,#22e0ff,#2d5cff);}
-  .c-game::before{background:radial-gradient(120% 120% at 40% 80%,#ffd25a,#ff6a2d);}
-  .c-goods::before{background:radial-gradient(120% 120% at 60% 30%,#8b2dff,#ff2d78);}
+  /* ============ BOOTH PREVIEW ============ */
+  .booth{border-radius:18px;overflow:hidden;position:relative;padding:clamp(16px,2.4vw,24px);
+    background:linear-gradient(120deg,#20112e 0%,#2b1740 45%,#3a1030 100%);}
+  .booth-grid{display:grid;grid-template-columns:1.1fr 1.6fr 1fr;gap:14px;align-items:stretch;}
+  @media(max-width:820px){.booth-grid{grid-template-columns:1fr;}}
+  .screen{border-radius:12px;border:1px solid rgba(255,255,255,.14);position:relative;overflow:hidden;
+    display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;min-height:150px;}
+  .scr-left{background:linear-gradient(160deg,#7a1f2f,#c0392b);}
+  .scr-left .zh{position:absolute;top:12px;left:14px;font-size:15px;letter-spacing:2px;opacity:.85;}
+  .scr-right{background:linear-gradient(160deg,#3a1030,#7a1030);}
+  .scr-right .zh{position:absolute;top:12px;right:14px;font-size:14px;letter-spacing:2px;opacity:.85;text-align:right;}
+  .center-stack{display:flex;flex-direction:column;gap:12px;}
+  .posters{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;}
+  .poster-t{aspect-ratio:3/4;border-radius:8px;border:1px solid rgba(255,255,255,.18);
+    display:flex;align-items:flex-end;justify-content:center;padding:6px 3px;font-size:10px;font-weight:800;color:#fff;
+    background:linear-gradient(180deg,rgba(255,255,255,.05),rgba(0,0,0,.4));}
+  .poster-t:nth-child(1){background:linear-gradient(180deg,#ff9ec4,#8a3a66);}
+  .poster-t:nth-child(2){background:linear-gradient(180deg,#a9c6ff,#3a4f8a);}
+  .poster-t:nth-child(3){background:linear-gradient(180deg,#ffd39e,#8a5f2f);}
+  .poster-t:nth-child(4){background:linear-gradient(180deg,#c6a9ff,#4f3a8a);}
+  .intel-bar{background:#0a4ea3;color:#fff;border-radius:8px;text-align:center;padding:10px;font-weight:900;letter-spacing:3px;}
+  .lantern{position:absolute;width:22px;height:30px;border-radius:8px;background:radial-gradient(circle at 50% 30%,#ffcf6a,#e0761f);
+    box-shadow:0 0 16px rgba(255,150,40,.7);}
+  .booth-tag{position:absolute;top:12px;right:16px;color:rgba(255,255,255,.75);font-size:13px;letter-spacing:2px;}
 
-  /* ============ GOODS / REWARDS ============ */
-  .goods{padding:clamp(80px,11vh,160px) 0;background:
-      linear-gradient(180deg,#08040f,#160829 60%,#08040f);}
-  .goods-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:26px;margin-top:20px;}
-  .goods-item{
-    text-align:center;padding:40px 24px;border-radius:22px;
-    background:linear-gradient(160deg,rgba(255,255,255,.06),rgba(255,255,255,.02));
-    border:1px solid rgba(255,255,255,.1);transition:.35s;position:relative;overflow:hidden;
-  }
-  .goods-item::before{content:"";position:absolute;top:-50%;left:-50%;width:200%;height:200%;
-    background:conic-gradient(from 0deg,transparent,rgba(255,210,90,.18),transparent 30%);
-    animation:spin 6s linear infinite;opacity:0;transition:.4s;}
-  .goods-item:hover::before{opacity:1;}
-  @keyframes spin{to{transform:rotate(360deg);}}
-  .goods-item:hover{transform:translateY(-8px);border-color:var(--gold);}
-  .goods-item .emo{font-size:60px;position:relative;z-index:1;}
-  .goods-item h4{font-size:22px;margin:16px 0 8px;position:relative;z-index:1;}
-  .goods-item p{color:#c3bcd6;font-size:14px;position:relative;z-index:1;}
-  .goods-item .rarity{display:inline-block;margin-top:14px;padding:5px 14px;border-radius:20px;font-size:11px;font-weight:800;letter-spacing:1px;position:relative;z-index:1;}
-  .r-legend{background:linear-gradient(90deg,var(--gold),#ff8a2d);color:#2a1500;}
-  .r-epic{background:linear-gradient(90deg,var(--neon-purple),var(--neon-pink));color:#fff;}
-  .r-rare{background:linear-gradient(90deg,var(--neon-cyan),#2d5cff);color:#04121a;}
+  /* ============ LOCATION ============ */
+  .loc-head{display:flex;flex-wrap:wrap;align-items:baseline;gap:8px 18px;margin-bottom:16px;font-weight:900;}
+  .loc-head .b1{color:var(--purple);font-size:clamp(16px,2vw,22px);}
+  .loc-head .b1 span{color:var(--pink-deep);}
+  .map{position:relative;background:#f6f2fb;border:1px solid var(--line);border-radius:16px;padding:18px;}
+  .map-row{display:grid;grid-template-columns:repeat(7,1fr);gap:8px;margin-bottom:44px;}
+  @media(max-width:720px){.map-row{grid-template-columns:repeat(4,1fr);}}
+  .hall{background:#e7e0f2;border:1px solid #d6cce8;border-radius:9px;text-align:center;
+    padding:16px 4px;font-weight:800;color:#6a6386;font-size:14px;}
+  .hall.ent{background:#fff;border-style:dashed;}
+  .hall.booth{background:linear-gradient(135deg,#d7b3ff,#b98cff);color:#3a2f55;position:relative;}
+  .hall.booth b{display:block;font-size:12px;color:#5a37b0;}
+  .map-bottom{display:grid;grid-template-columns:1fr 3fr 1fr;gap:8px;align-items:end;}
+  .west{display:flex;flex-direction:column;gap:8px;}
+  .east{display:flex;flex-direction:column;gap:8px;align-items:stretch;}
+  .hall.e6{background:linear-gradient(135deg,#c9b3ff,#a98cff);color:#3a2f55;min-height:120px;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;}
+  .bubble{font-weight:900;padding:8px 16px;border-radius:20px 20px 20px 4px;color:#fff;display:inline-block;
+    box-shadow:0 6px 14px rgba(0,0,0,.14);transform:rotate(-4deg);}
+  .bub-booth{background:var(--pink);position:absolute;left:50%;top:calc(100% + 8px);
+    transform:translateX(-50%) rotate(-4deg);font-size:19px;z-index:4;white-space:nowrap;}
+  .bub-more{background:var(--gold);position:absolute;left:calc(100% - 6px);top:calc(100% + 2px);
+    font-size:12px;transform:rotate(6deg);z-index:5;white-space:nowrap;}
+  .bub-fan{background:var(--pink);font-size:18px;border-radius:20px 20px 4px 20px;transform:rotate(4deg);}
 
-  /* ============ STATS STRIP ============ */
-  .stats{padding:clamp(50px,7vh,90px) 0;background:linear-gradient(90deg,#160829,#2a0a3d,#160829);
-    border-top:1px solid rgba(255,255,255,.08);border-bottom:1px solid rgba(255,255,255,.08);}
-  .stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:30px;text-align:center;}
-  .stat .num{font-size:clamp(40px,5.5vw,84px);font-weight:900;
-    background:linear-gradient(120deg,var(--neon-cyan),var(--neon-pink));-webkit-background-clip:text;background-clip:text;color:transparent;}
-  .stat .lbl{margin-top:8px;font-size:15px;letter-spacing:2px;text-transform:uppercase;color:#c9c2dc;font-weight:700;}
-
-  /* ============ SCHEDULE ============ */
-  .schedule{padding:clamp(80px,11vh,160px) 0;background:#08040f;}
-  .timeline{max-width:1000px;margin:0 auto;position:relative;}
-  .timeline::before{content:"";position:absolute;left:120px;top:0;bottom:0;width:3px;
-    background:linear-gradient(180deg,var(--neon-cyan),var(--neon-pink),var(--neon-purple));box-shadow:0 0 14px var(--neon-pink);}
-  .slot{display:grid;grid-template-columns:120px 1fr;gap:40px;padding:22px 0;position:relative;}
-  .slot .time{text-align:right;font-weight:900;font-size:22px;color:var(--gold);padding-top:4px;}
-  .slot .dot{position:absolute;left:113px;top:14px;width:17px;height:17px;border-radius:50%;
-    background:var(--neon-pink);box-shadow:0 0 0 5px rgba(255,45,120,.25),0 0 18px var(--neon-pink);}
-  .slot .body{padding-left:36px;}
-  .slot .body h4{font-size:24px;margin-bottom:6px;}
-  .slot .body p{color:#b9b3cc;font-size:15px;}
-  @media(max-width:640px){
-    .timeline::before{left:60px;}
-    .slot{grid-template-columns:60px 1fr;gap:16px;}
-    .slot .dot{left:53px;}
-    .slot .time{font-size:16px;}
-  }
-
-  /* ============ CTA FOOTER ============ */
-  .final{
-    padding:clamp(90px,14vh,200px) 0;text-align:center;position:relative;overflow:hidden;
-    background:radial-gradient(90% 90% at 50% 100%,rgba(255,45,120,.5),transparent 60%),
-      linear-gradient(180deg,#08040f,#1c0730);
-  }
-  .final h2{font-size:clamp(38px,7vw,120px);margin-bottom:24px;}
-  .final p{color:#d8d2e6;font-size:clamp(16px,1.6vw,24px);margin-bottom:38px;}
-  .foot{padding:40px 0;text-align:center;color:#6f6884;font-size:14px;background:#04030a;border-top:1px solid rgba(255,255,255,.06);}
-  .foot a{color:var(--neon-cyan);text-decoration:none;}
+  /* ============ FOOTER ============ */
+  .foot{margin-top:28px;text-align:center;color:var(--ink-soft);font-size:13px;padding:18px;}
+  .foot .logos{margin-top:12px;display:flex;gap:20px;justify-content:center;align-items:center;flex-wrap:wrap;
+    font-weight:800;color:#8a83a6;}
+  .foot .logos b{color:var(--blue);}
+  .note-strip{background:rgba(255,255,255,.6);border:1px dashed var(--line);border-radius:12px;
+    padding:12px 16px;margin-top:18px;color:var(--ink-soft);font-size:12.5px;text-align:center;}
 </style>
 </head>
 <body>
 
-<!-- TOP BAR -->
-<div class="topbar">
-  <div class="brand"><span class="cj">CHINAJOY</span><span>MAIN STAGE LIVE</span></div>
-  <nav class="nav">
-    <a href="#experience">Experience</a>
-    <a href="#goods">Goods</a>
-    <a href="#schedule">Schedule</a>
-    <a href="#join">Join</a>
-  </nav>
+<div class="bokeh">
+  <span style="width:120px;height:120px;left:6%;top:14%;"></span>
+  <span style="width:80px;height:80px;left:82%;top:10%;animation-delay:2s;"></span>
+  <span style="width:150px;height:150px;left:70%;top:60%;animation-delay:4s;"></span>
+  <span style="width:90px;height:90px;left:10%;top:70%;animation-delay:1s;"></span>
+  <span style="width:60px;height:60px;left:45%;top:30%;animation-delay:3s;"></span>
 </div>
 
-<!-- HERO / MAIN STAGE -->
-<section class="hero">
-  <div class="led-wall"></div>
-  <div class="led-title">FAN&nbsp;MEETING</div>
-  <div class="beams">
-    <div class="beam b1" style="left:22%"></div>
-    <div class="beam b2" style="left:40%"></div>
-    <div class="beam b3" style="left:58%"></div>
-    <div class="beam b4" style="left:76%"></div>
-  </div>
-  <div class="stage-floor"></div>
+<div class="poster">
 
-  <!-- crowd silhouette -->
-  <div class="crowd">
-    <svg viewBox="0 0 1440 220" preserveAspectRatio="none">
-      <path class="g2" d="M0,220 L0,150 Q30,120 60,140 Q90,110 120,135 Q160,105 200,132 Q240,100 280,130 Q320,108 360,134 Q400,102 440,132 Q480,110 520,136 Q560,104 600,130 Q640,108 680,134 Q720,100 760,132 Q800,110 840,136 Q880,102 920,130 Q960,108 1000,134 Q1040,104 1080,132 Q1120,110 1160,136 Q1200,102 1240,130 Q1280,108 1320,134 Q1360,106 1400,132 Q1420,120 1440,150 L1440,220 Z"/>
-      <path class="g1" d="M0,220 L0,180 Q40,150 80,172 Q120,148 160,170 Q200,146 240,168 Q280,150 320,172 Q360,144 400,168 Q440,150 480,170 Q520,146 560,168 Q600,150 640,172 Q680,144 720,166 Q760,150 800,170 Q840,146 880,168 Q920,150 960,172 Q1000,144 1040,166 Q1080,150 1120,170 Q1160,146 1200,168 Q1240,150 1280,170 Q1320,146 1360,168 Q1400,152 1440,178 L1440,220 Z"/>
-    </svg>
-  </div>
-
-  <!-- HERO TEXT -->
-  <div class="hero-content wrap">
-    <span class="kicker">ChinaJoy · Shanghai · Central Main Stage</span>
-    <h1>THE STAR CAST<br>FAN MEETING</h1>
-    <p class="sub">Meet the headline cast live on the grand main stage — fan talks, photo time,<br>mini-games and exclusive goods, surrounded by a roaring crowd of thousands.</p>
-    <div class="cta-row">
-      <a href="#join" class="btn btn-primary">Reserve Your Spot</a>
-      <a href="#schedule" class="btn btn-ghost">View Stage Schedule</a>
-    </div>
-  </div>
-</section>
-
-<!-- TICKER -->
-<div class="ticker">
-  <div class="track">
-    <span>★ LIVE ON MAIN STAGE</span><span>★ FAN TALK &amp; Q&amp;A</span><span>★ PHOTO TIME</span><span>★ STAGE MINI-GAMES</span><span>★ EXCLUSIVE GOODS DROP</span><span>★ MEET THE CAST</span>
-    <span>★ LIVE ON MAIN STAGE</span><span>★ FAN TALK &amp; Q&amp;A</span><span>★ PHOTO TIME</span><span>★ STAGE MINI-GAMES</span><span>★ EXCLUSIVE GOODS DROP</span><span>★ MEET THE CAST</span>
-  </div>
-</div>
-
-<!-- EXPERIENCE -->
-<section class="experience" id="experience">
-  <div class="wrap">
-    <div class="sec-head">
-      <div class="eyebrow">On The Main Stage</div>
-      <h2>Four Ways To <span class="cyan-text">Get Close</span></h2>
-      <p>The whole floor lights up when the cast steps out. Here's everything happening under the giant LED wall.</p>
-    </div>
-    <div class="exp-grid">
-      <div class="card c-fan">
-        <span class="tag">Live Talk</span>
-        <div class="icon">🎤</div>
-        <h3>Fan Meeting</h3>
-        <p>Up-close talk sessions, live Q&amp;A and shout-outs with the headline cast, hosted center stage before thousands of fans.</p>
-      </div>
-      <div class="card c-photo">
-        <span class="tag">Camera Ready</span>
-        <div class="icon">📸</div>
-        <h3>Photo Time</h3>
-        <p>Official on-stage photo moments and group shots. Bright lights, giant screens, and a memory you'll keep forever.</p>
-      </div>
-      <div class="card c-game">
-        <span class="tag">Play To Win</span>
-        <div class="icon">🎮</div>
-        <h3>Stage Mini-Games</h3>
-        <p>Jump on stage and go head-to-head with the cast in quick, high-energy mini-games — winners take home the best goods.</p>
-      </div>
-      <div class="card c-goods">
-        <span class="tag">Free Drops</span>
-        <div class="icon">🎁</div>
-        <h3>Exclusive Goods</h3>
-        <p>Signed prints, limited posters, badge sets and figures — earned through games, photo time and fan-meeting draws.</p>
+  <!-- HEADER -->
+  <header class="header">
+    <div class="brand-title">
+      <div class="st"><span class="spark">✦</span>STORYTACO<span class="spark">✦</span></div>
+      <div class="sub">Booth, Fan Meeting</div>
+      <div class="brand-meta">
+        <span class="cj">CHINAJOY 2026</span>
+        <span class="dv"></span>
+        <span class="date">Jul 31<b>(Fri)</b> – Aug 2<b>(Sun)</b></span>
       </div>
     </div>
-  </div>
-</section>
+    <div class="badges">
+      <div class="badge b-fhuor">Five Hearts Under One Roof <small>2 · FHUOR2</small></div>
+      <div class="badge b-shb">Summer's Heartbeat <small>SHB</small></div>
+    </div>
+  </header>
 
-<!-- STATS -->
-<section class="stats">
-  <div class="wrap">
-    <div class="stats-grid">
-      <div class="stat"><div class="num">8,000+</div><div class="lbl">Live Audience</div></div>
-      <div class="stat"><div class="num">12</div><div class="lbl">Cast Members</div></div>
-      <div class="stat"><div class="num">40M</div><div class="lbl">LED Wall (px)</div></div>
-      <div class="stat"><div class="num">3</div><div class="lbl">Stage Days</div></div>
+  <!-- MAIN STAGE -->
+  <section class="block">
+    <div class="tab t-purple"><span class="di">✦</span> Main Stage</div>
+    <div class="panel">
+      <div class="stage">
+        <div class="stage-top"><span class="stage-badge">2026 ChinaJoy</span></div>
+        <div class="cast-row">
+          <div class="cast"><div class="ph"></div><div class="nm">CAST 01</div></div>
+          <div class="cast"><div class="ph"></div><div class="nm">CAST 02</div></div>
+          <div class="cast"><div class="ph"></div><div class="nm">CAST 03</div></div>
+          <div class="cast"><div class="ph"></div><div class="nm">CAST 04</div></div>
+          <div class="cast"><div class="ph"></div><div class="nm">CAST 05</div></div>
+          <div class="cast"><div class="ph"></div><div class="nm">CAST 06</div></div>
+        </div>
+        <div class="stage-caption">
+          <div class="cn">《阿西美女2》主演见面会 <em>"寓"</em>你相见</div>
+          <div class="en">STORYTACO FMV CAST FAN MEETING · Meet the leading cast live on the ChinaJoy Main Stage</div>
+        </div>
+        <div class="ai-note">※ AI-generated image for illustrative purposes.</div>
+      </div>
+      <div class="note-strip">
+        ★ Cast photo frames above are placeholders — drop in the official cast photos and they slot straight in.
+      </div>
     </div>
-  </div>
-</section>
+  </section>
 
-<!-- GOODS -->
-<section class="goods" id="goods">
-  <div class="wrap">
-    <div class="sec-head">
-      <div class="eyebrow">Win Them On Stage</div>
-      <h2>The <span class="gold-text">Goods Vault</span></h2>
-      <p>Every mini-game, photo session and fan-meeting draw is a chance to walk away with limited-edition merch.</p>
+  <!-- EVENT -->
+  <section class="block">
+    <div class="tab t-pink"><span class="di">✦</span> Event</div>
+    <div class="panel">
+      <div class="event-grid">
+        <div class="acts">
+          <div class="act a1"><div class="ic">✍️</div><h4>Autograph Session</h4><p>Meet the cast and get their autographs!</p></div>
+          <div class="act a2"><div class="ic">📷</div><h4>Quiz Time</h4><p>Answer correctly for awesome prizes!</p></div>
+          <div class="act a3"><div class="ic">📝</div><h4>Message the Beauties</h4><p>Leave a message at our booth and connect with them!</p></div>
+          <div class="act a4"><div class="ic">🎁</div><h4>Storytaco FMV Demo &amp; Goods Gift Counter</h4><p>Play FMVs &amp; get exclusive gifts!</p></div>
+        </div>
+        <div class="sched">
+          <table>
+            <thead>
+              <tr>
+                <th class="slash">TIME&nbsp;\&nbsp;DAY</th>
+                <th>July 31 <small>(Fri)</small></th>
+                <th>August 1 <small>(Sat)</small></th>
+                <th>August 2 <small>(Sun)</small></th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="time">09:30<br>~10:30</td>
+                <td></td>
+                <td><div class="cell c-stage-fh">FHUOR2<small>Fan Event Stage</small></div></td>
+                <td></td>
+              </tr>
+              <tr>
+                <td class="time">11:00<br>~12:00</td>
+                <td><div class="cell c-shb">SHB<small>Autograph Session</small></div></td>
+                <td><div class="cell c-shb">SHB<small>Autograph Session</small></div></td>
+                <td><div class="cell c-fh">FHUOR2<small>Autograph Session</small></div></td>
+              </tr>
+              <tr>
+                <td class="time">13:00<br>~14:00</td>
+                <td><div class="cell c-stage-shb">SHB<small>Fan Event Stage</small></div></td>
+                <td><div class="cell c-fh">FHUOR2<small>Autograph Session</small></div></td>
+                <td></td>
+              </tr>
+              <tr>
+                <td class="time">14:00<br>~15:00</td>
+                <td><div class="cell c-fh">FHUOR2<small>Autograph Session</small></div></td>
+                <td></td>
+                <td></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
     </div>
-    <div class="goods-grid">
-      <div class="goods-item"><div class="emo">🖼️</div><h4>Signed Poster</h4><p>Hand-signed by the full cast, numbered edition of 500.</p><span class="rarity r-legend">Legendary</span></div>
-      <div class="goods-item"><div class="emo">🧸</div><h4>Character Figure</h4><p>Exclusive main-stage figure, ChinaJoy edition only.</p><span class="rarity r-epic">Epic</span></div>
-      <div class="goods-item"><div class="emo">📇</div><h4>Photo Card Set</h4><p>Full collectible set from the on-stage photo time.</p><span class="rarity r-epic">Epic</span></div>
-      <div class="goods-item"><div class="emo">🎽</div><h4>Event Tee</h4><p>Official fan-meeting shirt in stage neon colors.</p><span class="rarity r-rare">Rare</span></div>
-      <div class="goods-item"><div class="emo">📛</div><h4>Badge Pack</h4><p>Enamel badge collection, one per cast member.</p><span class="rarity r-rare">Rare</span></div>
-    </div>
-  </div>
-</section>
+  </section>
 
-<!-- SCHEDULE -->
-<section class="schedule" id="schedule">
-  <div class="wrap">
-    <div class="sec-head">
-      <div class="eyebrow">Main Stage · Daily Run Sheet</div>
-      <h2>Stage <span class="neon-text">Schedule</span></h2>
-      <p>Doors and the crowd fill up fast — arrive early to grab a spot near the front barrier.</p>
+  <!-- BOOTH PREVIEW -->
+  <section class="block">
+    <div class="tab t-mag"><span class="di">✦</span> Booth Preview</div>
+    <div class="panel">
+      <div class="booth">
+        <div class="booth-tag">水墨志怪 · 相约申城</div>
+        <div class="booth-grid">
+          <div class="screen scr-left"><span class="zh">星源全视频</span>STORYTACO FMV</div>
+          <div class="center-stack">
+            <div class="posters">
+              <div class="poster-t">阿西美女2</div>
+              <div class="poster-t">星巴美女</div>
+              <div class="poster-t">FHUOR2</div>
+              <div class="poster-t">Summer's<br>Heartbeat</div>
+            </div>
+            <div class="intel-bar">intel · DEMO STATIONS</div>
+          </div>
+          <div class="screen scr-right"><span class="zh">相约申城</span>INK MONSTERS
+            <div class="lantern" style="right:14px;top:40px;"></div>
+            <div class="lantern" style="right:14px;top:78px;"></div>
+            <div class="lantern" style="right:14px;top:116px;"></div>
+          </div>
+        </div>
+        <div class="ai-note">※ AI-generated image for illustrative purposes.</div>
+      </div>
     </div>
-    <div class="timeline">
-      <div class="slot"><div class="time">13:00</div><div class="dot"></div><div class="body"><h4>Doors &amp; Warm-Up</h4><p>Crowd fills the floor as the LED wall lights up and the host opens the stage.</p></div></div>
-      <div class="slot"><div class="time">14:00</div><div class="dot"></div><div class="body"><h4>Cast Entrance &amp; Fan Talk</h4><p>The headline cast walks out for the opening fan-meeting talk and live Q&amp;A.</p></div></div>
-      <div class="slot"><div class="time">15:00</div><div class="dot"></div><div class="body"><h4>Stage Mini-Games</h4><p>Fans join the cast on stage for fast, funny mini-games — goods on the line.</p></div></div>
-      <div class="slot"><div class="time">16:00</div><div class="dot"></div><div class="body"><h4>Photo Time</h4><p>Official group and on-stage photo moments under full stage lighting.</p></div></div>
-      <div class="slot"><div class="time">16:45</div><div class="dot"></div><div class="body"><h4>Grand Goods Drop</h4><p>The finale draw — signed posters, figures and the full goods vault handed out.</p></div></div>
-    </div>
-  </div>
-</section>
+  </section>
 
-<!-- FINAL CTA -->
-<section class="final" id="join">
-  <div class="wrap">
-    <h2>Be There When<br>The Lights Go Up.</h2>
-    <p>Reserve a main-stage pass and stand in the roaring crowd of thousands.</p>
-    <div class="cta-row">
-      <a href="#" class="btn btn-primary">Get Your Pass</a>
-      <a href="#" class="btn btn-ghost">Add To Calendar</a>
+  <!-- LOCATION -->
+  <section class="block">
+    <div class="tab t-purple"><span class="di">✦</span> Location Info</div>
+    <div class="panel">
+      <div class="loc-head">
+        <span class="b1">Booth – <span>N1 G102</span></span>
+        <span class="b1">|</span>
+        <span class="b1">Fan Meeting – <span>E6 ChinaJoy Main Stage</span></span>
+      </div>
+      <div class="map">
+        <div class="map-row">
+          <div class="hall ent">Entrance 2</div>
+          <div class="hall booth">N1<b>G102</b>
+            <div class="bubble bub-booth">Our Booth</div>
+            <div class="bubble bub-more">More events!</div>
+          </div>
+          <div class="hall">N2</div>
+          <div class="hall">N3</div>
+          <div class="hall">N4</div>
+          <div class="hall">N5</div>
+          <div class="hall ent">Entrance 3</div>
+        </div>
+        <div class="map-bottom">
+          <div class="west">
+            <div class="hall">W5</div>
+            <div class="hall">W4</div>
+          </div>
+          <div></div>
+          <div class="east">
+            <div class="hall">E7</div>
+            <div class="hall e6">
+              <div class="bubble bub-fan">Fan Meeting</div>
+              <div style="margin-top:8px;font-weight:900;">E6 · Main Stage</div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
-  </div>
-</section>
+  </section>
 
-<div class="foot">
-  ChinaJoy Main Stage · Star Cast Fan Meeting — Fan Talk · Photo Time · Mini-Games · Exclusive Goods<br>
-  <a href="#">Official Site</a> &nbsp;·&nbsp; <a href="#">Schedule</a> &nbsp;·&nbsp; <a href="#">Contact</a>
+  <!-- FOOTER -->
+  <div class="foot">
+    ※ Program and schedule are subject to change depending on on-site conditions.
+    <div class="logos"><span>顺网科技 Shunwang</span> · <span>CHINAJOY</span> · <b>STORYTACO</b></div>
+  </div>
+
 </div>
 
 <script>
-  // scatter twinkling phone lights across the crowd
-  (function(){
-    const hero = document.querySelector('.hero');
-    for(let i=0;i<60;i++){
-      const p=document.createElement('div');
-      p.className='phone';
-      p.style.left=(Math.random()*100)+'%';
-      p.style.bottom=(4+Math.random()*18)+'%';
-      p.style.animationDelay=(Math.random()*3)+'s';
-      const hue=[ '255,45,120','34,224,255','255,210,90','139,45,255' ][Math.floor(Math.random()*4)];
-      p.style.boxShadow='0 0 10px 3px rgba('+hue+',.9)';
-      hero.appendChild(p);
-    }
-  })();
+  // inject a simple person silhouette into each cast placeholder
+  var sil='<svg viewBox="0 0 64 64" fill="rgba(255,255,255,.85)" xmlns="http://www.w3.org/2000/svg"><circle cx="32" cy="22" r="12"/><path d="M10 60c0-13 10-22 22-22s22 9 22 22z"/></svg>';
+  document.querySelectorAll('.cast .ph').forEach(function(el){el.innerHTML=sil;});
 </script>
 </body>
 </html>
