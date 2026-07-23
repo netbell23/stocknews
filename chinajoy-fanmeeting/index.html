@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ChinaJoy Main Stage — Star Cast Fan Meeting</title>
+<style>
+  :root{
+    --neon-pink:#ff2d78;
+    --neon-cyan:#22e0ff;
+    --neon-purple:#8b2dff;
+    --gold:#ffd25a;
+    --ink:#04030a;
+    --stage-glow:rgba(255,45,120,.55);
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    font-family:"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+    background:var(--ink);
+    color:#fff;
+    overflow-x:hidden;
+    line-height:1.5;
+  }
+  h1,h2,h3{font-weight:900;letter-spacing:-.5px;line-height:1.02;}
+  section{position:relative;}
+  .wrap{max-width:2200px;margin:0 auto;padding:0 clamp(20px,4vw,90px);}
+  .neon-text{
+    text-shadow:0 0 12px var(--neon-pink),0 0 34px rgba(255,45,120,.6);
+  }
+  .cyan-text{color:var(--neon-cyan);text-shadow:0 0 14px rgba(34,224,255,.7);}
+  .gold-text{color:var(--gold);text-shadow:0 0 16px rgba(255,210,90,.7);}
+
+  /* ============ TOP BAR ============ */
+  .topbar{
+    position:fixed;top:0;left:0;right:0;z-index:100;
+    display:flex;align-items:center;justify-content:space-between;
+    padding:14px clamp(20px,4vw,70px);
+    background:linear-gradient(180deg,rgba(4,3,10,.92),rgba(4,3,10,0));
+    backdrop-filter:blur(6px);
+  }
+  .brand{display:flex;align-items:center;gap:14px;font-weight:900;font-size:clamp(16px,1.5vw,24px);}
+  .brand .cj{
+    background:linear-gradient(135deg,var(--neon-pink),var(--neon-purple));
+    padding:6px 14px;border-radius:10px;letter-spacing:1px;
+    box-shadow:0 0 22px var(--stage-glow);
+  }
+  .nav{display:flex;gap:clamp(14px,2vw,38px);font-weight:700;font-size:15px;}
+  .nav a{color:#d8d3e8;text-decoration:none;transition:.25s;text-transform:uppercase;letter-spacing:1px;}
+  .nav a:hover{color:var(--neon-cyan);text-shadow:0 0 12px var(--neon-cyan);}
+  @media(max-width:820px){.nav{display:none;}}
+
+  /* ============ HERO / MAIN STAGE ============ */
+  .hero{
+    height:100vh;min-height:760px;
+    display:flex;flex-direction:column;justify-content:flex-end;
+    overflow:hidden;
+    background:
+      radial-gradient(120% 90% at 50% 8%,rgba(139,45,255,.55),transparent 55%),
+      radial-gradient(80% 60% at 50% 0%,rgba(255,45,120,.5),transparent 60%),
+      linear-gradient(180deg,#12061f 0%,#1c0730 40%,#070312 100%);
+  }
+  /* moving spotlight beams */
+  .beams{position:absolute;inset:0;overflow:hidden;pointer-events:none;}
+  .beam{
+    position:absolute;top:-25%;left:50%;
+    width:14vw;height:150%;
+    background:linear-gradient(180deg,rgba(255,255,255,.28),rgba(255,45,120,.05) 60%,transparent);
+    transform-origin:top center;
+    filter:blur(6px);
+    mix-blend-mode:screen;
+  }
+  .beam.b1{--c:var(--neon-cyan);background:linear-gradient(180deg,rgba(34,224,255,.35),transparent 65%);animation:sweep1 7s ease-in-out infinite;}
+  .beam.b2{background:linear-gradient(180deg,rgba(255,45,120,.35),transparent 65%);animation:sweep2 9s ease-in-out infinite;}
+  .beam.b3{background:linear-gradient(180deg,rgba(139,45,255,.35),transparent 65%);animation:sweep3 11s ease-in-out infinite;}
+  .beam.b4{background:linear-gradient(180deg,rgba(255,210,90,.3),transparent 65%);animation:sweep1 8s ease-in-out infinite reverse;}
+  @keyframes sweep1{0%,100%{transform:translateX(-50%) rotate(-22deg);}50%{transform:translateX(-50%) rotate(16deg);}}
+  @keyframes sweep2{0%,100%{transform:translateX(-50%) rotate(20deg);}50%{transform:translateX(-50%) rotate(-18deg);}}
+  @keyframes sweep3{0%,100%{transform:translateX(-50%) rotate(-8deg);}50%{transform:translateX(-50%) rotate(28deg);}}
+
+  /* LED backdrop grid */
+  .led-wall{
+    position:absolute;top:0;left:0;right:0;height:62%;
+    background:
+      repeating-linear-gradient(90deg,rgba(34,224,255,.05) 0 2px,transparent 2px 40px),
+      repeating-linear-gradient(0deg,rgba(255,45,120,.05) 0 2px,transparent 2px 40px);
+    mask:linear-gradient(180deg,#000 40%,transparent);
+    opacity:.6;
+  }
+  .led-title{
+    position:absolute;top:16%;left:0;right:0;text-align:center;
+    font-size:clamp(40px,9vw,160px);font-weight:900;
+    color:transparent;-webkit-text-stroke:2px rgba(255,255,255,.14);
+    letter-spacing:4px;user-select:none;
+  }
+
+  /* stage floor */
+  .stage-floor{
+    position:absolute;bottom:0;left:0;right:0;height:30%;
+    background:linear-gradient(180deg,transparent,rgba(255,45,120,.18) 40%,rgba(139,45,255,.35));
+    transform:perspective(600px) rotateX(48deg);
+    transform-origin:bottom;
+    box-shadow:0 -30px 90px rgba(255,45,120,.4);
+  }
+  .stage-floor::before{
+    content:"";position:absolute;inset:0;
+    background:
+      repeating-linear-gradient(90deg,rgba(34,224,255,.25) 0 2px,transparent 2px 90px),
+      repeating-linear-gradient(0deg,rgba(255,255,255,.12) 0 2px,transparent 2px 70px);
+  }
+
+  /* crowd silhouette */
+  .crowd{position:absolute;bottom:0;left:0;right:0;height:26%;z-index:3;}
+  .crowd svg{width:100%;height:100%;display:block;}
+  .crowd .g1{fill:#05020c;}
+  .crowd .g2{fill:#0c0518;}
+  /* phone lights */
+  .phone{position:absolute;bottom:12%;width:5px;height:5px;border-radius:50%;
+    background:#fff;box-shadow:0 0 10px 3px rgba(255,255,255,.9);z-index:4;
+    animation:twinkle 3s ease-in-out infinite;}
+  @keyframes twinkle{0%,100%{opacity:.25;transform:translateY(0);}50%{opacity:1;transform:translateY(-6px);}}
+
+  .hero-content{position:relative;z-index:6;text-align:center;padding-bottom:clamp(40px,9vh,120px);}
+  .kicker{
+    display:inline-block;margin-bottom:22px;padding:9px 22px;border-radius:40px;
+    border:1px solid rgba(34,224,255,.5);background:rgba(34,224,255,.08);
+    font-size:clamp(12px,1.1vw,16px);font-weight:800;letter-spacing:3px;text-transform:uppercase;
+    color:var(--neon-cyan);box-shadow:0 0 26px rgba(34,224,255,.35);
+  }
+  .hero h1{
+    font-size:clamp(46px,8.5vw,150px);
+    background:linear-gradient(120deg,#fff 20%,var(--neon-pink) 55%,var(--neon-cyan));
+    -webkit-background-clip:text;background-clip:text;color:transparent;
+    filter:drop-shadow(0 0 40px rgba(255,45,120,.5));
+  }
+  .hero .sub{
+    margin-top:20px;font-size:clamp(16px,1.8vw,30px);font-weight:600;color:#e9e4fb;
+    text-shadow:0 2px 20px rgba(0,0,0,.7);
+  }
+  .cta-row{margin-top:38px;display:flex;gap:20px;justify-content:center;flex-wrap:wrap;}
+  .btn{
+    padding:17px 40px;border-radius:50px;font-weight:800;font-size:17px;text-decoration:none;
+    text-transform:uppercase;letter-spacing:1.5px;transition:.3s;cursor:pointer;border:none;
+  }
+  .btn-primary{
+    background:linear-gradient(135deg,var(--neon-pink),var(--neon-purple));color:#fff;
+    box-shadow:0 0 30px var(--stage-glow);
+  }
+  .btn-primary:hover{transform:translateY(-3px) scale(1.03);box-shadow:0 0 50px var(--stage-glow);}
+  .btn-ghost{background:rgba(255,255,255,.06);color:#fff;border:1.5px solid rgba(255,255,255,.35);}
+  .btn-ghost:hover{border-color:var(--neon-cyan);color:var(--neon-cyan);}
+
+  /* scrolling marquee ticker */
+  .ticker{
+    position:relative;z-index:7;background:linear-gradient(90deg,var(--neon-pink),var(--neon-purple));
+    padding:12px 0;overflow:hidden;white-space:nowrap;
+  }
+  .ticker .track{display:inline-block;animation:scroll 24s linear infinite;font-weight:800;letter-spacing:2px;font-size:15px;text-transform:uppercase;}
+  .ticker .track span{margin:0 30px;}
+  @keyframes scroll{from{transform:translateX(0);}to{transform:translateX(-50%);}}
+
+  /* ============ GENERIC SECTION HEAD ============ */
+  .sec-head{text-align:center;margin-bottom:clamp(36px,5vh,72px);}
+  .sec-head .eyebrow{font-size:14px;font-weight:800;letter-spacing:4px;text-transform:uppercase;color:var(--neon-cyan);margin-bottom:14px;}
+  .sec-head h2{font-size:clamp(32px,5vw,80px);}
+  .sec-head p{margin-top:16px;color:#b9b3cc;font-size:clamp(15px,1.3vw,20px);max-width:760px;margin-left:auto;margin-right:auto;}
+
+  /* ============ EXPERIENCE GRID ============ */
+  .experience{padding:clamp(80px,11vh,160px) 0;background:
+      radial-gradient(90% 60% at 100% 0%,rgba(139,45,255,.25),transparent 60%),
+      radial-gradient(70% 60% at 0% 100%,rgba(34,224,255,.18),transparent 60%),
+      #08040f;}
+  .exp-grid{
+    display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));
+    gap:clamp(20px,2vw,34px);
+  }
+  .card{
+    position:relative;border-radius:26px;overflow:hidden;min-height:420px;
+    display:flex;flex-direction:column;justify-content:flex-end;padding:34px;
+    border:1px solid rgba(255,255,255,.08);
+    transition:.4s;isolation:isolate;
+  }
+  .card::before{content:"";position:absolute;inset:0;z-index:-2;opacity:.9;}
+  .card::after{content:"";position:absolute;inset:0;z-index:-1;
+    background:linear-gradient(180deg,transparent 30%,rgba(4,3,10,.9));}
+  .card:hover{transform:translateY(-10px);border-color:rgba(34,224,255,.5);box-shadow:0 30px 70px rgba(0,0,0,.6),0 0 40px rgba(255,45,120,.25);}
+  .card .icon{font-size:52px;margin-bottom:16px;filter:drop-shadow(0 0 16px rgba(255,255,255,.4));}
+  .card h3{font-size:clamp(24px,2.2vw,34px);margin-bottom:12px;}
+  .card p{color:#d6d0e6;font-size:16px;}
+  .card .tag{position:absolute;top:22px;left:22px;z-index:2;padding:7px 16px;border-radius:30px;
+    font-size:12px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;background:rgba(0,0,0,.5);border:1px solid rgba(255,255,255,.25);}
+  .c-fan::before{background:radial-gradient(120% 120% at 30% 20%,#ff2d78,#8b2dff);}
+  .c-photo::before{background:radial-gradient(120% 120% at 70% 20%,#22e0ff,#2d5cff);}
+  .c-game::before{background:radial-gradient(120% 120% at 40% 80%,#ffd25a,#ff6a2d);}
+  .c-goods::before{background:radial-gradient(120% 120% at 60% 30%,#8b2dff,#ff2d78);}
+
+  /* ============ GOODS / REWARDS ============ */
+  .goods{padding:clamp(80px,11vh,160px) 0;background:
+      linear-gradient(180deg,#08040f,#160829 60%,#08040f);}
+  .goods-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:26px;margin-top:20px;}
+  .goods-item{
+    text-align:center;padding:40px 24px;border-radius:22px;
+    background:linear-gradient(160deg,rgba(255,255,255,.06),rgba(255,255,255,.02));
+    border:1px solid rgba(255,255,255,.1);transition:.35s;position:relative;overflow:hidden;
+  }
+  .goods-item::before{content:"";position:absolute;top:-50%;left:-50%;width:200%;height:200%;
+    background:conic-gradient(from 0deg,transparent,rgba(255,210,90,.18),transparent 30%);
+    animation:spin 6s linear infinite;opacity:0;transition:.4s;}
+  .goods-item:hover::before{opacity:1;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+  .goods-item:hover{transform:translateY(-8px);border-color:var(--gold);}
+  .goods-item .emo{font-size:60px;position:relative;z-index:1;}
+  .goods-item h4{font-size:22px;margin:16px 0 8px;position:relative;z-index:1;}
+  .goods-item p{color:#c3bcd6;font-size:14px;position:relative;z-index:1;}
+  .goods-item .rarity{display:inline-block;margin-top:14px;padding:5px 14px;border-radius:20px;font-size:11px;font-weight:800;letter-spacing:1px;position:relative;z-index:1;}
+  .r-legend{background:linear-gradient(90deg,var(--gold),#ff8a2d);color:#2a1500;}
+  .r-epic{background:linear-gradient(90deg,var(--neon-purple),var(--neon-pink));color:#fff;}
+  .r-rare{background:linear-gradient(90deg,var(--neon-cyan),#2d5cff);color:#04121a;}
+
+  /* ============ STATS STRIP ============ */
+  .stats{padding:clamp(50px,7vh,90px) 0;background:linear-gradient(90deg,#160829,#2a0a3d,#160829);
+    border-top:1px solid rgba(255,255,255,.08);border-bottom:1px solid rgba(255,255,255,.08);}
+  .stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:30px;text-align:center;}
+  .stat .num{font-size:clamp(40px,5.5vw,84px);font-weight:900;
+    background:linear-gradient(120deg,var(--neon-cyan),var(--neon-pink));-webkit-background-clip:text;background-clip:text;color:transparent;}
+  .stat .lbl{margin-top:8px;font-size:15px;letter-spacing:2px;text-transform:uppercase;color:#c9c2dc;font-weight:700;}
+
+  /* ============ SCHEDULE ============ */
+  .schedule{padding:clamp(80px,11vh,160px) 0;background:#08040f;}
+  .timeline{max-width:1000px;margin:0 auto;position:relative;}
+  .timeline::before{content:"";position:absolute;left:120px;top:0;bottom:0;width:3px;
+    background:linear-gradient(180deg,var(--neon-cyan),var(--neon-pink),var(--neon-purple));box-shadow:0 0 14px var(--neon-pink);}
+  .slot{display:grid;grid-template-columns:120px 1fr;gap:40px;padding:22px 0;position:relative;}
+  .slot .time{text-align:right;font-weight:900;font-size:22px;color:var(--gold);padding-top:4px;}
+  .slot .dot{position:absolute;left:113px;top:14px;width:17px;height:17px;border-radius:50%;
+    background:var(--neon-pink);box-shadow:0 0 0 5px rgba(255,45,120,.25),0 0 18px var(--neon-pink);}
+  .slot .body{padding-left:36px;}
+  .slot .body h4{font-size:24px;margin-bottom:6px;}
+  .slot .body p{color:#b9b3cc;font-size:15px;}
+  @media(max-width:640px){
+    .timeline::before{left:60px;}
+    .slot{grid-template-columns:60px 1fr;gap:16px;}
+    .slot .dot{left:53px;}
+    .slot .time{font-size:16px;}
+  }
+
+  /* ============ CTA FOOTER ============ */
+  .final{
+    padding:clamp(90px,14vh,200px) 0;text-align:center;position:relative;overflow:hidden;
+    background:radial-gradient(90% 90% at 50% 100%,rgba(255,45,120,.5),transparent 60%),
+      linear-gradient(180deg,#08040f,#1c0730);
+  }
+  .final h2{font-size:clamp(38px,7vw,120px);margin-bottom:24px;}
+  .final p{color:#d8d2e6;font-size:clamp(16px,1.6vw,24px);margin-bottom:38px;}
+  .foot{padding:40px 0;text-align:center;color:#6f6884;font-size:14px;background:#04030a;border-top:1px solid rgba(255,255,255,.06);}
+  .foot a{color:var(--neon-cyan);text-decoration:none;}
+</style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<div class="topbar">
+  <div class="brand"><span class="cj">CHINAJOY</span><span>MAIN STAGE LIVE</span></div>
+  <nav class="nav">
+    <a href="#experience">Experience</a>
+    <a href="#goods">Goods</a>
+    <a href="#schedule">Schedule</a>
+    <a href="#join">Join</a>
+  </nav>
+</div>
+
+<!-- HERO / MAIN STAGE -->
+<section class="hero">
+  <div class="led-wall"></div>
+  <div class="led-title">FAN&nbsp;MEETING</div>
+  <div class="beams">
+    <div class="beam b1" style="left:22%"></div>
+    <div class="beam b2" style="left:40%"></div>
+    <div class="beam b3" style="left:58%"></div>
+    <div class="beam b4" style="left:76%"></div>
+  </div>
+  <div class="stage-floor"></div>
+
+  <!-- crowd silhouette -->
+  <div class="crowd">
+    <svg viewBox="0 0 1440 220" preserveAspectRatio="none">
+      <path class="g2" d="M0,220 L0,150 Q30,120 60,140 Q90,110 120,135 Q160,105 200,132 Q240,100 280,130 Q320,108 360,134 Q400,102 440,132 Q480,110 520,136 Q560,104 600,130 Q640,108 680,134 Q720,100 760,132 Q800,110 840,136 Q880,102 920,130 Q960,108 1000,134 Q1040,104 1080,132 Q1120,110 1160,136 Q1200,102 1240,130 Q1280,108 1320,134 Q1360,106 1400,132 Q1420,120 1440,150 L1440,220 Z"/>
+      <path class="g1" d="M0,220 L0,180 Q40,150 80,172 Q120,148 160,170 Q200,146 240,168 Q280,150 320,172 Q360,144 400,168 Q440,150 480,170 Q520,146 560,168 Q600,150 640,172 Q680,144 720,166 Q760,150 800,170 Q840,146 880,168 Q920,150 960,172 Q1000,144 1040,166 Q1080,150 1120,170 Q1160,146 1200,168 Q1240,150 1280,170 Q1320,146 1360,168 Q1400,152 1440,178 L1440,220 Z"/>
+    </svg>
+  </div>
+
+  <!-- HERO TEXT -->
+  <div class="hero-content wrap">
+    <span class="kicker">ChinaJoy · Shanghai · Central Main Stage</span>
+    <h1>THE STAR CAST<br>FAN MEETING</h1>
+    <p class="sub">Meet the headline cast live on the grand main stage — fan talks, photo time,<br>mini-games and exclusive goods, surrounded by a roaring crowd of thousands.</p>
+    <div class="cta-row">
+      <a href="#join" class="btn btn-primary">Reserve Your Spot</a>
+      <a href="#schedule" class="btn btn-ghost">View Stage Schedule</a>
+    </div>
+  </div>
+</section>
+
+<!-- TICKER -->
+<div class="ticker">
+  <div class="track">
+    <span>★ LIVE ON MAIN STAGE</span><span>★ FAN TALK &amp; Q&amp;A</span><span>★ PHOTO TIME</span><span>★ STAGE MINI-GAMES</span><span>★ EXCLUSIVE GOODS DROP</span><span>★ MEET THE CAST</span>
+    <span>★ LIVE ON MAIN STAGE</span><span>★ FAN TALK &amp; Q&amp;A</span><span>★ PHOTO TIME</span><span>★ STAGE MINI-GAMES</span><span>★ EXCLUSIVE GOODS DROP</span><span>★ MEET THE CAST</span>
+  </div>
+</div>
+
+<!-- EXPERIENCE -->
+<section class="experience" id="experience">
+  <div class="wrap">
+    <div class="sec-head">
+      <div class="eyebrow">On The Main Stage</div>
+      <h2>Four Ways To <span class="cyan-text">Get Close</span></h2>
+      <p>The whole floor lights up when the cast steps out. Here's everything happening under the giant LED wall.</p>
+    </div>
+    <div class="exp-grid">
+      <div class="card c-fan">
+        <span class="tag">Live Talk</span>
+        <div class="icon">🎤</div>
+        <h3>Fan Meeting</h3>
+        <p>Up-close talk sessions, live Q&amp;A and shout-outs with the headline cast, hosted center stage before thousands of fans.</p>
+      </div>
+      <div class="card c-photo">
+        <span class="tag">Camera Ready</span>
+        <div class="icon">📸</div>
+        <h3>Photo Time</h3>
+        <p>Official on-stage photo moments and group shots. Bright lights, giant screens, and a memory you'll keep forever.</p>
+      </div>
+      <div class="card c-game">
+        <span class="tag">Play To Win</span>
+        <div class="icon">🎮</div>
+        <h3>Stage Mini-Games</h3>
+        <p>Jump on stage and go head-to-head with the cast in quick, high-energy mini-games — winners take home the best goods.</p>
+      </div>
+      <div class="card c-goods">
+        <span class="tag">Free Drops</span>
+        <div class="icon">🎁</div>
+        <h3>Exclusive Goods</h3>
+        <p>Signed prints, limited posters, badge sets and figures — earned through games, photo time and fan-meeting draws.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- STATS -->
+<section class="stats">
+  <div class="wrap">
+    <div class="stats-grid">
+      <div class="stat"><div class="num">8,000+</div><div class="lbl">Live Audience</div></div>
+      <div class="stat"><div class="num">12</div><div class="lbl">Cast Members</div></div>
+      <div class="stat"><div class="num">40M</div><div class="lbl">LED Wall (px)</div></div>
+      <div class="stat"><div class="num">3</div><div class="lbl">Stage Days</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- GOODS -->
+<section class="goods" id="goods">
+  <div class="wrap">
+    <div class="sec-head">
+      <div class="eyebrow">Win Them On Stage</div>
+      <h2>The <span class="gold-text">Goods Vault</span></h2>
+      <p>Every mini-game, photo session and fan-meeting draw is a chance to walk away with limited-edition merch.</p>
+    </div>
+    <div class="goods-grid">
+      <div class="goods-item"><div class="emo">🖼️</div><h4>Signed Poster</h4><p>Hand-signed by the full cast, numbered edition of 500.</p><span class="rarity r-legend">Legendary</span></div>
+      <div class="goods-item"><div class="emo">🧸</div><h4>Character Figure</h4><p>Exclusive main-stage figure, ChinaJoy edition only.</p><span class="rarity r-epic">Epic</span></div>
+      <div class="goods-item"><div class="emo">📇</div><h4>Photo Card Set</h4><p>Full collectible set from the on-stage photo time.</p><span class="rarity r-epic">Epic</span></div>
+      <div class="goods-item"><div class="emo">🎽</div><h4>Event Tee</h4><p>Official fan-meeting shirt in stage neon colors.</p><span class="rarity r-rare">Rare</span></div>
+      <div class="goods-item"><div class="emo">📛</div><h4>Badge Pack</h4><p>Enamel badge collection, one per cast member.</p><span class="rarity r-rare">Rare</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- SCHEDULE -->
+<section class="schedule" id="schedule">
+  <div class="wrap">
+    <div class="sec-head">
+      <div class="eyebrow">Main Stage · Daily Run Sheet</div>
+      <h2>Stage <span class="neon-text">Schedule</span></h2>
+      <p>Doors and the crowd fill up fast — arrive early to grab a spot near the front barrier.</p>
+    </div>
+    <div class="timeline">
+      <div class="slot"><div class="time">13:00</div><div class="dot"></div><div class="body"><h4>Doors &amp; Warm-Up</h4><p>Crowd fills the floor as the LED wall lights up and the host opens the stage.</p></div></div>
+      <div class="slot"><div class="time">14:00</div><div class="dot"></div><div class="body"><h4>Cast Entrance &amp; Fan Talk</h4><p>The headline cast walks out for the opening fan-meeting talk and live Q&amp;A.</p></div></div>
+      <div class="slot"><div class="time">15:00</div><div class="dot"></div><div class="body"><h4>Stage Mini-Games</h4><p>Fans join the cast on stage for fast, funny mini-games — goods on the line.</p></div></div>
+      <div class="slot"><div class="time">16:00</div><div class="dot"></div><div class="body"><h4>Photo Time</h4><p>Official group and on-stage photo moments under full stage lighting.</p></div></div>
+      <div class="slot"><div class="time">16:45</div><div class="dot"></div><div class="body"><h4>Grand Goods Drop</h4><p>The finale draw — signed posters, figures and the full goods vault handed out.</p></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- FINAL CTA -->
+<section class="final" id="join">
+  <div class="wrap">
+    <h2>Be There When<br>The Lights Go Up.</h2>
+    <p>Reserve a main-stage pass and stand in the roaring crowd of thousands.</p>
+    <div class="cta-row">
+      <a href="#" class="btn btn-primary">Get Your Pass</a>
+      <a href="#" class="btn btn-ghost">Add To Calendar</a>
+    </div>
+  </div>
+</section>
+
+<div class="foot">
+  ChinaJoy Main Stage · Star Cast Fan Meeting — Fan Talk · Photo Time · Mini-Games · Exclusive Goods<br>
+  <a href="#">Official Site</a> &nbsp;·&nbsp; <a href="#">Schedule</a> &nbsp;·&nbsp; <a href="#">Contact</a>
+</div>
+
+<script>
+  // scatter twinkling phone lights across the crowd
+  (function(){
+    const hero = document.querySelector('.hero');
+    for(let i=0;i<60;i++){
+      const p=document.createElement('div');
+      p.className='phone';
+      p.style.left=(Math.random()*100)+'%';
+      p.style.bottom=(4+Math.random()*18)+'%';
+      p.style.animationDelay=(Math.random()*3)+'s';
+      const hue=[ '255,45,120','34,224,255','255,210,90','139,45,255' ][Math.floor(Math.random()*4)];
+      p.style.boxShadow='0 0 10px 3px rgba('+hue+',.9)';
+      hero.appendChild(p);
+    }
+  })();
+</script>
+</body>
+</html>
