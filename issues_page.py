@@ -40,23 +40,27 @@ def generate_issues_html(data: dict, out_path: str) -> str:
     else:
         earnings_html = '<p class="empty">향후 90일 내 예정된 실적 발표가 없습니다.</p>'
 
-    # 뉴스 섹션
-    news_sections = []
-    for sec in data["news"]:
-        if not sec["items"]:
-            continue
-        lis = []
-        for it in sec["items"]:
-            meta = " · ".join(x for x in [_esc(it["source"]), _esc(it["time"])] if x)
-            lis.append(
-                f'<li><a href="{_esc(it["link"])}" target="_blank" rel="noopener">'
-                f'{_esc(it["title"])}</a><span class="meta">{meta}</span></li>'
+    # 뉴스/동향 섹션 렌더러
+    def _news_blocks(sections):
+        blocks = []
+        for sec in sections:
+            if not sec["items"]:
+                continue
+            lis = []
+            for it in sec["items"]:
+                meta = " · ".join(x for x in [_esc(it["source"]), _esc(it["time"])] if x)
+                lis.append(
+                    f'<li><a href="{_esc(it["link"])}" target="_blank" rel="noopener">'
+                    f'{_esc(it["title"])}</a><span class="meta">{meta}</span></li>'
+                )
+            blocks.append(
+                f'<section class="newsblock"><h3>{_esc(sec["category"])}</h3>'
+                f'<ul class="news">{"".join(lis)}</ul></section>'
             )
-        news_sections.append(
-            f'<section class="newsblock"><h3>{_esc(sec["category"])}</h3>'
-            f'<ul class="news">{"".join(lis)}</ul></section>'
-        )
-    news_html = "".join(news_sections)
+        return "".join(blocks)
+
+    news_html = _news_blocks(data["news"])
+    trends_html = _news_blocks(data.get("trends", []))
 
     # 제작지원 공고 (KOCCA/NIPA/RAPA)
     notices = data.get("notices") or []
@@ -144,6 +148,11 @@ def generate_issues_html(data: dict, out_path: str) -> str:
     <section class="box">
       <h2>🏛️ 영상·게임·AI 제작지원 공고 <small style="color:var(--sub);font-size:12px;font-weight:400">KOCCA · NIPA · RAPA</small></h2>
       {notices_html}
+    </section>
+
+    <section class="box">
+      <h2>🚀 최신동향 <small style="color:var(--sub);font-size:12px;font-weight:400">AI·반도체 · 게임·콘텐츠 · 내 종목 · IT·스타트업</small></h2>
+      {trends_html}
     </section>
 
     <section class="box">

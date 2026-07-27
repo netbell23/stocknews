@@ -41,6 +41,14 @@ NEWS_QUERIES = [
     ("지정학·전쟁·재난", "지정학 리스크 OR 전쟁 OR 중동 OR 우크라이나 OR 유가 OR 지진 OR 재난", "ko", "KR", "KR:ko"),
 ]
 
+# 최신동향 카테고리별 검색어 (별도 섹션)
+TREND_QUERIES = [
+    ("AI·반도체", "AI OR 인공지능 OR 반도체 OR GPU OR HBM OR 엔비디아 OR 생성형", "ko", "KR", "KR:ko"),
+    ("게임·콘텐츠", "게임 OR 콘텐츠 OR 메타버스 OR 웹툰 OR OTT OR 인터랙티브", "ko", "KR", "KR:ko"),
+    ("내 종목", "삼성전자 OR SK하이닉스 OR 엔비디아 OR 테슬라 OR 스페이스엑스 OR 알파벳", "ko", "KR", "KR:ko"),
+    ("IT·스타트업·투자", "스타트업 OR 벤처투자 OR IPO OR 유니콘 OR 시리즈A OR 신기술", "ko", "KR", "KR:ko"),
+]
+
 
 # ──────────────────────────────────────────────
 # 1) 변곡점 자동 감지
@@ -181,6 +189,11 @@ def build_issues(report: dict) -> dict:
     for title, q, hl, gl, ceid in NEWS_QUERIES:
         news.append({"category": title, "items": fetch_news(q, hl, gl, ceid)})
 
+    print("이슈 수집: 최신동향...")
+    trends = []
+    for title, q, hl, gl, ceid in TREND_QUERIES:
+        trends.append({"category": title, "items": fetch_news(q, hl, gl, ceid, n=4)})
+
     print("이슈 수집: 제작지원 공고(KOCCA/NIPA/RAPA)...")
     try:
         import gov_notices
@@ -194,6 +207,7 @@ def build_issues(report: dict) -> dict:
         "movers": movers,
         "earnings": earnings,
         "news": news,
+        "trends": trends,
         "notices": notices,
     }
 
@@ -216,6 +230,19 @@ def build_issues_summary(data: dict, corr_url: str = "") -> str:
     for sec in data["news"]:
         if sec["items"] and sec["category"] in ("국내 증시·경제", "지정학·전쟁·재난"):
             lines.append(f"  • [{sec['category']}] {sec['items'][0]['title'][:32]}")
+    # 최신동향 (분야별 대표 헤드라인 1건씩, 중복 제목 제외)
+    trends = data.get("trends") or []
+    trend_lines, seen = [], set()
+    for sec in trends:
+        pick = next((it for it in sec["items"] if it["title"] not in seen), None)
+        if pick:
+            seen.add(pick["title"])
+            trend_lines.append(f"  • [{sec['category']}] {pick['title'][:30]}")
+    if trend_lines:
+        lines.append("")
+        lines.append("🚀 최신동향")
+        lines.extend(trend_lines)
+
     # 제작지원 공고 (KOCCA/NIPA/RAPA)
     notices = data.get("notices") or []
     if notices:
