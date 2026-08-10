@@ -5,6 +5,7 @@
 
 import os
 import json
+import urllib.parse
 
 # 한국식 색상: 상승=빨강, 하락=파랑
 UP = "#e8453c"
@@ -14,6 +15,18 @@ FLAT = "#868e96"
 
 def _color(pct: float) -> str:
     return UP if pct > 0 else (DOWN if pct < 0 else FLAT)
+
+
+def _quote_url(ticker: str) -> str:
+    """티커별 실제 시세 페이지 URL (국내는 네이버금융, 그 외는 야후파이낸스)"""
+    t = ticker or ""
+    if t.endswith(".KS") or t.endswith(".KQ"):
+        return f"https://finance.naver.com/item/main.naver?code={t.split('.')[0]}"
+    if t == "^KS11":
+        return "https://finance.naver.com/sise/sise_index.naver?code=KOSPI"
+    if t == "^KQ11":
+        return "https://finance.naver.com/sise/sise_index.naver?code=KOSDAQ"
+    return f"https://finance.yahoo.com/quote/{urllib.parse.quote(t)}"
 
 
 def _fmt(v: float, dec: int) -> str:
@@ -37,15 +50,17 @@ def generate_html(report: dict, out_path: str) -> str:
             sign = "+" if it["change"] >= 0 else ""
             arrow = "▲" if it["pct"] > 0 else ("▼" if it["pct"] < 0 else "━")
             charts[cid] = {"labels": it["dates"], "data": it["closes"], "color": color}
+            url = _quote_url(it.get("ticker", ""))
             cards.append(f"""
-        <div class="card">
+        <a class="card" href="{url}" target="_blank" rel="noopener">
+          <span class="ext">↗</span>
           <div class="card-name">{it['name']}</div>
           <div class="card-value">{_fmt(it['price'], it['decimals'])}<span class="unit">{it['unit']}</span></div>
           <div class="card-change" style="color:{color}">
             {arrow} {sign}{_fmt(it['change'], it['decimals'])} ({sign}{it['pct']:.2f}%)
           </div>
           <div class="spark"><canvas id="{cid}"></canvas></div>
-        </div>""")
+        </a>""")
         cards_html.append(f"""
       <section>
         <h2>{grp['emoji']} {grp['title']}</h2>
@@ -79,8 +94,13 @@ def generate_html(report: dict, out_path: str) -> str:
                border-bottom:1px solid var(--line); padding-bottom:8px; margin:0 0 12px; }}
   .grid {{ display:grid; gap:12px;
           grid-template-columns:repeat(auto-fill,minmax(230px,1fr)); }}
-  .card {{ background:var(--card); border:1px solid var(--line); border-radius:14px;
-          padding:14px 16px; }}
+  .card {{ position:relative; display:block; background:var(--card);
+          border:1px solid var(--line); border-radius:14px; padding:14px 16px;
+          text-decoration:none; color:var(--txt); transition:border-color .15s, transform .15s; }}
+  .card:hover {{ border-color:#3a4658; transform:translateY(-2px); }}
+  .card .ext {{ position:absolute; top:10px; right:12px; color:var(--sub);
+               font-size:13px; opacity:.5; }}
+  .card:hover .ext {{ opacity:1; color:#4dabf7; }}
   .card-name {{ font-size:14px; color:var(--sub); }}
   .card-value {{ font-size:26px; font-weight:700; margin:2px 0; }}
   .card-value .unit {{ font-size:14px; color:var(--sub); margin-left:3px; font-weight:400; }}

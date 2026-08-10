@@ -77,6 +77,7 @@ SPECS = [
     # 반도체
     ("반도체",   "삼성전자",        "005930.KS", "원", 0, 1),
     ("반도체",   "SK하이닉스",      "000660.KS", "원", 0, 1),
+    ("반도체",   "SK스퀘어",        "402340.KS", "원", 0, 1),
     ("반도체",   "한미반도체",      "042700.KS", "원", 0, 1),
     ("반도체",   "리노공업",        "058470.KS", "원", 0, 1),
     ("반도체",   "DB하이텍",        "000990.KS", "원", 0, 1),
@@ -112,7 +113,7 @@ def fetch_item(spec: dict) -> dict | None:
         change = price - prev
         pct = (change / prev * 100) if prev else 0.0
         return {
-            "name": name, "unit": unit, "decimals": dec,
+            "name": name, "ticker": ticker, "unit": unit, "decimals": dec,
             "price": price, "change": change, "pct": pct,
             "dates": dates, "closes": closes,
         }
