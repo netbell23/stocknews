@@ -115,6 +115,7 @@ def generate_html(report: dict, out_path: str) -> str:
     <div class="ts">{report['generated_at']} 기준 · 데이터: Yahoo Finance</div>
     <a class="navlink" href="correlation.html">🔗 상관관계 분석 →</a>
     <a class="navlink" href="issues.html">📰 주요 이슈 & 일정 →</a>
+    <a class="navlink" href="manage.html">🛠️ 종목 관리 →</a>
     <a class="navlink" href="https://kospilab.com/" target="_blank" rel="noopener">🧪 코스피랩 →</a>
   </header>
   <main>

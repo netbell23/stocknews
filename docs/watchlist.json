@@ -1,0 +1,55 @@
+{
+  "groups": [
+    {
+      "title": "지수", "emoji": "📊", "unit": "pt", "decimals": 2,
+      "hint": "지수 티커는 보통 ^로 시작 (예: 코스피 ^KS11, 나스닥 ^IXIC, S&P500 ^GSPC)",
+      "items": [
+        {"name": "KOSPI", "ticker": "^KS11"},
+        {"name": "KOSDAQ", "ticker": "^KQ11"},
+        {"name": "S&P500", "ticker": "^GSPC"},
+        {"name": "나스닥", "ticker": "^IXIC"}
+      ]
+    },
+    {
+      "title": "환율", "emoji": "💱", "unit": "원", "decimals": 2,
+      "hint": "원화 환율은 통화코드+KRW=X (예: 미국 KRW=X, 유럽 EURKRW=X). 100엔 단위 표시는 mult 100",
+      "items": [
+        {"name": "미국 USD", "ticker": "KRW=X"},
+        {"name": "일본 JPY(100엔)", "ticker": "JPYKRW=X", "mult": 100},
+        {"name": "유럽 EUR", "ticker": "EURKRW=X"}
+      ]
+    },
+    {
+      "title": "원자재", "emoji": "🛢️", "unit": "$", "decimals": 2,
+      "hint": "원자재 선물은 심볼+=F (예: WTI유가 CL=F, 금 GC=F, 은 SI=F, 천연가스 NG=F)",
+      "items": [
+        {"name": "WTI 국제유가", "ticker": "CL=F"},
+        {"name": "금", "ticker": "GC=F"}
+      ]
+    },
+    {
+      "title": "반도체", "emoji": "💾", "unit": "원", "decimals": 0,
+      "hint": "국내 종목은 6자리코드.KS(코스피)/.KQ(코스닥) (예: 삼성전자 005930.KS)",
+      "items": [
+        {"name": "삼성전자", "ticker": "005930.KS"},
+        {"name": "SK하이닉스", "ticker": "000660.KS"},
+        {"name": "SK스퀘어", "ticker": "402340.KS"},
+        {"name": "한미반도체", "ticker": "042700.KS"},
+        {"name": "리노공업", "ticker": "058470.KS"},
+        {"name": "DB하이텍", "ticker": "000990.KS"},
+        {"name": "원익IPS", "ticker": "240810.KS"},
+        {"name": "이오테크닉스", "ticker": "039030.KS"}
+      ]
+    },
+    {
+      "title": "해외 종목", "emoji": "🌎", "unit": "$", "decimals": 2,
+      "hint": "미국 종목은 티커 그대로 (예: 엔비디아 NVDA, 테슬라 TSLA, 스페이스엑스 SPCX)",
+      "items": [
+        {"name": "스페이스엑스", "ticker": "SPCX"},
+        {"name": "엔비디아", "ticker": "NVDA"},
+        {"name": "테슬라", "ticker": "TSLA"},
+        {"name": "알파벳(구글)", "ticker": "GOOGL"}
+      ]
+    }
+  ]
+}

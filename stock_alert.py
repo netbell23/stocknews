@@ -92,6 +92,31 @@ SPECS = [
 
 GROUP_EMOJI = {"지수": "📊", "환율": "💱", "원자재": "🛢️", "반도체": "💾", "해외 종목": "🌎"}
 
+# 사용자가 웹 관리페이지에서 편집하는 설정 파일 (없으면 위 하드코딩 SPECS 사용)
+WATCHLIST_PATH = os.path.join(BASE_DIR, "docs", "watchlist.json")
+
+
+def load_config():
+    """docs/watchlist.json 을 읽어 (specs, emoji_map) 반환. 실패 시 하드코딩 fallback."""
+    try:
+        with open(WATCHLIST_PATH, encoding="utf-8") as f:
+            cfg = json.load(f)
+        specs, emoji = [], {}
+        for g in cfg["groups"]:
+            title = g["title"]
+            emoji[title] = g.get("emoji", "")
+            g_unit, g_dec = g.get("unit", ""), g.get("decimals", 2)
+            for it in g["items"]:
+                specs.append((
+                    title, it["name"], it["ticker"],
+                    it.get("unit", g_unit), it.get("decimals", g_dec), it.get("mult", 1),
+                ))
+        if specs:
+            return specs, emoji
+    except Exception as e:
+        print(f"[watchlist.json 로드 실패 — 기본값 사용] {e}")
+    return SPECS, GROUP_EMOJI
+
 
 # ──────────────────────────────────────────────
 # 데이터 조회
@@ -124,9 +149,10 @@ def fetch_item(spec: dict) -> dict | None:
 
 def build_report() -> dict:
     """모든 항목을 한 번씩 조회해 그룹별로 묶은 리포트 구조 반환"""
+    specs, emoji_map = load_config()
     groups: dict[str, list] = {}
     order: list[str] = []
-    for group, name, ticker, unit, dec, mult in SPECS:
+    for group, name, ticker, unit, dec, mult in specs:
         if group not in groups:
             groups[group] = []
             order.append(group)
@@ -136,7 +162,7 @@ def build_report() -> dict:
             groups[group].append(item)
     return {
         "generated_at": datetime.now().strftime("%Y-%m-%d %H:%M"),
-        "groups": [{"title": g, "emoji": GROUP_EMOJI.get(g, ""), "items": groups[g]}
+        "groups": [{"title": g, "emoji": emoji_map.get(g, ""), "items": groups[g]}
                    for g in order],
     }
 
