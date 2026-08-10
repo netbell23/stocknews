@@ -7,7 +7,9 @@
         {"name": "KOSPI", "ticker": "^KS11"},
         {"name": "KOSDAQ", "ticker": "^KQ11"},
         {"name": "S&P500", "ticker": "^GSPC"},
-        {"name": "나스닥", "ticker": "^IXIC"}
+        {"name": "나스닥", "ticker": "^IXIC"},
+        {"name": "중국 상해종합", "ticker": "000001.SS"},
+        {"name": "싱가포르 STI", "ticker": "^STI"}
       ]
     },
     {
@@ -16,7 +18,9 @@
       "items": [
         {"name": "미국 USD", "ticker": "KRW=X"},
         {"name": "일본 JPY(100엔)", "ticker": "JPYKRW=X", "mult": 100},
-        {"name": "유럽 EUR", "ticker": "EURKRW=X"}
+        {"name": "유럽 EUR", "ticker": "EURKRW=X"},
+        {"name": "중국 CNY", "ticker": "CNYKRW=X"},
+        {"name": "싱가포르 SGD", "ticker": "SGDKRW=X"}
       ]
     },
     {
