@@ -1,3 +1,36 @@
+# 📂 netbell23/stocknews — 프로젝트 모음 저장소
+
+> 이 저장소는 주가 카톡 알림으로 시작했지만, 지금은 여러 개인 프로젝트가 한곳에 모여 있습니다.
+> 프로젝트별 이름·설명·링크는 아래 표에서 확인하세요. **웹 허브**: https://netbell23.github.io/stocknews/projects.html
+
+### 🌐 공개 배포된 프로젝트 (바로 접속)
+| 프로젝트 | 설명 | 링크 | 폴더 |
+|---------|------|------|------|
+| **주가·숏츠 알림** | 매일 아침 시황·인기 숏츠를 카톡으로 발송 + 그래프/이슈 웹페이지 | [시황](https://netbell23.github.io/stocknews/) · [상관관계](https://netbell23.github.io/stocknews/correlation.html) · [이슈](https://netbell23.github.io/stocknews/issues.html) · [숏츠](https://netbell23.github.io/stocknews/shorts.html) | 루트(`stock_alert.py` 등) |
+| 📖 **StoryMate** | AI 캐릭터와 매일 대화하며 관계·스토리를 키우는 모바일 앱(웹 데모) | [열기](https://netbell23.github.io/stocknews/storymate/) | `storymate/` |
+| 🥾 **두마음 산악회** | GPS 등산 기록 + 완등맵 + 계급/뱃지/랭킹 앱 | [열기](https://netbell23.github.io/stocknews/hiking-app/) | `hiking-app/` |
+| 🧭 **내 생활 포털** | 날씨·교통·버스·일정·뉴스·증시 생활 대시보드 + 런처 PWA | [열기](https://netbell23.github.io/stocknews/app-portal/) | `app-portal/` |
+| 🎪 **차이나조이 부스** | CJ2026 STORYTACO 부스·팬미팅 랜딩 | [열기](https://netbell23.github.io/stocknews/chinajoy-fanmeeting/) | `chinajoy-fanmeeting/` |
+
+### 💻 로컬 실행 프로젝트 (아직 공개 링크 없음)
+| 프로젝트 | 설명 | 폴더 | 로컬 포트 |
+|---------|------|------|----------|
+| 🐙 **문어 디펜스** | 탄막 × 디펜스 Phaser 게임 | `octopus-defense/` | 5173 |
+| 👹 **우마왕 디펜스** | Three.js 탄막 × 가챠 디펜스 | `bullking_defense/` | 8744 |
+| 🛡️ **영웅 디펜스** | TBH식 레인 디펜스 (7직업·룬 테크트리·5막 50챕터) | `hero-defense/` | 8756 |
+| 🧗 **PEAK 협동 등반** | Three.js 3D 협동 등반 멀티플레이 | `peak_game/` | 8741 (서버 8742) |
+| 🚀 **제비우스** | 클래식 종스크롤 슈팅 리메이크 | `xevious_game/` | 8753 |
+| 🐱 **어항 속 고양이들** | 바탕화면 펫 게임 | `fishbowl-cats/` | 8747 |
+| 👾 **몬스터 헌트 AR** | 레이반 디스플레이용 AR 웹앱 (600×600·검정=투명·D-pad) | `ar-monster-hunt/` | 8768 |
+| 🔭 **XR 스카우터** | 전투력 측정기 웹앱 (SPU 공식·CAM/SIM 모드) | `xr-scouter/` | 8769 |
+| 🚇 **서울 지하철 타임랩스** | 14개 노선 열차 운행 타임랩스 | `seoul-subway-timelapse/` | 8773 |
+| 🤖 **카톡 이슈정리 챗봇** | 단톡방 `/정리` 명령으로 대화 요약 (PC 자동화 + Claude) | `kakao-issue-bot/` | (봇) |
+
+> 로컬 프로젝트 실행: `.claude/launch.json`에 각 서버가 등록돼 있습니다.
+> 공개 배포된 프로젝트는 `main`에 push하면 GitHub Actions가 `docs/`를 GitHub Pages로 자동 배포합니다.
+
+---
+
 # 주가 카톡 알림 (StockNews → KakaoTalk)
 
 매일 아침 8:30에 다음 시황을 카카오톡 "나에게 보내기"로 전송하고,

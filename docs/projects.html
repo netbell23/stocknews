@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>프로젝트 모음 · netbell23</title>
+<style>
+  :root{
+    --bg:#f4f5fb; --card:#ffffff; --border:#e7e6f0; --text:#1e1b2e;
+    --muted:#6f6b85; --faint:#a9a5bc; --brand:#6c5ce7; --brandsoft:#efecff;
+    --live:#16a34a; --livesoft:#e7f7ee; --local:#8a8698; --localsoft:#eeedf3;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --bg:#14121f; --card:#1e1b2e; --border:#2c2840; --text:#f2f1f7;
+      --muted:#a29fb8; --faint:#6f6b85; --brand:#a99bff; --brandsoft:#26224060;
+      --live:#4ade80; --livesoft:#14311f; --local:#8a8698; --localsoft:#26243a;
+    }
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Malgun Gothic","Apple SD Gothic Neo",sans-serif;
+    -webkit-font-smoothing:antialiased;line-height:1.5;}
+  .wrap{max-width:960px;margin:0 auto;padding:32px 20px 64px;}
+  header.hero{margin-bottom:28px;}
+  .kicker{font-size:13px;font-weight:800;letter-spacing:.08em;color:var(--brand);text-transform:uppercase;}
+  h1{font-size:30px;font-weight:900;margin:6px 0 8px;}
+  .sub{color:var(--muted);font-size:15px;}
+  h2{font-size:16px;font-weight:800;margin:34px 0 14px;display:flex;align-items:center;gap:8px;}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px;}
+  .card{background:var(--card);border:1px solid var(--border);border-radius:18px;padding:18px;
+    display:flex;flex-direction:column;gap:8px;transition:transform .12s ease,box-shadow .12s ease;}
+  a.card{text-decoration:none;color:inherit;}
+  a.card:hover{transform:translateY(-3px);box-shadow:0 10px 26px rgba(60,50,110,.14);border-color:var(--brand);}
+  .card .top{display:flex;align-items:center;gap:10px;}
+  .emoji{font-size:26px;line-height:1;}
+  .name{font-size:17px;font-weight:800;}
+  .desc{color:var(--muted);font-size:14px;flex:1;}
+  .meta{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:4px;}
+  .folder{font-size:12px;color:var(--faint);font-family:ui-monospace,SFMono-Regular,Menlo,monospace;}
+  .badge{font-size:11px;font-weight:800;padding:3px 9px;border-radius:999px;letter-spacing:.03em;}
+  .badge.live{color:var(--live);background:var(--livesoft);}
+  .badge.local{color:var(--local);background:var(--localsoft);}
+  .links{display:flex;flex-wrap:wrap;gap:6px;margin-top:2px;}
+  .chip{font-size:12px;font-weight:700;color:var(--brand);background:var(--brandsoft);
+    padding:4px 10px;border-radius:999px;text-decoration:none;}
+  .chip:hover{opacity:.8;}
+  footer{margin-top:40px;color:var(--faint);font-size:12px;text-align:center;}
+  footer a{color:var(--muted);}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="hero">
+    <div class="kicker">netbell23 / stocknews</div>
+    <h1>프로젝트 모음 📂</h1>
+    <p class="sub">이 저장소에 들어 있는 프로젝트들입니다. 공개된 것은 눌러서 바로 열 수 있어요.</p>
+  </header>
+
+  <h2>🌐 공개 배포 <span class="badge live" style="font-weight:700">LIVE</span></h2>
+  <div class="grid">
+    <div class="card">
+      <div class="top"><span class="emoji">📈</span><span class="name">주가·숏츠 알림</span></div>
+      <div class="desc">매일 아침 시황·인기 숏츠를 카톡으로 발송 + 그래프/이슈 웹페이지</div>
+      <div class="links">
+        <a class="chip" href="./index.html">시황</a>
+        <a class="chip" href="./correlation.html">상관관계</a>
+        <a class="chip" href="./issues.html">이슈</a>
+        <a class="chip" href="./shorts.html">숏츠</a>
+      </div>
+      <div class="meta"><span class="folder">루트 · stock_alert.py</span><span class="badge live">LIVE</span></div>
+    </div>
+
+    <a class="card" href="./storymate/">
+      <div class="top"><span class="emoji">📖</span><span class="name">StoryMate</span></div>
+      <div class="desc">AI 캐릭터와 매일 대화하며 관계·스토리를 키우는 모바일 앱(웹 데모)</div>
+      <div class="meta"><span class="folder">storymate/</span><span class="badge live">LIVE</span></div>
+    </a>
+
+    <a class="card" href="./hiking-app/">
+      <div class="top"><span class="emoji">🥾</span><span class="name">두마음 산악회</span></div>
+      <div class="desc">GPS 등산 기록 + 완등맵 + 계급/뱃지/랭킹 앱</div>
+      <div class="meta"><span class="folder">hiking-app/</span><span class="badge live">LIVE</span></div>
+    </a>
+
+    <a class="card" href="./app-portal/">
+      <div class="top"><span class="emoji">🧭</span><span class="name">내 생활 포털</span></div>
+      <div class="desc">날씨·교통·버스·일정·뉴스·증시 생활 대시보드 + 런처 PWA</div>
+      <div class="meta"><span class="folder">app-portal/</span><span class="badge live">LIVE</span></div>
+    </a>
+
+    <a class="card" href="./chinajoy-fanmeeting/">
+      <div class="top"><span class="emoji">🎪</span><span class="name">차이나조이 부스</span></div>
+      <div class="desc">CJ2026 STORYTACO 부스·팬미팅 랜딩</div>
+      <div class="meta"><span class="folder">chinajoy-fanmeeting/</span><span class="badge live">LIVE</span></div>
+    </a>
+  </div>
+
+  <h2>💻 로컬 실행 <span class="badge local" style="font-weight:700">LOCAL</span></h2>
+  <div class="grid">
+    <div class="card">
+      <div class="top"><span class="emoji">🐙</span><span class="name">문어 디펜스</span></div>
+      <div class="desc">탄막 × 디펜스 Phaser 게임</div>
+      <div class="meta"><span class="folder">octopus-defense/ · :5173</span><span class="badge local">LOCAL</span></div>
+    </div>
+    <div class="card">
+      <div class="top"><span class="emoji">👹</span><span class="name">우마왕 디펜스</span></div>
+      <div class="desc">Three.js 탄막 × 가챠 디펜스</div>
+      <div class="meta"><span class="folder">bullking_defense/ · :8744</span><span class="badge local">LOCAL</span></div>
+    </div>
+    <div class="card">
+      <div class="top"><span class="emoji">🛡️</span><span class="name">영웅 디펜스</span></div>
+      <div class="desc">TBH식 레인 디펜스 (7직업·룬 테크트리·5막 50챕터)</div>
+      <div class="meta"><span class="folder">hero-defense/ · :8756</span><span class="badge local">LOCAL</span></div>
+    </div>
+    <div class="card">
+      <div class="top"><span class="emoji">🧗</span><span class="name">PEAK 협동 등반</span></div>
+      <div class="desc">Three.js 3D 협동 등반 멀티플레이</div>
+      <div class="meta"><span class="folder">peak_game/ · :8741</span><span class="badge local">LOCAL</span></div>
+    </div>
+    <div class="card">
+      <div class="top"><span class="emoji">🚀</span><span class="name">제비우스</span></div>
+      <div class="desc">클래식 종스크롤 슈팅 리메이크</div>
+      <div class="meta"><span class="folder">xevious_game/ · :8753</span><span class="badge local">LOCAL</span></div>
+    </div>
+    <div class="card">
+      <div class="top"><span class="emoji">🐱</span><span class="name">어항 속 고양이들</span></div>
+      <div class="desc">바탕화면 펫 게임</div>
+      <div class="meta"><span class="folder">fishbowl-cats/ · :8747</span><span class="badge local">LOCAL</span></div>
+    </div>
+    <div class="card">
+      <div class="top"><span class="emoji">👾</span><span class="name">몬스터 헌트 AR</span></div>
+      <div class="desc">레이반 디스플레이용 AR 웹앱 (600×600·검정=투명·D-pad)</div>
+      <div class="meta"><span class="folder">ar-monster-hunt/ · :8768</span><span class="badge local">LOCAL</span></div>
+    </div>
+    <div class="card">
+      <div class="top"><span class="emoji">🔭</span><span class="name">XR 스카우터</span></div>
+      <div class="desc">전투력 측정기 웹앱 (SPU 공식·CAM/SIM 모드)</div>
+      <div class="meta"><span class="folder">xr-scouter/ · :8769</span><span class="badge local">LOCAL</span></div>
+    </div>
+    <div class="card">
+      <div class="top"><span class="emoji">🚇</span><span class="name">서울 지하철 타임랩스</span></div>
+      <div class="desc">14개 노선 열차 운행 타임랩스</div>
+      <div class="meta"><span class="folder">seoul-subway-timelapse/ · :8773</span><span class="badge local">LOCAL</span></div>
+    </div>
+    <div class="card">
+      <div class="top"><span class="emoji">🤖</span><span class="name">카톡 이슈정리 챗봇</span></div>
+      <div class="desc">단톡방 /정리 명령으로 대화 요약 (PC 자동화 + Claude)</div>
+      <div class="meta"><span class="folder">kakao-issue-bot/</span><span class="badge local">LOCAL</span></div>
+    </div>
+  </div>
+
+  <footer>
+    <a href="https://github.com/netbell23/stocknews">github.com/netbell23/stocknews</a>
+    · main에 push하면 GitHub Actions가 공개 프로젝트를 자동 배포합니다.
+  </footer>
+</div>
+</body>
+</html>
