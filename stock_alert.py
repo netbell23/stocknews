@@ -58,6 +58,7 @@ PAGE_URL = os.environ.get("STOCKNEWS_PAGE_URL", "https://netbell23.github.io/sto
 CORR_URL = os.environ.get("STOCKNEWS_CORR_URL", "https://netbell23.github.io/stocknews/correlation.html")
 ISSUES_URL = os.environ.get("STOCKNEWS_ISSUES_URL", "https://netbell23.github.io/stocknews/issues.html")
 KOSPILAB_URL = os.environ.get("STOCKNEWS_KOSPILAB_URL", "https://kospilab.com/")
+STORYMATE_URL = os.environ.get("STORYMATE_URL", "https://netbell23.github.io/stocknews/storymate/")
 
 # 조회 항목 정의: (그룹, 표시이름, 티커, 단위, 소수자릿수, 배수)
 #  - 배수: JPY 처럼 100엔 단위로 보여주고 싶을 때 사용
@@ -187,6 +188,7 @@ def build_message(report: dict) -> str:
     lines.append(f"· 자산·환율·주가 상관관계\n  {CORR_URL}")
     lines.append(f"· 주요 이슈·실적·뉴스\n  {ISSUES_URL}")
     lines.append(f"· 코스피랩(국내주식 시세 비교)\n  {KOSPILAB_URL}")
+    lines.append(f"· 📖 StoryMate (AI 캐릭터 스토리 앱)\n  {STORYMATE_URL}")
     lines.append("")
     for grp in report["groups"]:
         if not grp["items"]:
