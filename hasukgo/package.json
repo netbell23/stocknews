@@ -1,0 +1,37 @@
+{
+  "name": "hasukgo",
+  "version": "0.1.0",
+  "private": true,
+  "description": "하숙생 맞고 - 2인 맞고 + 연애 비주얼노벨",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit",
+    "sim": "vitest run tests/ai.balance.test.ts",
+    "cap:sync": "npm run build && cap sync android",
+    "cap:apk": "npm run cap:sync && cd android && gradlew assembleDebug",
+    "build:h5": "node scripts/build-h5.mjs",
+    "icons": "node scripts/gen-icons.mjs",
+    "dev:lan": "vite --host",
+    "preview:lan": "vite preview --host --port 8796"
+  },
+  "dependencies": {
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@capacitor/android": "^6.2.0",
+    "@capacitor/cli": "^6.2.0",
+    "@capacitor/core": "^6.2.0",
+    "@types/react": "^18.3.12",
+    "@types/react-dom": "^18.3.1",
+    "@vitejs/plugin-react": "^4.3.4",
+    "typescript": "^5.7.2",
+    "vite": "^5.4.11",
+    "vitest": "^2.1.8"
+  }
+}

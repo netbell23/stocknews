@@ -1,0 +1,114 @@
+name: 하숙생 맞고 · Android 빌드
+
+# 이 PC 에 JDK/Android SDK 를 설치하지 않고 APK/AAB 를 만든다.
+# GitHub 러너에는 JDK 와 Android SDK 가 이미 들어 있다.
+on:
+  push:
+    paths:
+      - 'hasukgo/**'
+      - '.github/workflows/hasukgo-android.yml'
+  workflow_dispatch:
+    inputs:
+      versionName:
+        description: '버전 이름 (예: 1.0.1)'
+        required: false
+        default: '1.0.0'
+      buildAab:
+        description: 'Play 스토어 업로드용 AAB 도 만들기'
+        type: boolean
+        required: false
+        default: true
+
+defaults:
+  run:
+    working-directory: hasukgo
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      # 키스토어 시크릿이 등록돼 있으면 서명된 빌드, 없으면 미서명 빌드
+      HAS_KEYSTORE: ${{ secrets.ANDROID_KEYSTORE_BASE64 != '' }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Node 설치
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: hasukgo/package-lock.json
+
+      - name: JDK 17 설치
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Android SDK 준비
+        uses: android-actions/setup-android@v3
+
+      - name: 의존성 설치
+        run: npm ci
+
+      - name: 타입 검사
+        run: npm run typecheck
+
+      - name: 테스트 (규칙 엔진 / AI / 시나리오)
+        run: npm test
+
+      - name: 웹 번들 빌드
+        run: npx vite build
+
+      - name: Capacitor 동기화
+        run: npx cap sync android
+
+      - name: 서명 키스토어 복원
+        id: keystore
+        if: env.HAS_KEYSTORE == 'true'
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+        run: |
+          echo "$ANDROID_KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/release.keystore"
+          echo "path=$RUNNER_TEMP/release.keystore" >> "$GITHUB_OUTPUT"
+
+      - name: APK 빌드 (release)
+        env:
+          VERSION_NAME: ${{ github.event.inputs.versionName || '1.0.0' }}
+          VERSION_CODE: ${{ github.run_number }}
+          ANDROID_KEYSTORE_PATH: ${{ steps.keystore.outputs.path }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          cd android
+          chmod +x gradlew
+          ./gradlew assembleRelease --no-daemon --stacktrace
+
+      - name: AAB 빌드 (Play 스토어 업로드용)
+        if: ${{ github.event_name != 'workflow_dispatch' || github.event.inputs.buildAab == 'true' }}
+        env:
+          VERSION_NAME: ${{ github.event.inputs.versionName || '1.0.0' }}
+          VERSION_CODE: ${{ github.run_number }}
+          ANDROID_KEYSTORE_PATH: ${{ steps.keystore.outputs.path }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          cd android
+          ./gradlew bundleRelease --no-daemon --stacktrace
+
+      - name: APK 업로드
+        uses: actions/upload-artifact@v4
+        with:
+          name: hasukgo-apk
+          path: hasukgo/android/app/build/outputs/apk/release/*.apk
+          if-no-files-found: error
+
+      - name: AAB 업로드
+        if: ${{ github.event_name != 'workflow_dispatch' || github.event.inputs.buildAab == 'true' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: hasukgo-aab
+          path: hasukgo/android/app/build/outputs/bundle/release/*.aab
+          if-no-files-found: warn
