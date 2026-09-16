@@ -47,6 +47,14 @@ jobs:
 
       - name: Android SDK 준비
         uses: android-actions/setup-android@v3
+        with:
+          # 기본값이 이제는 없어진 'tools' 패키지를 설치하려다 실패한다. 빈 값으로 두고 아래에서 직접 받는다.
+          packages: ''
+
+      - name: SDK 구성요소 설치 (Platform 35 / Build-Tools)
+        run: |
+          yes | sdkmanager --licenses > /dev/null 2>&1 || true
+          sdkmanager --install "platform-tools" "platforms;android-35" "build-tools;35.0.0"
 
       - name: 의존성 설치
         run: npm ci
