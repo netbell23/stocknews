@@ -1,29 +1,938 @@
 <!doctype html>
 <html lang="ko">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
-    <meta name="theme-color" content="#2a1f18" />
-    <meta name="description" content="밤마다 마루에서, 열 번의 승부. 2인 맞고 + 연애 비주얼노벨." />
-    <link rel="manifest" href="./manifest.webmanifest" />
-    <link rel="apple-touch-icon" href="./apple-touch-icon.png" />
-    <link rel="icon" href="./icon-192.png" />
-    <!-- iOS 홈 화면 추가 시 전체화면으로 -->
-    <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-    <meta name="apple-mobile-web-app-title" content="하숙생 맞고" />
-    <meta name="format-detection" content="telephone=no" />
-    <!-- 카카오톡/메신저 공유 미리보기 -->
-    <meta property="og:type" content="website" />
-    <meta property="og:title" content="하숙생 맞고" />
-    <meta property="og:description" content="밤마다 마루에서, 열 번의 승부." />
-    <meta property="og:image" content="./icon-512.png" />
-    <title>하숙생 맞고</title>
-    <script type="module" crossorigin src="./assets/index-DUcR_wzk.js"></script>
-    <link rel="stylesheet" crossorigin href="./assets/index-DeLNxuYS.css">
-  </head>
-  <body>
-    <div id="root"></div>
-  </body>
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>하숙생 맞고 — 밤마다 마루에서, 열 번의 승부</title>
+<meta name="description" content="서울의 한 하숙집. 개성 강한 하숙생 10명과 각각 열 판씩, 총 100판. 맞고 70% + 연애 비주얼노벨 30%. 설치 없이 브라우저에서 바로 무료로 즐기세요." />
+<meta name="theme-color" content="#2a1f18" />
+<link rel="icon" href="./icon-192.png" />
+<link rel="apple-touch-icon" href="./apple-touch-icon.png" />
+<meta property="og:type" content="website" />
+<meta property="og:title" content="하숙생 맞고" />
+<meta property="og:description" content="밤마다 마루에서, 열 번의 승부. 하숙생 10명 × 10판." />
+<meta property="og:image" content="./icon-512.png" />
+<meta name="twitter:card" content="summary_large_image" />
+<style>
+  :root{
+    --wood-dark:#221a14; --wood:#4a3628; --wood-light:#6b4f38;
+    --paper:#f4ead6; --paper-dim:#c9bda6; --lamp:#ffd98a; --lamp-dim:#c9a25a;
+    --accent:#c8563f; --ok:#3f8a52;
+    --max:920px;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{
+    margin:0; overflow-x:hidden; background:var(--wood-dark); color:var(--paper);
+    font-family:'Pretendard','Apple SD Gothic Neo','Noto Sans KR',system-ui,sans-serif;
+    line-height:1.7; -webkit-text-size-adjust:100%;
+  }
+  img,svg{max-width:100%}
+  a{color:inherit}
+  .wrap{max-width:var(--max); margin:0 auto; padding-inline:20px}
+
+  /* ── 히어로 ─────────────────────────── */
+  .hero{position:relative; overflow:hidden; padding-block:64px 48px; text-align:center}
+  .hero-bg{position:absolute; inset:0; z-index:0; opacity:.5}
+  .hero-bg svg{width:100%; height:100%; object-fit:cover}
+  .hero-bg::after{content:''; position:absolute; inset:0;
+    background:radial-gradient(ellipse at 50% 30%, transparent 10%, var(--wood-dark) 78%)}
+  .hero > .wrap{position:relative; z-index:1}
+  .logo{
+    font-size:clamp(38px,9vw,68px); font-weight:900; letter-spacing:3px; margin:0 0 10px;
+    text-shadow:0 5px 0 rgba(0,0,0,.45), 0 0 46px rgba(255,217,138,.45);
+  }
+  .tagline{font-size:clamp(14px,3.4vw,19px); color:var(--paper-dim); margin:0 0 6px}
+  .genre{display:inline-block; font-size:12px; letter-spacing:1px; color:var(--lamp);
+    border:1px solid rgba(255,217,138,.4); border-radius:999px; padding:4px 14px; margin-bottom:28px}
+
+  .cta{display:flex; gap:12px; justify-content:center; flex-wrap:wrap; margin-bottom:14px}
+  .btn{
+    display:inline-block; padding:15px 34px; border-radius:14px; font-weight:800; font-size:17px;
+    text-decoration:none; border:2px solid rgba(0,0,0,.35);
+    background:linear-gradient(180deg,var(--wood-light),var(--wood));
+    box-shadow:0 4px 0 rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.12);
+    transition:transform .08s ease;
+  }
+  .btn:active{transform:translateY(3px); box-shadow:0 1px 0 rgba(0,0,0,.45)}
+  .btn.play{background:linear-gradient(180deg,#d4614a,#9c3c2c); font-size:19px; padding:17px 46px}
+  .note{font-size:12.5px; color:var(--paper-dim)}
+
+  /* ── 미리보기 ───────────────────────── */
+  .preview{display:flex; align-items:flex-end; justify-content:center; gap:6px; margin-top:34px; flex-wrap:nowrap; min-width:0}
+  .preview .p{min-width:0}
+  .preview .p{width:clamp(74px,17vw,118px); filter:drop-shadow(0 8px 16px rgba(0,0,0,.6))}
+  .preview .p:nth-child(even){transform:translateY(-14px)}
+  .cards{display:flex; justify-content:center; gap:7px; margin-top:26px; flex-wrap:wrap}
+  .cards svg{width:clamp(52px,11vw,74px); height:auto; border-radius:6px;
+    box-shadow:0 5px 12px rgba(0,0,0,.55); transform:rotate(var(--r,0deg))}
+
+  /* ── 섹션 ───────────────────────────── */
+  section{padding-block:52px; border-top:1px solid rgba(255,255,255,.07)}
+  h2{font-size:clamp(21px,5vw,27px); margin:0 0 8px; text-align:center}
+  .sub{text-align:center; color:var(--paper-dim); font-size:14px; margin:0 0 34px}
+
+  .grid{display:grid; gap:14px; grid-template-columns:repeat(auto-fit,minmax(min(215px,100%),1fr))}
+  .card{
+    background:linear-gradient(180deg,rgba(74,54,40,.85),rgba(34,26,20,.85));
+    border:1px solid rgba(255,255,255,.09); border-radius:16px; padding:20px;
+  }
+  .card h3{margin:0 0 6px; font-size:16px; color:var(--lamp)}
+  .card p{margin:0; font-size:13.5px; color:var(--paper-dim)}
+
+  /* ── 하숙생 ─────────────────────────── */
+  .tenants{display:grid; gap:10px; grid-template-columns:repeat(auto-fill,minmax(min(140px,100%),1fr))}
+  .tenant{
+    background:linear-gradient(180deg,rgba(74,54,40,.75),rgba(34,26,20,.9));
+    border:1px solid rgba(255,255,255,.08); border-radius:14px; padding:12px 10px; text-align:center;
+  }
+  .tenant svg{width:78px; height:auto; display:block; margin:0 auto 6px;
+    filter:drop-shadow(0 3px 6px rgba(0,0,0,.5))}
+  .tenant b{display:block; font-size:15px}
+  .tenant .nick{font-size:11px; color:var(--lamp-dim)}
+  .tenant .style{font-size:11px; color:var(--paper-dim); line-height:1.45; margin-top:5px; min-height:2.9em}
+  .tenant.locked{opacity:.55}
+  .tenant.locked svg{filter:grayscale(1) brightness(.5)}
+  .tenant .season{font-size:10px; color:var(--paper-dim); opacity:.7}
+
+  /* ── 규칙 ───────────────────────────── */
+  .chips{display:flex; flex-wrap:wrap; gap:7px; justify-content:center}
+  .chips span{font-size:12.5px; padding:6px 13px; border-radius:999px;
+    background:rgba(0,0,0,.35); border:1px solid rgba(255,255,255,.1)}
+
+  /* ── 고지 ───────────────────────────── */
+  .notice{
+    background:rgba(63,138,82,.12); border:1px solid rgba(63,138,82,.4);
+    border-radius:14px; padding:18px 20px; font-size:13.5px; color:var(--paper-dim);
+  }
+  .notice b{color:var(--paper)}
+  footer{padding-block:34px 56px; text-align:center; font-size:12px; color:var(--paper-dim);
+    border-top:1px solid rgba(255,255,255,.07)}
+  footer a{color:var(--lamp-dim)}
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="hero-bg"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 1280" preserveAspectRatio="xMidYMid slice" role="img" aria-label="하숙집 마루 night">
+  
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#1b2440"/>
+      <stop offset="100%" stop-color="#2f3a5c"/>
+    </linearGradient>
+    <radialGradient id="lamp" cx="50%" cy="20%" r="60%">
+      <stop offset="0%" stop-color="#ffd98a" stop-opacity="0.55"/>
+      <stop offset="100%" stop-color="#ffd98a" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect fill="url(#sky)"/>
+  
+        <rect x="0" y="380" fill="#4a4237"/>
+        <rect x="60" y="420" rx="6" fill="#00000018" stroke="#6b4f33" stroke-width="8"/>
+        <rect x="440" y="420" rx="6" fill="#00000018" stroke="#6b4f33" stroke-width="8"/>
+        <circle cx="360" cy="330" r="46" fill="#ffd98a" opacity="0.9"/>
+        <rect x="356" y="180" fill="#00000055"/>
+        <ellipse cx="360" cy="360" rx="300" ry="120" fill="url(#lamp)"/>
+        <rect x="0" y="740" fill="#6b4f33"/><path d="M0 740 L90 1280" stroke="#00000022" stroke-width="3"/><path d="M90 740 L157.5 1280" stroke="#00000022" stroke-width="3"/><path d="M180 740 L225 1280" stroke="#00000022" stroke-width="3"/><path d="M270 740 L292.5 1280" stroke="#00000022" stroke-width="3"/><path d="M360 740 L360 1280" stroke="#00000022" stroke-width="3"/><path d="M450 740 L427.5 1280" stroke="#00000022" stroke-width="3"/><path d="M540 740 L495 1280" stroke="#00000022" stroke-width="3"/><path d="M630 740 L562.5 1280" stroke="#00000022" stroke-width="3"/><path d="M720 740 L630 1280" stroke="#00000022" stroke-width="3"/><rect x="0" y="740" fill="#00000033"/>
+        <ellipse cx="250" cy="980" rx="120" ry="42" fill="#b5493f" opacity="0.85"/>
+        <ellipse cx="480" cy="1050" rx="120" ry="42" fill="#3f6bb5" opacity="0.85"/>
+  <rect fill="#0a0d18" opacity="0.34"/>
+</svg></div>
+  <div class="wrap">
+    <h1 class="logo">하숙생 맞고</h1>
+    <p class="tagline">밤마다 마루에서, 열 번의 승부</p>
+    <span class="genre">맞고 70% · 연애 비주얼노벨 30%</span>
+
+    <div class="cta">
+      <a class="btn play" href="./play/">지금 바로 플레이</a>
+    </div>
+    <p class="note">설치 없이 브라우저에서 바로 · 무료 · 로그인 없음</p>
+
+    <div class="preview"><svg class="p" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 330" role="img" aria-label="은서 웃음">
+  <path d="M64 98 q-4 46 2 74 h88 q6 -28 2 -74z" fill="#6b4630" opacity="0.95"/>
+  
+    <path d="M84 158 q26 -12 52 0 l16 14 q10 10 8 26 l-6 56 h-88 l-6 -56 q-2 -16 8 -26z" fill="#f4a7b9"/>
+    <path d="M98 160 h24 v10 h-24z" fill="#ffffff" opacity="0.5"/>
+    <path d="M74 250 h72 l10 70 h-92z" fill="#f4a7b9"/>
+    <rect x="74" y="246" rx="4" fill="#e8657f"/>
+    <path d="M70 176 q-12 34 -8 66" stroke="#f4a7b9" stroke-width="18" fill="none" stroke-linecap="round"/>
+    <path d="M150 176 q12 34 8 66" stroke="#f4a7b9" stroke-width="18" fill="none" stroke-linecap="round"/>
+    <circle cx="63" cy="246" r="9" fill="#f7d9c4"/>
+    <circle cx="157" cy="246" r="9" fill="#f7d9c4"/>
+  <path d="M100 140 h20 v26 h-20z" fill="#f7d9c4"/>
+  <ellipse cx="110" cy="104" rx="44" ry="50" fill="#f7d9c4"/>
+  <ellipse cx="66" cy="108" rx="6" ry="9" fill="#f7d9c4"/>
+  <ellipse cx="154" cy="108" rx="6" ry="9" fill="#f7d9c4"/>
+  
+    <path d="M68 92 q6 -40 42 -40 q36 0 42 40 q-14 -20 -42 -20 q-28 0 -42 20z" fill="#6b4630"/>
+    <path d="M74 88 q14 -16 30 -14 q-16 6 -22 22z" fill="#ffffff" opacity="0.14"/>
+  
+    <path d="M79 86 q9 -4 18 0.5" stroke="#3a2b22" stroke-width="3" fill="none" stroke-linecap="round"/>
+    <path d="M141 86 q-9 -4 -18 0.5" stroke="#3a2b22" stroke-width="3" fill="none" stroke-linecap="round"/>
+  
+        <path d="M79 107 q9 -9 18 0" stroke="#2a2320" stroke-width="3" fill="none" stroke-linecap="round"/>
+        <path d="M123 107 q9 -9 18 0" stroke="#2a2320" stroke-width="3" fill="none" stroke-linecap="round"/>
+  <ellipse cx="82" cy="117" rx="11" ry="6" fill="#ff8a9a" opacity="0.14"/>
+         <ellipse cx="138" cy="117" rx="11" ry="6" fill="#ff8a9a" opacity="0.14"/>
+  <path d="M102 126 q8 7 16 0" stroke="#8a4a46" stroke-width="2.6" fill="none" stroke-linecap="round"/>
+  
+  
+</svg>
+<svg class="p" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 330" role="img" aria-label="하영 기본">
+  <path d="M66 100 q-4 40 0 70 h88 q4 -30 0 -70z" fill="#2f2723" opacity="0.95"/>
+              <path d="M150 105 q28 30 16 90" stroke="#2f2723" stroke-width="15" fill="none" stroke-linecap="round"/>
+  
+    <path d="M84 158 q26 -12 52 0 l16 14 q10 10 8 26 l-6 56 h-88 l-6 -56 q-2 -16 8 -26z" fill="#a8d5b5"/>
+    <path d="M98 160 h24 v10 h-24z" fill="#ffffff" opacity="0.5"/>
+    <path d="M74 250 h72 l10 70 h-92z" fill="#a8d5b5"/>
+    <rect x="74" y="246" rx="4" fill="#3e8e5a"/>
+    <path d="M70 176 q-12 34 -8 66" stroke="#a8d5b5" stroke-width="18" fill="none" stroke-linecap="round"/>
+    <path d="M150 176 q12 34 8 66" stroke="#a8d5b5" stroke-width="18" fill="none" stroke-linecap="round"/>
+    <circle cx="63" cy="246" r="9" fill="#f3d3b8"/>
+    <circle cx="157" cy="246" r="9" fill="#f3d3b8"/>
+  <path d="M100 140 h20 v26 h-20z" fill="#f3d3b8"/>
+  <ellipse cx="110" cy="104" rx="44" ry="50" fill="#f3d3b8"/>
+  <ellipse cx="66" cy="108" rx="6" ry="9" fill="#f3d3b8"/>
+  <ellipse cx="154" cy="108" rx="6" ry="9" fill="#f3d3b8"/>
+  
+    <path d="M68 92 q6 -40 42 -40 q36 0 42 40 q-14 -20 -42 -20 q-28 0 -42 20z" fill="#2f2723"/>
+    <path d="M74 88 q14 -16 30 -14 q-16 6 -22 22z" fill="#ffffff" opacity="0.14"/>
+  
+    <path d="M79 88 q9 -4 18 0" stroke="#3a2b22" stroke-width="3" fill="none" stroke-linecap="round"/>
+    <path d="M141 88 q-9 -4 -18 0" stroke="#3a2b22" stroke-width="3" fill="none" stroke-linecap="round"/>
+  
+        <ellipse cx="88" cy="104" rx="7.5" ry="9" fill="#fff"/>
+        <ellipse cx="132" cy="104" rx="7.5" ry="9" fill="#fff"/>
+        <circle cx="88" cy="104" r="5" fill="#3e8e5a"/>
+        <circle cx="132" cy="104" r="5" fill="#3e8e5a"/>
+        <circle cx="88" cy="104" r="2.4" fill="#2a2320"/>
+        <circle cx="132" cy="104" r="2.4" fill="#2a2320"/>
+        <circle cx="86" cy="101" r="1.6" fill="#fff"/>
+        <circle cx="130" cy="101" r="1.6" fill="#fff"/>
+  
+  <path d="M104 126 h12" stroke="#8a4a46" stroke-width="2.4" stroke-linecap="round"/>
+  
+  
+</svg>
+<svg class="p" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 330" role="img" aria-label="지우 웃음">
+  <path d="M62 100 q-6 90 4 150 h108 q10 -60 4 -150z" fill="#1f1b2e" opacity="0.95"/>
+  
+    <path d="M84 158 q26 -12 52 0 l16 14 q10 10 8 26 l-6 56 h-88 l-6 -56 q-2 -16 8 -26z" fill="#5b6b8c"/>
+    <path d="M98 160 h24 v10 h-24z" fill="#ffffff" opacity="0.5"/>
+    <path d="M74 250 h72 l10 70 h-92z" fill="#5b6b8c"/>
+    <rect x="74" y="246" rx="4" fill="#7a6fd8"/>
+    <path d="M70 176 q-12 34 -8 66" stroke="#5b6b8c" stroke-width="18" fill="none" stroke-linecap="round"/>
+    <path d="M150 176 q12 34 8 66" stroke="#5b6b8c" stroke-width="18" fill="none" stroke-linecap="round"/>
+    <circle cx="63" cy="246" r="9" fill="#efd2bd"/>
+    <circle cx="157" cy="246" r="9" fill="#efd2bd"/>
+  <path d="M100 140 h20 v26 h-20z" fill="#efd2bd"/>
+  <ellipse cx="110" cy="104" rx="44" ry="50" fill="#efd2bd"/>
+  <ellipse cx="66" cy="108" rx="6" ry="9" fill="#efd2bd"/>
+  <ellipse cx="154" cy="108" rx="6" ry="9" fill="#efd2bd"/>
+  
+    <path d="M68 92 q6 -40 42 -40 q36 0 42 40 q-14 -20 -42 -20 q-28 0 -42 20z" fill="#1f1b2e"/>
+    <path d="M74 88 q14 -16 30 -14 q-16 6 -22 22z" fill="#ffffff" opacity="0.14"/>
+  
+    <path d="M79 86 q9 -4 18 0.5" stroke="#3a2b22" stroke-width="3" fill="none" stroke-linecap="round"/>
+    <path d="M141 86 q-9 -4 -18 0.5" stroke="#3a2b22" stroke-width="3" fill="none" stroke-linecap="round"/>
+  
+        <path d="M79 107 q9 -9 18 0" stroke="#2a2320" stroke-width="3" fill="none" stroke-linecap="round"/>
+        <path d="M123 107 q9 -9 18 0" stroke="#2a2320" stroke-width="3" fill="none" stroke-linecap="round"/>
+  <ellipse cx="82" cy="117" rx="11" ry="6" fill="#ff8a9a" opacity="0.14"/>
+         <ellipse cx="138" cy="117" rx="11" ry="6" fill="#ff8a9a" opacity="0.14"/>
+  <path d="M102 126 q8 7 16 0" stroke="#8a4a46" stroke-width="2.6" fill="none" stroke-linecap="round"/>
+  
+  
+</svg>
+<svg class="p" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 330" role="img" aria-label="수아 기본">
+  <path d="M70 96 q-2 30 0 46 h80 q2 -16 0 -46z" fill="#3a2b1f" opacity="0.95"/>
+  
+    <path d="M84 158 q26 -12 52 0 l16 14 q10 10 8 26 l-6 56 h-88 l-6 -56 q-2 -16 8 -26z" fill="#3f7fd0"/>
+    <path d="M98 160 h24 v10 h-24z" fill="#ffffff" opacity="0.5"/>
+    <path d="M74 250 h72 l10 70 h-92z" fill="#3f7fd0"/>
+    <rect x="74" y="246" rx="4" fill="#2d6ac9"/>
+    <path d="M70 176 q-12 34 -8 66" stroke="#3f7fd0" stroke-width="18" fill="none" stroke-linecap="round"/>
+    <path d="M150 176 q12 34 8 66" stroke="#3f7fd0" stroke-width="18" fill="none" stroke-linecap="round"/>
+    <circle cx="63" cy="246" r="9" fill="#e8c09b"/>
+    <circle cx="157" cy="246" r="9" fill="#e8c09b"/>
+  <path d="M100 140 h20 v26 h-20z" fill="#e8c09b"/>
+  <ellipse cx="110" cy="104" rx="44" ry="50" fill="#e8c09b"/>
+  <ellipse cx="66" cy="108" rx="6" ry="9" fill="#e8c09b"/>
+  <ellipse cx="154" cy="108" rx="6" ry="9" fill="#e8c09b"/>
+  
+    <path d="M68 92 q6 -40 42 -40 q36 0 42 40 q-14 -20 -42 -20 q-28 0 -42 20z" fill="#3a2b1f"/>
+    <path d="M74 88 q14 -16 30 -14 q-16 6 -22 22z" fill="#ffffff" opacity="0.14"/>
+  
+    <path d="M79 88 q9 -4 18 0" stroke="#3a2b22" stroke-width="3" fill="none" stroke-linecap="round"/>
+    <path d="M141 88 q-9 -4 -18 0" stroke="#3a2b22" stroke-width="3" fill="none" stroke-linecap="round"/>
+  
+        <ellipse cx="88" cy="104" rx="7.5" ry="9" fill="#fff"/>
+        <ellipse cx="132" cy="104" rx="7.5" ry="9" fill="#fff"/>
+        <circle cx="88" cy="104" r="5" fill="#2d6ac9"/>
+        <circle cx="132" cy="104" r="5" fill="#2d6ac9"/>
+        <circle cx="88" cy="104" r="2.4" fill="#2a2320"/>
+        <circle cx="132" cy="104" r="2.4" fill="#2a2320"/>
+        <circle cx="86" cy="101" r="1.6" fill="#fff"/>
+        <circle cx="130" cy="101" r="1.6" fill="#fff"/>
+  
+  <path d="M104 126 h12" stroke="#8a4a46" stroke-width="2.4" stroke-linecap="round"/>
+  
+  
+</svg>
+<svg class="p" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 330" role="img" aria-label="민지 웃음">
+  <path d="M68 100 q-2 36 0 60 h84 q2 -24 0 -60z" fill="#463229" opacity="0.95"/>
+              <circle cx="110" cy="52" r="17" fill="#463229"/>
+  
+    <path d="M84 158 q26 -12 52 0 l16 14 q10 10 8 26 l-6 56 h-88 l-6 -56 q-2 -16 8 -26z" fill="#5c6370"/>
+    <path d="M98 160 h24 v10 h-24z" fill="#ffffff" opacity="0.5"/>
+    <path d="M74 250 h72 l10 70 h-92z" fill="#5c6370"/>
+    <rect x="74" y="246" rx="4" fill="#4c6ef5"/>
+    <path d="M70 176 q-12 34 -8 66" stroke="#5c6370" stroke-width="18" fill="none" stroke-linecap="round"/>
+    <path d="M150 176 q12 34 8 66" stroke="#5c6370" stroke-width="18" fill="none" stroke-linecap="round"/>
+    <circle cx="63" cy="246" r="9" fill="#f2d5bd"/>
+    <circle cx="157" cy="246" r="9" fill="#f2d5bd"/>
+  <path d="M100 140 h20 v26 h-20z" fill="#f2d5bd"/>
+  <ellipse cx="110" cy="104" rx="44" ry="50" fill="#f2d5bd"/>
+  <ellipse cx="66" cy="108" rx="6" ry="9" fill="#f2d5bd"/>
+  <ellipse cx="154" cy="108" rx="6" ry="9" fill="#f2d5bd"/>
+  
+    <path d="M68 92 q6 -40 42 -40 q36 0 42 40 q-14 -20 -42 -20 q-28 0 -42 20z" fill="#463229"/>
+    <path d="M74 88 q14 -16 30 -14 q-16 6 -22 22z" fill="#ffffff" opacity="0.14"/>
+  
+    <path d="M79 86 q9 -4 18 0.5" stroke="#3a2b22" stroke-width="3" fill="none" stroke-linecap="round"/>
+    <path d="M141 86 q-9 -4 -18 0.5" stroke="#3a2b22" stroke-width="3" fill="none" stroke-linecap="round"/>
+  
+        <path d="M79 107 q9 -9 18 0" stroke="#2a2320" stroke-width="3" fill="none" stroke-linecap="round"/>
+        <path d="M123 107 q9 -9 18 0" stroke="#2a2320" stroke-width="3" fill="none" stroke-linecap="round"/>
+  <ellipse cx="82" cy="117" rx="11" ry="6" fill="#ff8a9a" opacity="0.14"/>
+         <ellipse cx="138" cy="117" rx="11" ry="6" fill="#ff8a9a" opacity="0.14"/>
+  <path d="M102 126 q8 7 16 0" stroke="#8a4a46" stroke-width="2.6" fill="none" stroke-linecap="round"/>
+  
+  
+</svg></div>
+    <div class="cards"><svg style="--r:-8deg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 180" role="img" aria-label="송학 광">
+  
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#1c1c22"/>
+      <stop offset="100%" stop-color="#2b2b34"/>
+    </linearGradient>
+    <linearGradient id="paper" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#fbf4e6"/>
+      <stop offset="100%" stop-color="#efe2ca"/>
+    </linearGradient>
+  </defs>
+  <rect rx="10" fill="url(#paper)"/>
+  <rect x="5" y="5" rx="7" fill="url(#bg)"/>
+  <rect x="5" y="5" rx="7" fill="none" stroke="#12100e" stroke-width="3"/>
+  <path d="M60 150 v-40" stroke="#5b4330" stroke-width="7"/>
+              <path d="M60 116 l-26 18 M60 116 l26 18 M60 132 l-20 16 M60 132 l20 16" stroke="#3f8a52" stroke-width="7" stroke-linecap="round"/><path d="M46 130 q18 -30 38 -18 q8 6 0 14 q-14 12 -34 8z" fill="#f4ece0" stroke="#12100e" stroke-width="3"/>
+              <path d="M84 112 l14 -8 l-10 14z" fill="#d8402f"/>
+              <path d="M54 138 v16 M66 138 v16" stroke="#12100e" stroke-width="4"/>
+              <circle cx="78" cy="116" r="3" fill="#12100e"/>
+  <rect x="14" y="14" rx="5" fill="#d8402f" stroke="#12100e" stroke-width="2.5"/>
+  <text x="31" y="43" font-size="24" text-anchor="middle" fill="#f4ece0" font-family="serif" font-weight="bold">光</text>
+  <rect x="5" y="150" fill="#00000055"/>
+  <text x="60" y="168" font-size="12" text-anchor="middle" fill="#f4ece0" font-family="sans-serif">1월 송학</text>
+</svg>
+<svg style="--r:-4deg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 180" role="img" aria-label="매조 홍단">
+  
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#2a1f2e"/>
+      <stop offset="100%" stop-color="#3d2c42"/>
+    </linearGradient>
+    <linearGradient id="paper" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#fbf4e6"/>
+      <stop offset="100%" stop-color="#efe2ca"/>
+    </linearGradient>
+  </defs>
+  <rect rx="10" fill="url(#paper)"/>
+  <rect x="5" y="5" rx="7" fill="url(#bg)"/>
+  <rect x="5" y="5" rx="7" fill="none" stroke="#12100e" stroke-width="3"/>
+  <path d="M44 158 q14 -36 34 -50" stroke="#5b4330" stroke-width="6" fill="none"/>
+              <circle cx="80" cy="106" r="9" fill="#f2a0b4" stroke="#12100e" stroke-width="2"/>
+              <circle cx="62" cy="126" r="8" fill="#f2a0b4" stroke="#12100e" stroke-width="2"/>
+  <rect x="20" y="66" rx="6" fill="#d8402f" stroke="#12100e" stroke-width="3"/>
+  <text x="60" y="98" font-size="22" text-anchor="middle" fill="#f4ece0" font-family="serif" font-weight="bold">홍단</text>
+  <rect x="5" y="150" fill="#00000055"/>
+  <text x="60" y="168" font-size="12" text-anchor="middle" fill="#f4ece0" font-family="sans-serif">2월 매조</text>
+</svg>
+<svg style="--r:0deg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 180" role="img" aria-label="공산 광">
+  
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#1a2230"/>
+      <stop offset="100%" stop-color="#283348"/>
+    </linearGradient>
+    <linearGradient id="paper" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#fbf4e6"/>
+      <stop offset="100%" stop-color="#efe2ca"/>
+    </linearGradient>
+  </defs>
+  <rect rx="10" fill="url(#paper)"/>
+  <rect x="5" y="5" rx="7" fill="url(#bg)"/>
+  <rect x="5" y="5" rx="7" fill="none" stroke="#12100e" stroke-width="3"/>
+  <path d="M16 158 q44 -34 88 0z" fill="#4a4030" stroke="#12100e" stroke-width="2.5"/><circle cx="60" cy="108" r="26" fill="#d8402f" stroke="#12100e" stroke-width="3"/>
+  <rect x="14" y="14" rx="5" fill="#d8402f" stroke="#12100e" stroke-width="2.5"/>
+  <text x="31" y="43" font-size="24" text-anchor="middle" fill="#f4ece0" font-family="serif" font-weight="bold">光</text>
+  <rect x="5" y="150" fill="#00000055"/>
+  <text x="60" y="168" font-size="12" text-anchor="middle" fill="#f4ece0" font-family="sans-serif">8월 공산</text>
+</svg>
+<svg style="--r:4deg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 180" role="img" aria-label="국화 청단">
+  
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#2d2a1c"/>
+      <stop offset="100%" stop-color="#443f28"/>
+    </linearGradient>
+    <linearGradient id="paper" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#fbf4e6"/>
+      <stop offset="100%" stop-color="#efe2ca"/>
+    </linearGradient>
+  </defs>
+  <rect rx="10" fill="url(#paper)"/>
+  <rect x="5" y="5" rx="7" fill="url(#bg)"/>
+  <rect x="5" y="5" rx="7" fill="none" stroke="#12100e" stroke-width="3"/>
+  <path d="M60 158 v-24" stroke="#3f8a52" stroke-width="6"/>
+              <circle cx="60" cy="124" r="16" fill="#e8b53c" stroke="#12100e" stroke-width="2.5"/>
+              <circle cx="60" cy="124" r="6" fill="#b8801f"/>
+  <rect x="20" y="66" rx="6" fill="#3f6fb5" stroke="#12100e" stroke-width="3"/>
+  <text x="60" y="98" font-size="22" text-anchor="middle" fill="#f4ece0" font-family="serif" font-weight="bold">청단</text>
+  <rect x="5" y="150" fill="#00000055"/>
+  <text x="60" y="168" font-size="12" text-anchor="middle" fill="#f4ece0" font-family="sans-serif">9월 국화</text>
+</svg>
+<svg style="--r:8deg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 180" role="img" aria-label="비광">
+  
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#1b2228"/>
+      <stop offset="100%" stop-color="#2a343c"/>
+    </linearGradient>
+    <linearGradient id="paper" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#fbf4e6"/>
+      <stop offset="100%" stop-color="#efe2ca"/>
+    </linearGradient>
+  </defs>
+  <rect rx="10" fill="url(#paper)"/>
+  <rect x="5" y="5" rx="7" fill="url(#bg)"/>
+  <rect x="5" y="5" rx="7" fill="none" stroke="#12100e" stroke-width="3"/>
+  <path d="M60 96 q-24 30 -18 62 M60 96 q24 30 18 62" stroke="#4a5b3a" stroke-width="5" fill="none"/><path d="M26 92 q34 -26 68 0z" fill="#12100e"/>
+              <path d="M60 92 v46" stroke="#12100e" stroke-width="4"/>
+              <circle cx="60" cy="142" r="9" fill="#5a4a3a" stroke="#12100e" stroke-width="2.5"/>
+              <path d="M52 152 h16 v14 h-16z" fill="#5a4a3a" stroke="#12100e" stroke-width="2.5"/>
+  <rect x="14" y="14" rx="5" fill="#d8402f" stroke="#12100e" stroke-width="2.5"/>
+  <text x="31" y="43" font-size="24" text-anchor="middle" fill="#f4ece0" font-family="serif" font-weight="bold">光</text>
+  <rect x="5" y="150" fill="#00000055"/>
+  <text x="60" y="168" font-size="12" text-anchor="middle" fill="#f4ece0" font-family="sans-serif">12월 비</text>
+</svg>
+<svg style="--r:12deg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 180" role="img" aria-label="오동 광">
+  
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#231f2c"/>
+      <stop offset="100%" stop-color="#352f45"/>
+    </linearGradient>
+    <linearGradient id="paper" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#fbf4e6"/>
+      <stop offset="100%" stop-color="#efe2ca"/>
+    </linearGradient>
+  </defs>
+  <rect rx="10" fill="url(#paper)"/>
+  <rect x="5" y="5" rx="7" fill="url(#bg)"/>
+  <rect x="5" y="5" rx="7" fill="none" stroke="#12100e" stroke-width="3"/>
+  <path d="M60 158 v-32" stroke="#5b4330" stroke-width="6"/>
+              <ellipse cx="42" cy="118" rx="18" ry="13" fill="#6f7f4a" stroke="#12100e" stroke-width="2.5"/>
+              <ellipse cx="80" cy="112" rx="18" ry="13" fill="#6f7f4a" stroke="#12100e" stroke-width="2.5"/><path d="M40 128 q22 -34 46 -16 q10 8 0 18 q-20 12 -46 -2z" fill="#e8b53c" stroke="#12100e" stroke-width="3"/>
+              <path d="M86 110 l16 -10 l-10 18z" fill="#d8402f"/>
+              <path d="M44 132 q-14 12 -6 24 q10 -6 14 -18z" fill="#e8b53c" stroke="#12100e" stroke-width="2.5"/>
+  <rect x="14" y="14" rx="5" fill="#d8402f" stroke="#12100e" stroke-width="2.5"/>
+  <text x="31" y="43" font-size="24" text-anchor="middle" fill="#f4ece0" font-family="serif" font-weight="bold">光</text>
+  <rect x="5" y="150" fill="#00000055"/>
+  <text x="60" y="168" font-size="12" text-anchor="middle" fill="#f4ece0" font-family="sans-serif">11월 오동</text>
+</svg></div>
+  </div>
+</header>
+
+<section>
+  <div class="wrap">
+    <h2>어떤 게임인가요</h2>
+    <p class="sub">서울의 한 하숙집. 어머니가 운영하는 이 집의 오랜 전통은 밤마다 마루에서 벌어지는 맞고 승부입니다.</p>
+    <div class="grid">
+      <div class="card">
+        <h3>하숙생 10명 × 10판</h3>
+        <p>총 100판. 한 판 이길 때마다 호감 이벤트가 열리고, 열 번째 판을 이기면 그 사람과 사귀게 됩니다.</p>
+      </div>
+      <div class="card">
+        <h3>제대로 된 맞고</h3>
+        <p>쪽·따닥·뻑·자뻑·쓸·흔들기·폭탄·총통에 피박/광박/멍박/고박까지. 규칙은 설정에서 전부 켜고 끌 수 있습니다.</p>
+      </div>
+      <div class="card">
+        <h3>상대마다 다른 버릇</h3>
+        <p>피만 쌓는 사람, 띠만 노리는 사람, 7점만 넘으면 무조건 고를 외치는 사람. 단계가 오르면 눈에 띄게 강해집니다.</p>
+      </div>
+      <div class="card">
+        <h3>105개의 이야기</h3>
+        <p>프롤로그부터 히든 엔딩까지. 선택지에 따라 대사가 갈리고, 호감도가 오르면 말투 자체가 달라집니다.</p>
+      </div>
+      <div class="card">
+        <h3>오프라인에서도</h3>
+        <p>한 번 열어두면 인터넷 없이도 돌아갑니다. 홈 화면에 추가하면 앱처럼 실행됩니다.</p>
+      </div>
+      <div class="card">
+        <h3>진행도는 안전하게</h3>
+        <p>백업 코드 하나면 폰을 바꿔도 이어서 할 수 있습니다. 계정도, 개인정보도 필요 없습니다.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <h2>하숙생 열 명</h2>
+    <p class="sub">봄에는 1층, 여름에는 3층, 가을이 지나 겨울이 오면 별채의 문이 열립니다.</p>
+    <div class="tenants">      <div class="tenant">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 330" role="img" aria-label="은서 웃음">
+  <path d="M64 98 q-4 46 2 74 h88 q6 -28 2 -74z" fill="#6b4630" opacity="0.95"/>
+  
+    <path d="M84 158 q26 -12 52 0 l16 14 q10 10 8 26 l-6 56 h-88 l-6 -56 q-2 -16 8 -26z" fill="#f4a7b9"/>
+    <path d="M98 160 h24 v10 h-24z" fill="#ffffff" opacity="0.5"/>
+    <path d="M74 250 h72 l10 70 h-92z" fill="#f4a7b9"/>
+    <rect x="74" y="246" rx="4" fill="#e8657f"/>
+    <path d="M70 176 q-12 34 -8 66" stroke="#f4a7b9" stroke-width="18" fill="none" stroke-linecap="round"/>
+    <path d="M150 176 q12 34 8 66" stroke="#f4a7b9" stroke-width="18" fill="none" stroke-linecap="round"/>
+    <circle cx="63" cy="246" r="9" fill="#f7d9c4"/>
+    <circle cx="157" cy="246" r="9" fill="#f7d9c4"/>
+  <path d="M100 140 h20 v26 h-20z" fill="#f7d9c4"/>
+  <ellipse cx="110" cy="104" rx="44" ry="50" fill="#f7d9c4"/>
+  <ellipse cx="66" cy="108" rx="6" ry="9" fill="#f7d9c4"/>
+  <ellipse cx="154" cy="108" rx="6" ry="9" fill="#f7d9c4"/>
+  
+    <path d="M68 92 q6 -40 42 -40 q36 0 42 40 q-14 -20 -42 -20 q-28 0 -42 20z" fill="#6b4630"/>
+    <path d="M74 88 q14 -16 30 -14 q-16 6 -22 22z" fill="#ffffff" opacity="0.14"/>
+  
+    <path d="M79 86 q9 -4 18 0.5" stroke="#3a2b22" stroke-width="3" fill="none" stroke-linecap="round"/>
+    <path d="M141 86 q-9 -4 -18 0.5" stroke="#3a2b22" stroke-width="3" fill="none" stroke-linecap="round"/>
+  
+        <path d="M79 107 q9 -9 18 0" stroke="#2a2320" stroke-width="3" fill="none" stroke-linecap="round"/>
+        <path d="M123 107 q9 -9 18 0" stroke="#2a2320" stroke-width="3" fill="none" stroke-linecap="round"/>
+  <ellipse cx="82" cy="117" rx="11" ry="6" fill="#ff8a9a" opacity="0.14"/>
+         <ellipse cx="138" cy="117" rx="11" ry="6" fill="#ff8a9a" opacity="0.14"/>
+  <path d="M102 126 q8 7 16 0" stroke="#8a4a46" stroke-width="2.6" fill="none" stroke-linecap="round"/>
+  
+  
+</svg>
+        <b>은서</b>
+        <span class="nick">"옆방"</span>
+        <div class="style">아직 규칙을 외우는 중. 뭘 낼지 모르겠으면 그냥 낸다</div>
+        <div class="season">봄</div>
+      </div>
+      <div class="tenant">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 330" role="img" aria-label="하영 웃음">
+  <path d="M66 100 q-4 40 0 70 h88 q4 -30 0 -70z" fill="#2f2723" opacity="0.95"/>
+              <path d="M150 105 q28 30 16 90" stroke="#2f2723" stroke-width="15" fill="none" stroke-linecap="round"/>
+  
+    <path d="M84 158 q26 -12 52 0 l16 14 q10 10 8 26 l-6 56 h-88 l-6 -56 q-2 -16 8 -26z" fill="#a8d5b5"/>
+    <path d="M98 160 h24 v10 h-24z" fill="#ffffff" opacity="0.5"/>
+    <path d="M74 250 h72 l10 70 h-92z" fill="#a8d5b5"/>
+    <rect x="74" y="246" rx="4" fill="#3e8e5a"/>
+    <path d="M70 176 q-12 34 -8 66" stroke="#a8d5b5" stroke-width="18" fill="none" stroke-linecap="round"/>
+    <path d="M150 176 q12 34 8 66" stroke="#a8d5b5" stroke-width="18" fill="none" stroke-linecap="round"/>
+    <circle cx="63" cy="246" r="9" fill="#f3d3b8"/>
+    <circle cx="157" cy="246" r="9" fill="#f3d3b8"/>
+  <path d="M100 140 h20 v26 h-20z" fill="#f3d3b8"/>
+  <ellipse cx="110" cy="104" rx="44" ry="50" fill="#f3d3b8"/>
+  <ellipse cx="66" cy="108" rx="6" ry="9" fill="#f3d3b8"/>
+  <ellipse cx="154" cy="108" rx="6" ry="9" fill="#f3d3b8"/>
+  
+    <path d="M68 92 q6 -40 42 -40 q36 0 42 40 q-14 -20 -42 -20 q-28 0 -42 20z" fill="#2f2723"/>
+    <path d="M74 88 q14 -16 30 -14 q-16 6 -22 22z" fill="#ffffff" opacity="0.14"/>
+  
+    <path d="M79 86 q9 -4 18 0.5" stroke="#3a2b22" stroke-width="3" fill="none" stroke-linecap="round"/>
+    <path d="M141 86 q-9 -4 -18 0.5" stroke="#3a2b22" stroke-width="3" fill="none" stroke-linecap="round"/>
+  
+        <path d="M79 107 q9 -9 18 0" stroke="#2a2320" stroke-width="3" fill="none" stroke-linecap="round"/>
+        <path d="M123 107 q9 -9 18 0" stroke="#2a2320" stroke-width="3" fill="none" stroke-linecap="round"/>
+  <ellipse cx="82" cy="117" rx="11" ry="6" fill="#ff8a9a" opacity="0.14"/>
+         <ellipse cx="138" cy="117" rx="11" ry="6" fill="#ff8a9a" opacity="0.14"/>
+  <path d="M102 126 q8 7 16 0" stroke="#8a4a46" stroke-width="2.6" fill="none" stroke-linecap="round"/>
+  
+  
+</svg>
+        <b>하영</b>
+        <span class="nick">"요리왕"</span>
+        <div class="style">피부터 쌓는다. 화려하진 않은데 정신 차리면 피박</div>
+        <div class="season">봄</div>
+      </div>
+      <div class="tenant">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 330" role="img" aria-label="지우 웃음">
+  <path d="M62 100 q-6 90 4 150 h108 q10 -60 4 -150z" fill="#1f1b2e" opacity="0.95"/>
+  
+    <path d="M84 158 q26 -12 52 0 l16 14 q10 10 8 26 l-6 56 h-88 l-6 -56 q-2 -16 8 -26z" fill="#5b6b8c"/>
+    <path d="M98 160 h24 v10 h-24z" fill="#ffffff" opacity="0.5"/>
+    <path d="M74 250 h72 l10 70 h-92z" fill="#5b6b8c"/>
+    <rect x="74" y="246" rx="4" fill="#7a6fd8"/>
+    <path d="M70 176 q-12 34 -8 66" stroke="#5b6b8c" stroke-width="18" fill="none" stroke-linecap="round"/>
+    <path d="M150 176 q12 34 8 66" stroke="#5b6b8c" stroke-width="18" fill="none" stroke-linecap="round"/>
+    <circle cx="63" cy="246" r="9" fill="#efd2bd"/>
+    <circle cx="157" cy="246" r="9" fill="#efd2bd"/>
+  <path d="M100 140 h20 v26 h-20z" fill="#efd2bd"/>
+  <ellipse cx="110" cy="104" rx="44" ry="50" fill="#efd2bd"/>
+  <ellipse cx="66" cy="108" rx="6" ry="9" fill="#efd2bd"/>
+  <ellipse cx="154" cy="108" rx="6" ry="9" fill="#efd2bd"/>
+  
+    <path d="M68 92 q6 -40 42 -40 q36 0 42 40 q-14 -20 -42 -20 q-28 0 -42 20z" fill="#1f1b2e"/>
+    <path d="M74 88 q14 -16 30 -14 q-16 6 -22 22z" fill="#ffffff" opacity="0.14"/>
+  
+    <path d="M79 86 q9 -4 18 0.5" stroke="#3a2b22" stroke-width="3" fill="none" stroke-linecap="round"/>
+    <path d="M141 86 q-9 -4 -18 0.5" stroke="#3a2b22" stroke-width="3" fill="none" stroke-linecap="round"/>
+  
+        <path d="M79 107 q9 -9 18 0" stroke="#2a2320" stroke-width="3" fill="none" stroke-linecap="round"/>
+        <path d="M123 107 q9 -9 18 0" stroke="#2a2320" stroke-width="3" fill="none" stroke-linecap="round"/>
+  <ellipse cx="82" cy="117" rx="11" ry="6" fill="#ff8a9a" opacity="0.14"/>
+         <ellipse cx="138" cy="117" rx="11" ry="6" fill="#ff8a9a" opacity="0.14"/>
+  <path d="M102 126 q8 7 16 0" stroke="#8a4a46" stroke-width="2.6" fill="none" stroke-linecap="round"/>
+  
+  
+</svg>
+        <b>지우</b>
+        <span class="nick">"밤샘"</span>
+        <div class="style">띠만 본다. 홍단 청단 나오면 눈빛이 달라진다</div>
+        <div class="season">봄</div>
+      </div>
+      <div class="tenant locked">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 330" role="img" aria-label="수아 기본">
+  <path d="M70 96 q-2 30 0 46 h80 q2 -16 0 -46z" fill="#3a2b1f" opacity="0.95"/>
+  
+    <path d="M84 158 q26 -12 52 0 l16 14 q10 10 8 26 l-6 56 h-88 l-6 -56 q-2 -16 8 -26z" fill="#3f7fd0"/>
+    <path d="M98 160 h24 v10 h-24z" fill="#ffffff" opacity="0.5"/>
+    <path d="M74 250 h72 l10 70 h-92z" fill="#3f7fd0"/>
+    <rect x="74" y="246" rx="4" fill="#2d6ac9"/>
+    <path d="M70 176 q-12 34 -8 66" stroke="#3f7fd0" stroke-width="18" fill="none" stroke-linecap="round"/>
+    <path d="M150 176 q12 34 8 66" stroke="#3f7fd0" stroke-width="18" fill="none" stroke-linecap="round"/>
+    <circle cx="63" cy="246" r="9" fill="#e8c09b"/>
+    <circle cx="157" cy="246" r="9" fill="#e8c09b"/>
+  <path d="M100 140 h20 v26 h-20z" fill="#e8c09b"/>
+  <ellipse cx="110" cy="104" rx="44" ry="50" fill="#e8c09b"/>
+  <ellipse cx="66" cy="108" rx="6" ry="9" fill="#e8c09b"/>
+  <ellipse cx="154" cy="108" rx="6" ry="9" fill="#e8c09b"/>
+  
+    <path d="M68 92 q6 -40 42 -40 q36 0 42 40 q-14 -20 -42 -20 q-28 0 -42 20z" fill="#3a2b1f"/>
+    <path d="M74 88 q14 -16 30 -14 q-16 6 -22 22z" fill="#ffffff" opacity="0.14"/>
+  
+    <path d="M79 88 q9 -4 18 0" stroke="#3a2b22" stroke-width="3" fill="none" stroke-linecap="round"/>
+    <path d="M141 88 q-9 -4 -18 0" stroke="#3a2b22" stroke-width="3" fill="none" stroke-linecap="round"/>
+  
+        <ellipse cx="88" cy="104" rx="7.5" ry="9" fill="#fff"/>
+        <ellipse cx="132" cy="104" rx="7.5" ry="9" fill="#fff"/>
+        <circle cx="88" cy="104" r="5" fill="#2d6ac9"/>
+        <circle cx="132" cy="104" r="5" fill="#2d6ac9"/>
+        <circle cx="88" cy="104" r="2.4" fill="#2a2320"/>
+        <circle cx="132" cy="104" r="2.4" fill="#2a2320"/>
+        <circle cx="86" cy="101" r="1.6" fill="#fff"/>
+        <circle cx="130" cy="101" r="1.6" fill="#fff"/>
+  
+  <path d="M104 126 h12" stroke="#8a4a46" stroke-width="2.4" stroke-linecap="round"/>
+  
+  
+</svg>
+        <b>수아</b>
+        <span class="nick">"체대"</span>
+        <div class="style">???</div>
+        <div class="season">여름</div>
+      </div>
+      <div class="tenant locked">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 330" role="img" aria-label="민지 기본">
+  <path d="M68 100 q-2 36 0 60 h84 q2 -24 0 -60z" fill="#463229" opacity="0.95"/>
+              <circle cx="110" cy="52" r="17" fill="#463229"/>
+  
+    <path d="M84 158 q26 -12 52 0 l16 14 q10 10 8 26 l-6 56 h-88 l-6 -56 q-2 -16 8 -26z" fill="#5c6370"/>
+    <path d="M98 160 h24 v10 h-24z" fill="#ffffff" opacity="0.5"/>
+    <path d="M74 250 h72 l10 70 h-92z" fill="#5c6370"/>
+    <rect x="74" y="246" rx="4" fill="#4c6ef5"/>
+    <path d="M70 176 q-12 34 -8 66" stroke="#5c6370" stroke-width="18" fill="none" stroke-linecap="round"/>
+    <path d="M150 176 q12 34 8 66" stroke="#5c6370" stroke-width="18" fill="none" stroke-linecap="round"/>
+    <circle cx="63" cy="246" r="9" fill="#f2d5bd"/>
+    <circle cx="157" cy="246" r="9" fill="#f2d5bd"/>
+  <path d="M100 140 h20 v26 h-20z" fill="#f2d5bd"/>
+  <ellipse cx="110" cy="104" rx="44" ry="50" fill="#f2d5bd"/>
+  <ellipse cx="66" cy="108" rx="6" ry="9" fill="#f2d5bd"/>
+  <ellipse cx="154" cy="108" rx="6" ry="9" fill="#f2d5bd"/>
+  
+    <path d="M68 92 q6 -40 42 -40 q36 0 42 40 q-14 -20 -42 -20 q-28 0 -42 20z" fill="#463229"/>
+    <path d="M74 88 q14 -16 30 -14 q-16 6 -22 22z" fill="#ffffff" opacity="0.14"/>
+  
+    <path d="M79 88 q9 -4 18 0" stroke="#3a2b22" stroke-width="3" fill="none" stroke-linecap="round"/>
+    <path d="M141 88 q-9 -4 -18 0" stroke="#3a2b22" stroke-width="3" fill="none" stroke-linecap="round"/>
+  
+        <ellipse cx="88" cy="104" rx="7.5" ry="9" fill="#fff"/>
+        <ellipse cx="132" cy="104" rx="7.5" ry="9" fill="#fff"/>
+        <circle cx="88" cy="104" r="5" fill="#4c6ef5"/>
+        <circle cx="132" cy="104" r="5" fill="#4c6ef5"/>
+        <circle cx="88" cy="104" r="2.4" fill="#2a2320"/>
+        <circle cx="132" cy="104" r="2.4" fill="#2a2320"/>
+        <circle cx="86" cy="101" r="1.6" fill="#fff"/>
+        <circle cx="130" cy="101" r="1.6" fill="#fff"/>
+  
+  <path d="M104 126 h12" stroke="#8a4a46" stroke-width="2.4" stroke-linecap="round"/>
+  
+  
+</svg>
+        <b>민지</b>
+        <span class="nick">"취준"</span>
+        <div class="style">???</div>
+        <div class="season">여름</div>
+      </div>
+      <div class="tenant locked">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 330" role="img" aria-label="나래 기본">
+  <path d="M62 100 q-10 70 2 120 q10 -12 16 4 q10 -14 18 2 h36 q8 -16 18 -2 q6 -16 16 -4 q12 -50 2 -120z" fill="#20304a" opacity="0.95"/>
+  
+    <path d="M84 158 q26 -12 52 0 l16 14 q10 10 8 26 l-6 56 h-88 l-6 -56 q-2 -16 8 -26z" fill="#2c3e6b"/>
+    <path d="M98 160 h24 v10 h-24z" fill="#ffffff" opacity="0.5"/>
+    <path d="M74 250 h72 l10 70 h-92z" fill="#2c3e6b"/>
+    <rect x="74" y="246" rx="4" fill="#ffd766"/>
+    <path d="M70 176 q-12 34 -8 66" stroke="#2c3e6b" stroke-width="18" fill="none" stroke-linecap="round"/>
+    <path d="M150 176 q12 34 8 66" stroke="#2c3e6b" stroke-width="18" fill="none" stroke-linecap="round"/>
+    <circle cx="63" cy="246" r="9" fill="#f0d6c4"/>
+    <circle cx="157" cy="246" r="9" fill="#f0d6c4"/>
+  <path d="M100 140 h20 v26 h-20z" fill="#f0d6c4"/>
+  <ellipse cx="110" cy="104" rx="44" ry="50" fill="#f0d6c4"/>
+  <ellipse cx="66" cy="108" rx="6" ry="9" fill="#f0d6c4"/>
+  <ellipse cx="154" cy="108" rx="6" ry="9" fill="#f0d6c4"/>
+  
+    <path d="M68 92 q6 -40 42 -40 q36 0 42 40 q-14 -20 -42 -20 q-28 0 -42 20z" fill="#20304a"/>
+    <path d="M74 88 q14 -16 30 -14 q-16 6 -22 22z" fill="#ffffff" opacity="0.14"/>
+  
+    <path d="M79 88 q9 -4 18 0" stroke="#3a2b22" stroke-width="3" fill="none" stroke-linecap="round"/>
+    <path d="M141 88 q-9 -4 -18 0" stroke="#3a2b22" stroke-width="3" fill="none" stroke-linecap="round"/>
+  
+        <ellipse cx="88" cy="104" rx="7.5" ry="9" fill="#fff"/>
+        <ellipse cx="132" cy="104" rx="7.5" ry="9" fill="#fff"/>
+        <circle cx="88" cy="104" r="5" fill="#ffd766"/>
+        <circle cx="132" cy="104" r="5" fill="#ffd766"/>
+        <circle cx="88" cy="104" r="2.4" fill="#2a2320"/>
+        <circle cx="132" cy="104" r="2.4" fill="#2a2320"/>
+        <circle cx="86" cy="101" r="1.6" fill="#fff"/>
+        <circle cx="130" cy="101" r="1.6" fill="#fff"/>
+  
+  <path d="M104 126 h12" stroke="#8a4a46" stroke-width="2.4" stroke-linecap="round"/>
+  
+  
+</svg>
+        <b>나래</b>
+        <span class="nick">"옥상"</span>
+        <div class="style">???</div>
+        <div class="season">여름</div>
+      </div>
+      <div class="tenant locked">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 330" role="img" aria-label="예린 기본">
+  <path d="M62 100 q-6 90 4 150 h108 q10 -60 4 -150z" fill="#33261d" opacity="0.95"/>
+  
+    <path d="M84 158 q26 -12 52 0 l16 14 q10 10 8 26 l-6 56 h-88 l-6 -56 q-2 -16 8 -26z" fill="#7b8794"/>
+    <path d="M98 160 h24 v10 h-24z" fill="#ffffff" opacity="0.5"/>
+    <path d="M74 250 h72 l10 70 h-92z" fill="#7b8794"/>
+    <rect x="74" y="246" rx="4" fill="#8b5e3c"/>
+    <path d="M70 176 q-12 34 -8 66" stroke="#7b8794" stroke-width="18" fill="none" stroke-linecap="round"/>
+    <path d="M150 176 q12 34 8 66" stroke="#7b8794" stroke-width="18" fill="none" stroke-linecap="round"/>
+    <circle cx="63" cy="246" r="9" fill="#f4d8c2"/>
+    <circle cx="157" cy="246" r="9" fill="#f4d8c2"/>
+  <path d="M100 140 h20 v26 h-20z" fill="#f4d8c2"/>
+  <ellipse cx="110" cy="104" rx="44" ry="50" fill="#f4d8c2"/>
+  <ellipse cx="66" cy="108" rx="6" ry="9" fill="#f4d8c2"/>
+  <ellipse cx="154" cy="108" rx="6" ry="9" fill="#f4d8c2"/>
+  
+    <path d="M68 92 q6 -40 42 -40 q36 0 42 40 q-14 -20 -42 -20 q-28 0 -42 20z" fill="#33261d"/>
+    <path d="M74 88 q14 -16 30 -14 q-16 6 -22 22z" fill="#ffffff" opacity="0.14"/>
+  
+    <path d="M79 88 q9 -4 18 0" stroke="#3a2b22" stroke-width="3" fill="none" stroke-linecap="round"/>
+    <path d="M141 88 q-9 -4 -18 0" stroke="#3a2b22" stroke-width="3" fill="none" stroke-linecap="round"/>
+  
+        <ellipse cx="88" cy="104" rx="7.5" ry="9" fill="#fff"/>
+        <ellipse cx="132" cy="104" rx="7.5" ry="9" fill="#fff"/>
+        <circle cx="88" cy="104" r="5" fill="#8b5e3c"/>
+        <circle cx="132" cy="104" r="5" fill="#8b5e3c"/>
+        <circle cx="88" cy="104" r="2.4" fill="#2a2320"/>
+        <circle cx="132" cy="104" r="2.4" fill="#2a2320"/>
+        <circle cx="86" cy="101" r="1.6" fill="#fff"/>
+        <circle cx="130" cy="101" r="1.6" fill="#fff"/>
+  
+  <path d="M104 126 h12" stroke="#8a4a46" stroke-width="2.4" stroke-linecap="round"/>
+  
+  
+</svg>
+        <b>예린</b>
+        <span class="nick">"회계"</span>
+        <div class="style">???</div>
+        <div class="season">가을</div>
+      </div>
+      <div class="tenant locked">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 330" role="img" aria-label="세연 기본">
+  <path d="M62 100 q-10 70 2 120 q10 -12 16 4 q10 -14 18 2 h36 q8 -16 18 -2 q6 -16 16 -4 q12 -50 2 -120z" fill="#5a2230" opacity="0.95"/>
+  
+    <path d="M84 158 q26 -12 52 0 l16 14 q10 10 8 26 l-6 56 h-88 l-6 -56 q-2 -16 8 -26z" fill="#b23a55"/>
+    <path d="M98 160 h24 v10 h-24z" fill="#ffffff" opacity="0.5"/>
+    <path d="M74 250 h72 l10 70 h-92z" fill="#b23a55"/>
+    <rect x="74" y="246" rx="4" fill="#d94f6e"/>
+    <path d="M70 176 q-12 34 -8 66" stroke="#b23a55" stroke-width="18" fill="none" stroke-linecap="round"/>
+    <path d="M150 176 q12 34 8 66" stroke="#b23a55" stroke-width="18" fill="none" stroke-linecap="round"/>
+    <circle cx="63" cy="246" r="9" fill="#f6d9c6"/>
+    <circle cx="157" cy="246" r="9" fill="#f6d9c6"/>
+  <path d="M100 140 h20 v26 h-20z" fill="#f6d9c6"/>
+  <ellipse cx="110" cy="104" rx="44" ry="50" fill="#f6d9c6"/>
+  <ellipse cx="66" cy="108" rx="6" ry="9" fill="#f6d9c6"/>
+  <ellipse cx="154" cy="108" rx="6" ry="9" fill="#f6d9c6"/>
+  
+    <path d="M68 92 q6 -40 42 -40 q36 0 42 40 q-14 -20 -42 -20 q-28 0 -42 20z" fill="#5a2230"/>
+    <path d="M74 88 q14 -16 30 -14 q-16 6 -22 22z" fill="#ffffff" opacity="0.14"/>
+  
+    <path d="M79 88 q9 -4 18 0" stroke="#3a2b22" stroke-width="3" fill="none" stroke-linecap="round"/>
+    <path d="M141 88 q-9 -4 -18 0" stroke="#3a2b22" stroke-width="3" fill="none" stroke-linecap="round"/>
+  
+        <ellipse cx="88" cy="104" rx="7.5" ry="9" fill="#fff"/>
+        <ellipse cx="132" cy="104" rx="7.5" ry="9" fill="#fff"/>
+        <circle cx="88" cy="104" r="5" fill="#d94f6e"/>
+        <circle cx="132" cy="104" r="5" fill="#d94f6e"/>
+        <circle cx="88" cy="104" r="2.4" fill="#2a2320"/>
+        <circle cx="132" cy="104" r="2.4" fill="#2a2320"/>
+        <circle cx="86" cy="101" r="1.6" fill="#fff"/>
+        <circle cx="130" cy="101" r="1.6" fill="#fff"/>
+  
+  <path d="M104 126 h12" stroke="#8a4a46" stroke-width="2.4" stroke-linecap="round"/>
+  
+  
+</svg>
+        <b>세연</b>
+        <span class="nick">"연극"</span>
+        <div class="style">???</div>
+        <div class="season">가을</div>
+      </div>
+      <div class="tenant locked">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 330" role="img" aria-label="도희 기본">
+  <path d="M64 100 q-6 60 0 100 h92 q6 -40 0 -100z" fill="#241c17" opacity="0.95"/>
+              <path d="M148 150 q14 30 8 70" stroke="#241c17" stroke-width="13" fill="none" stroke-linecap="round"/>
+  
+    <path d="M84 158 q26 -12 52 0 l16 14 q10 10 8 26 l-6 56 h-88 l-6 -56 q-2 -16 8 -26z" fill="#8c6f4e"/>
+    <path d="M98 160 h24 v10 h-24z" fill="#ffffff" opacity="0.5"/>
+    <path d="M74 250 h72 l10 70 h-92z" fill="#8c6f4e"/>
+    <rect x="74" y="246" rx="4" fill="#b07d3f"/>
+    <path d="M70 176 q-12 34 -8 66" stroke="#8c6f4e" stroke-width="18" fill="none" stroke-linecap="round"/>
+    <path d="M150 176 q12 34 8 66" stroke="#8c6f4e" stroke-width="18" fill="none" stroke-linecap="round"/>
+    <circle cx="63" cy="246" r="9" fill="#f1d4bb"/>
+    <circle cx="157" cy="246" r="9" fill="#f1d4bb"/>
+  <path d="M100 140 h20 v26 h-20z" fill="#f1d4bb"/>
+  <ellipse cx="110" cy="104" rx="44" ry="50" fill="#f1d4bb"/>
+  <ellipse cx="66" cy="108" rx="6" ry="9" fill="#f1d4bb"/>
+  <ellipse cx="154" cy="108" rx="6" ry="9" fill="#f1d4bb"/>
+  
+    <path d="M68 92 q6 -40 42 -40 q36 0 42 40 q-14 -20 -42 -20 q-28 0 -42 20z" fill="#241c17"/>
+    <path d="M74 88 q14 -16 30 -14 q-16 6 -22 22z" fill="#ffffff" opacity="0.14"/>
+  
+    <path d="M79 88 q9 -4 18 0" stroke="#3a2b22" stroke-width="3" fill="none" stroke-linecap="round"/>
+    <path d="M141 88 q-9 -4 -18 0" stroke="#3a2b22" stroke-width="3" fill="none" stroke-linecap="round"/>
+  
+        <ellipse cx="88" cy="104" rx="7.5" ry="9" fill="#fff"/>
+        <ellipse cx="132" cy="104" rx="7.5" ry="9" fill="#fff"/>
+        <circle cx="88" cy="104" r="5" fill="#b07d3f"/>
+        <circle cx="132" cy="104" r="5" fill="#b07d3f"/>
+        <circle cx="88" cy="104" r="2.4" fill="#2a2320"/>
+        <circle cx="132" cy="104" r="2.4" fill="#2a2320"/>
+        <circle cx="86" cy="101" r="1.6" fill="#fff"/>
+        <circle cx="130" cy="101" r="1.6" fill="#fff"/>
+  
+  <path d="M104 126 h12" stroke="#8a4a46" stroke-width="2.4" stroke-linecap="round"/>
+  
+  
+</svg>
+        <b>도희</b>
+        <span class="nick">"선배"</span>
+        <div class="style">???</div>
+        <div class="season">가을</div>
+      </div>
+      <div class="tenant locked">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 330" role="img" aria-label="윤 기본">
+  <path d="M62 100 q-6 90 4 150 h108 q10 -60 4 -150z" fill="#15161c" opacity="0.95"/>
+  
+    <path d="M84 158 q26 -12 52 0 l16 14 q10 10 8 26 l-6 56 h-88 l-6 -56 q-2 -16 8 -26z" fill="#2b2f3a"/>
+    <path d="M98 160 h24 v10 h-24z" fill="#ffffff" opacity="0.5"/>
+    <path d="M74 250 h72 l10 70 h-92z" fill="#2b2f3a"/>
+    <rect x="74" y="246" rx="4" fill="#9aa7c7"/>
+    <path d="M70 176 q-12 34 -8 66" stroke="#2b2f3a" stroke-width="18" fill="none" stroke-linecap="round"/>
+    <path d="M150 176 q12 34 8 66" stroke="#2b2f3a" stroke-width="18" fill="none" stroke-linecap="round"/>
+    <circle cx="63" cy="246" r="9" fill="#ecd8cb"/>
+    <circle cx="157" cy="246" r="9" fill="#ecd8cb"/>
+  <path d="M100 140 h20 v26 h-20z" fill="#ecd8cb"/>
+  <ellipse cx="110" cy="104" rx="44" ry="50" fill="#ecd8cb"/>
+  <ellipse cx="66" cy="108" rx="6" ry="9" fill="#ecd8cb"/>
+  <ellipse cx="154" cy="108" rx="6" ry="9" fill="#ecd8cb"/>
+  
+    <path d="M68 92 q6 -40 42 -40 q36 0 42 40 q-14 -20 -42 -20 q-28 0 -42 20z" fill="#15161c"/>
+    <path d="M74 88 q14 -16 30 -14 q-16 6 -22 22z" fill="#ffffff" opacity="0.14"/>
+  
+    <path d="M79 88 q9 -4 18 0" stroke="#3a2b22" stroke-width="3" fill="none" stroke-linecap="round"/>
+    <path d="M141 88 q-9 -4 -18 0" stroke="#3a2b22" stroke-width="3" fill="none" stroke-linecap="round"/>
+  
+        <ellipse cx="88" cy="104" rx="7.5" ry="9" fill="#fff"/>
+        <ellipse cx="132" cy="104" rx="7.5" ry="9" fill="#fff"/>
+        <circle cx="88" cy="104" r="5" fill="#9aa7c7"/>
+        <circle cx="132" cy="104" r="5" fill="#9aa7c7"/>
+        <circle cx="88" cy="104" r="2.4" fill="#2a2320"/>
+        <circle cx="132" cy="104" r="2.4" fill="#2a2320"/>
+        <circle cx="86" cy="101" r="1.6" fill="#fff"/>
+        <circle cx="130" cy="101" r="1.6" fill="#fff"/>
+  
+  <path d="M104 126 h12" stroke="#8a4a46" stroke-width="2.4" stroke-linecap="round"/>
+  
+  
+</svg>
+        <b>윤</b>
+        <span class="nick">"장기하숙생"</span>
+        <div class="style">???</div>
+        <div class="season">겨울</div>
+      </div></div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <h2>들어 있는 규칙</h2>
+    <p class="sub">해석이 갈리는 항목은 임의로 정하지 않고 설정에서 고를 수 있게 했습니다.</p>
+    <div class="chips">
+      <span>쪽</span><span>따닥</span><span>뻑 · 자뻑</span><span>쓸</span>
+      <span>흔들기</span><span>폭탄</span><span>총통</span>
+      <span>피박</span><span>광박</span><span>멍박</span><span>고박</span>
+      <span>나가리</span><span>국진 선택</span><span>보너스 쌍피</span>
+      <span>띠 점수 2가지 방식</span>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <h2>지금 시작하세요</h2>
+    <p class="sub">한 판은 3분이면 끝납니다.</p>
+    <div class="cta">
+      <a class="btn play" href="./play/">브라우저에서 플레이</a>
+    </div>
+    <p class="note" style="text-align:center">
+      안드로이드 앱(APK)은 준비 중입니다.
+    </p>
+    <div class="notice" style="margin-top:30px">
+      <b>15세 이용가 기준으로 만들었습니다.</b><br />
+      등장인물은 전원 성인(22~29세)이고 노출·성적 묘사는 없습니다.
+      판돈은 현금이 아니라 설거지 면제권·옥상 독점권 같은 <b>하숙집 포인트</b>이며,
+      <b>현금 결제·환전 기능이 전혀 없습니다.</b>
+      연애는 승부에서 이겨서 얻는 것이 아니라, 승부를 계기로 서로 알아가는 이야기로 쓰였습니다.
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    하숙생 맞고 · 화투 도안을 포함한 모든 그림은 오리지널 제작입니다 · 2026-09-17 빌드<br />
+    <a href="https://github.com/netbell23/stocknews/tree/main/hasukgo">소스 보기</a>
+  </div>
+</footer>
+
+</body>
 </html>
