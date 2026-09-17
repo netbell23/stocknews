@@ -93,9 +93,18 @@ npm run cap:apk
 npm run build:h5
 ```
 
-`docs/hasukgo/` 에 빌드가 들어간다. 커밋해서 push 하면 GitHub Pages 가 서빙한다.
+`docs/hasukgo/` 에 소개 페이지와 게임이 함께 조립된다. 커밋해서 main 에 push 하면 GitHub Pages 가 서빙한다.
 
-> https://netbell23.github.io/stocknews/hasukgo/
+| | 주소 | 무엇 |
+|---|---|---|
+| 소개 | https://netbell23.github.io/stocknews/hasukgo/ | 게임 소개 랜딩 (공유용) |
+| 게임 | https://netbell23.github.io/stocknews/hasukgo/play/ | 게임 본체 |
+
+소개 페이지는 `landing/index.html` 템플릿에 `scripts/build-landing.mjs` 가 내용을 채워 만든다.
+스크린샷 파일을 따로 두지 않고 **게임이 실제로 쓰는 SVG 아트 생성기를 빌드 시점에 그대로 돌려**
+하숙생 입상과 화투패를 페이지에 직접 박아 넣는다. 그래서 아트를 고치면 소개 페이지도 같이 바뀌고,
+이미지 자산이 한 개도 없다. 미해금 하숙생은 흑백 + `???` 로 가려 스포일러를 줄였다.
+문구를 고치려면 `landing/index.html` 만 건드리면 된다.
 
 경로는 상대 경로(`base: './'`)라 어느 하위 폴더에 올려도 그대로 동작한다. 다른 호스팅(Netlify, S3, 사내 서버)에 올릴 때도
 `dist/` 를 통째로 복사하면 된다.
