@@ -212,5 +212,24 @@
   </div>
 </footer>
 
+<script>
+  /* 이 파일은 빌드 재료(템플릿)다. 그대로 열면 하숙생 목록이 비어 있고 play 링크도 깨진다.
+     scripts/build-landing.mjs 가 채운 결과물에서는 이 배너가 나오지 않는다. */
+  if (!document.querySelector('.tenants').children.length) {
+    document.body.insertAdjacentHTML('afterbegin',
+      '<div style="position:fixed;inset:0;z-index:99;background:#221a14;color:#f4ead6;' +
+      'display:flex;align-items:center;justify-content:center;padding:28px;text-align:center;' +
+      'font:15px/1.8 system-ui,sans-serif">' +
+      '<div style="max-width:440px"><div style="font-size:42px;margin-bottom:12px">🧱</div>' +
+      '<b style="font-size:19px">이 파일은 빌드 전 템플릿입니다</b><br><br>' +
+      '하숙생 그림과 「플레이」 링크는 빌드할 때 채워집니다. 완성된 페이지를 보려면:<br><br>' +
+      '<code style="display:block;background:#000;padding:12px 14px;border-radius:8px;' +
+      'text-align:left;font-size:13px;color:#ffd98a">npm run build:h5<br>npm run preview:site</code><br>' +
+      '띄워진 주소를 브라우저에서 여세요.<br><br>' +
+      '<span style="color:#c9bda6;font-size:13px">이미 올라가 있는 페이지:<br>' +
+      '<a style="color:#ffd98a" href="https://netbell23.github.io/stocknews/hasukgo/">' +
+      'netbell23.github.io/stocknews/hasukgo/</a></span></div></div>');
+  }
+</script>
 </body>
 </html>

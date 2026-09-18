@@ -17,7 +17,8 @@
     "build:h5": "node scripts/build-h5.mjs",
     "icons": "node scripts/gen-icons.mjs",
     "dev:lan": "vite --host",
-    "preview:lan": "vite preview --host --port 8796"
+    "preview:lan": "vite preview --host --port 8796",
+    "preview:site": "node scripts/serve-site.mjs"
   },
   "dependencies": {
     "react": "^18.3.1",
