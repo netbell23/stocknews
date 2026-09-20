@@ -155,3 +155,23 @@ export function skipToBreak(state: ScenarioState): ScenarioState {
   }
   return s;
 }
+
+/**
+ * 씬을 끝까지 밀어붙인다. 남은 선택지는 pick 번째(기본 첫 번째)를 고른다.
+ *
+ * 「건너뛰기」는 읽는 시간을 건너뛰는 것이지 보상을 포기하는 게 아니다.
+ * 이걸로 호감도·포인트·엔딩 CG 가 제대로 확정된다.
+ */
+export function fastForward(state: ScenarioState, pick = 0): ScenarioState {
+  let s = state;
+  let guard = 0;
+  while (!s.view.done && guard++ < 2000) {
+    if (s.view.choices) {
+      const idx = Math.min(pick, s.view.choices.length - 1);
+      s = choose(s, idx);
+    } else {
+      s = advance(s);
+    }
+  }
+  return s;
+}

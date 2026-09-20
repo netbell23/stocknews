@@ -18,6 +18,7 @@ import {
   profileFrom,
   resetSave,
   save,
+  takeAllowance,
   type SaveData,
 } from './save/storage';
 import GalleryScreen from './ui/GalleryScreen';
@@ -271,7 +272,6 @@ export default function App() {
           tenant={screen.tenant}
           textSpeed={data.settings.textSpeed}
           onDone={(r) => finishNovel(screen.scene, screen.tenant, r, screen.after)}
-          onSkip={() => finishNovel(screen.scene, screen.tenant, { affectionDelta: 0, pointDelta: 0, cg: null }, screen.after)}
         />
       </div>
     );
@@ -288,7 +288,6 @@ export default function App() {
           tenant={screen.tenant}
           textSpeed={data.settings.textSpeed}
           onDone={() => setScreen({ name: 'match', tenant: screen.tenant, stage: screen.stage })}
-          onSkip={() => setScreen({ name: 'match', tenant: screen.tenant, stage: screen.stage })}
         />
       </div>
     );
@@ -355,6 +354,7 @@ export default function App() {
         onPick={pickTenant}
         onGallery={() => setScreen({ name: 'gallery' })}
         onSettings={() => setScreen({ name: 'settings' })}
+        onAllowance={() => setData((prev) => takeAllowance(prev))}
         allClearedFlag={everyoneDone}
         onHidden={() => {
           const scene = getScene('hidden_ending');

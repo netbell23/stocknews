@@ -1,6 +1,6 @@
 /** 이벤트 씬 / 승부 전 대화 컷 — 비주얼노벨 화면 */
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { advance, choose, startScenario, type ScenarioState } from '../scenario/player';
+import { advance, choose, fastForward, startScenario, type ScenarioState } from '../scenario/player';
 import type { Scene } from '../scenario/types';
 import type { Tenant } from '../data/types';
 import { Background, Portrait } from './parts';
@@ -16,13 +16,14 @@ export default function NovelScreen({
   tenant,
   textSpeed,
   onDone,
-  onSkip,
+  canSkip = true,
 }: {
   scene: Scene;
   tenant: Tenant | null;
   textSpeed: number;
   onDone: (r: NovelResult) => void;
-  onSkip?: () => void;
+  /** 건너뛰기 버튼을 보일지 */
+  canSkip?: boolean;
 }) {
   const [st, setSt] = useState<ScenarioState>(() => startScenario(scene));
   const [typed, setTyped] = useState('');
@@ -54,6 +55,19 @@ export default function NovelScreen({
     };
   }, [v.text, textSpeed]);
 
+  /**
+   * 건너뛰기: 남은 대사를 한 번에 소화하고 그 결과를 그대로 넘긴다.
+   * 예전에는 빈 결과를 넘겨서 엔딩 CG 와 포인트가 날아갔다.
+   */
+  const skipAll = useCallback(() => {
+    const end = fastForward(st);
+    onDone({
+      affectionDelta: end.view.affectionDelta,
+      pointDelta: end.view.pointDelta,
+      cg: end.view.cg,
+    });
+  }, [st, onDone]);
+
   const next = useCallback(() => {
     if (typing) {
       // 타이핑 중이면 먼저 전부 보여준다
@@ -83,8 +97,8 @@ export default function NovelScreen({
       <div className="layer">
         <div className="topbar" onClick={(e) => e.stopPropagation()}>
           <h1>{scene.title}</h1>
-          {onSkip && (
-            <button className="btn ghost" style={{ padding: '6px 12px', fontSize: 13 }} onClick={onSkip}>
+          {canSkip && (
+            <button className="btn ghost" style={{ padding: '6px 12px', fontSize: 13 }} onClick={skipAll}>
               건너뛰기
             </button>
           )}

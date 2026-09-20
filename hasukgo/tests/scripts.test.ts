@@ -6,7 +6,7 @@ import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { parseScript } from '../src/scenario/parser';
-import { advance, choose, startScenario } from '../src/scenario/player';
+import { advance, choose, fastForward, startScenario } from '../src/scenario/player';
 import type { ParseIssue, Scene } from '../src/scenario/types';
 import { TENANTS } from '../src/data/tenants';
 
@@ -139,5 +139,67 @@ describe('모든 씬이 끝까지 재생된다', () => {
       }
     }
     expect(stuck).toEqual([]);
+  });
+});
+
+describe('건너뛰기는 보상을 잃지 않는다', () => {
+  /** 끝까지 읽었을 때의 결과 */
+  const readThrough = (scene: Scene, pick = 0) => {
+    let s = startScenario(scene);
+    let guard = 0;
+    while (!s.view.done && guard++ < 500) {
+      if (s.view.choices) s = choose(s, Math.min(pick, s.view.choices.length - 1));
+      else s = advance(s);
+    }
+    return s.view;
+  };
+
+  it('모든 이벤트에서 건너뛴 결과가 끝까지 읽은 결과와 같다', () => {
+    const mismatched: string[] = [];
+    for (const t of TENANTS) {
+      for (const e of t.events) {
+        const scene = scenes[e.scriptId];
+        if (!scene) continue;
+        const read = readThrough(scene);
+        // 첫 대사만 보고 곧바로 건너뛴 상황
+        const skipped = fastForward(startScenario(scene)).view;
+        if (
+          skipped.affectionDelta !== read.affectionDelta ||
+          skipped.pointDelta !== read.pointDelta ||
+          skipped.cg !== read.cg
+        ) {
+          mismatched.push(
+            `${e.scriptId}: 읽음(호감 ${read.affectionDelta}, ${read.pointDelta}P, CG ${read.cg}) ` +
+              `vs 건너뜀(호감 ${skipped.affectionDelta}, ${skipped.pointDelta}P, CG ${skipped.cg})`,
+          );
+        }
+      }
+    }
+    expect(mismatched).toEqual([]);
+  });
+
+  it('10단계를 건너뛰어도 엔딩 CG 가 해금된다', () => {
+    for (const t of TENANTS) {
+      const e = t.events.find((x) => x.stage === 10)!;
+      const view = fastForward(startScenario(scenes[e.scriptId])).view;
+      expect(view.cg, `${t.name} 10단계`).toBeTruthy();
+      expect(view.affectionDelta, `${t.name} 10단계`).toBeGreaterThan(0);
+    }
+  });
+
+  it('건너뛰기는 중간까지 고른 선택지를 존중한다', () => {
+    const scene = Object.values(scenes).find((s) =>
+      s.steps.some((st) => st.kind === 'choice'),
+    )!;
+    let s = startScenario(scene);
+    let guard = 0;
+    while (!s.view.choices && guard++ < 100) s = advance(s);
+    // 두 번째 선택지를 고른 뒤 건너뛰면, 그 선택의 호감도가 살아 있어야 한다
+    const picked = choose(s, 1);
+    const after = fastForward(picked).view;
+    expect(after.affectionDelta).toBe(
+      picked.view.affectionDelta + (after.affectionDelta - picked.view.affectionDelta),
+    );
+    expect(after.done).toBe(true);
   });
 });

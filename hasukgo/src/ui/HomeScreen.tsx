@@ -2,7 +2,7 @@
 import { isUnlocked, rewardFor, TENANTS, unlockHint } from '../data/tenants';
 import type { Tenant } from '../data/types';
 import type { SaveData } from '../save/storage';
-import { clearedStages } from '../save/storage';
+import { ALLOWANCE, clearedStages, isStuck } from '../save/storage';
 import { Background, currentTimeOfDay, Meter, Portrait, SEASON_LABEL } from './parts';
 
 export default function HomeScreen({
@@ -11,6 +11,7 @@ export default function HomeScreen({
   onGallery,
   onSettings,
   onHidden,
+  onAllowance,
   allClearedFlag,
 }: {
   data: SaveData;
@@ -18,6 +19,7 @@ export default function HomeScreen({
   onGallery: () => void;
   onSettings: () => void;
   onHidden: () => void;
+  onAllowance: () => void;
   allClearedFlag: boolean;
 }) {
   const cleared = clearedStages(data);
@@ -37,6 +39,19 @@ export default function HomeScreen({
             ⚙
           </button>
         </div>
+
+        {isStuck(data) && (
+          <div className="hint-box">
+            포인트가 모자라 승부를 걸 수 없습니다. 포인트는 승부로만 버는 터라 이대로는 진행이 막힙니다.
+            <button
+              className="btn primary wide"
+              style={{ marginTop: 10, fontSize: 14 }}
+              onClick={onAllowance}
+            >
+              어머니께 용돈 받기 (+{ALLOWANCE}P)
+            </button>
+          </div>
+        )}
 
         {allClearedFlag && (
           <div className="hint-box" style={{ cursor: 'pointer' }} onClick={onHidden}>

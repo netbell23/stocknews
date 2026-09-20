@@ -9,6 +9,7 @@ import {
   unlockHint,
 } from '../src/data/tenants';
 import { playSeries, type Seat } from '../src/ai/runner';
+import { cheapestEntry, emptySave, isStuck, takeAllowance } from '../src/save/storage';
 import type { LineSet, LineSetKey } from '../src/data/types';
 
 const LINE_KEYS: LineSetKey[] = [
@@ -194,6 +195,38 @@ describe('실제 대국 난이도 (하숙생 스타일 반영)', () => {
     for (const t of TENANTS) {
       const r = playSeries([seatOf(t.id, 10), seatOf('eunseo', 1)], 60, 7000 + t.order);
       expect(r.wins[0] + r.wins[1] + r.draws, t.id).toBe(60);
+    }
+  });
+});
+
+describe('포인트가 말라도 진행이 막히지 않는다', () => {
+  it('가장 싼 참가비보다 적으면 막힌 상태로 판정한다', () => {
+    const s = emptySave();
+    s.points = cheapestEntry() - 1;
+    expect(isStuck(s)).toBe(true);
+    s.points = cheapestEntry();
+    expect(isStuck(s)).toBe(false);
+  });
+
+  it('용돈을 받으면 최소 한 판은 둘 수 있게 된다', () => {
+    const s = emptySave();
+    s.points = 0;
+    const after = takeAllowance(s);
+    expect(isStuck(after)).toBe(false);
+    expect(after.points).toBeGreaterThanOrEqual(cheapestEntry());
+  });
+
+  it('막히지 않은 상태에서는 용돈이 나오지 않는다 (무한 수급 방지)', () => {
+    const s = emptySave();
+    s.points = 1000;
+    expect(takeAllowance(s).points).toBe(1000);
+  });
+
+  it('모든 단계에서 보상이 참가비보다 크다 (정상 진행이면 포인트가 늘어난다)', () => {
+    for (const t of TENANTS) {
+      for (let stage = 1; stage <= 10; stage++) {
+        expect(rewardFor(t, stage), `${t.name} ${stage}단계`).toBeGreaterThan(t.entryCost);
+      }
     }
   });
 });

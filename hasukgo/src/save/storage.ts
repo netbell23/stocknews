@@ -313,6 +313,27 @@ export function markSceneSeen(data: SaveData, sceneId: string, cg?: string | nul
   return { ...data, seenScenes: seen, unlockedCG: cgs };
 }
 
+/** 가장 싼 참가비. 이보다 적으면 아무 승부도 못 해 진행이 막힌다. */
+export function cheapestEntry(): number {
+  return Math.min(...TENANTS.map((t) => t.entryCost));
+}
+
+/**
+ * 포인트가 말라 아무 승부도 못 하는 상태인가.
+ * 포인트를 버는 길이 승부뿐이라, 이 상태가 되면 스스로 빠져나올 수 없다.
+ */
+export function isStuck(data: SaveData): boolean {
+  return data.points < cheapestEntry();
+}
+
+/** 어머니께 용돈 받기. 막힌 상태에서만 쓸 수 있다. */
+export const ALLOWANCE = 100;
+
+export function takeAllowance(data: SaveData): SaveData {
+  if (!isStuck(data)) return data;
+  return { ...data, points: data.points + ALLOWANCE };
+}
+
 /** 전원 10단계 클리어 여부 (히든 엔딩 조건) */
 export function allCleared(data: SaveData): boolean {
   return TENANTS.every((t) => (data.tenants[t.id]?.clearedStage ?? 0) >= 10);
