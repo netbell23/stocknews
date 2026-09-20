@@ -307,9 +307,47 @@ docs/hasukgo/   H5 배포본 (저장소 루트의 docs/ 를 GitHub Pages 가 서
   "reward": { "base": 26, "perStage": 5 },   // 최초 클리어 보너스 = base + perStage*(단계-1)
   "lines": { ... },            // 상황 8종 × 호감도 3톤 × 3줄 이상 + hints
   "events": [ ... ],           // 단계 1~10, 각 scriptId 는 스크립트 씬 id 와 일치해야 한다
-  "look": { ... }              // SVG 입상 생성 파라미터
+  "look": { ... }              // 입상 생성 파라미터 (아래 참고)
 }
 ```
+
+#### `look` — 캐릭터 외형
+
+그림 파일이 없다. 열 명의 생김새는 전부 이 값으로 코드가 그린다
+(`src/art/character.ts`). 색만 바꾸면 다 비슷해 보이므로, **구분을 만드는 것은
+눈매·얼굴형·앞머리·머리 모양·옷·소품 여섯 가지**다.
+
+```jsonc
+"look": {
+  "hair": "#6b4630",         // 머리색. 눈동자색·눈썹색이 여기서 파생된다
+  "hairStyle": "bob",        // long bob ponytail short braid bun wave
+  "skin": "#f7d9c4",
+  "outfits": ["#f4a7b9", "#ffd9a0", "#fff3e0"],   // 평상복 / 외출복 / 특별복 색
+  "accent": "#e8657f",       // 포인트 색 (머리핀·리본·띠 등)
+  "prop": "스케치북",         // 설명용 문구 (도감 표시)
+
+  "face": "round",           // round oval slim
+  "eyes": "round",           // round sharp droopy narrow sleepy
+  "bangs": "straight",       // straight split side curtain wispy
+  "build": "petite",         // petite average tall — 어깨 너비
+  "accessory": "hairpin",    // none glasses hairpin starpin ribbon earring band
+  "wear": ["hoodie", "tee", "dress"],             // 평상복 / 외출복 / 특별복 모양
+  "propArt": "sketchbook"    // 손에 든 물건
+}
+```
+
+`wear` 에 쓸 수 있는 것: `hoodie tee shirt apron smock jersey blouse knit suit
+dress cardigan coat hanbok`.
+`propArt`: `none sketchbook ladle brush tape notebook telescope bag script mug hwatu`.
+
+고치고 나서 열 명을 한 줄로 세워 눈으로 비교하려면:
+
+```bash
+node scripts/char-sheet.mjs
+```
+
+`.tmp-chars/sheet.html` 에 **한 줄 세우기 · 대화창 썸네일 크기(46px) · 1인당 표정 8종 ·
+의상 3종**이 한 페이지로 나온다. 작은 크기에서 누군지 구분되는지가 가장 중요한 기준이다.
 
 대사 톤 구간은 **호감도 0~30 `low` / 31~70 `mid` / 71~100 `high`** 다.
 `hints` 는 플레이어가 3연패 중일 때 뜨는 힌트 대사다.
@@ -367,8 +405,14 @@ docs/hasukgo/   H5 배포본 (저장소 루트의 docs/ 를 GitHub Pages 가 서
 
 ## 아트 교체
 
-지금 캐릭터·배경·화패는 전부 **코드로 생성한 SVG 플레이스홀더**다. 표정 8종이 실제로 다르게 그려지고
-게임은 완전히 돌아간다. 원화가 준비되면 파일만 넣으면 된다.
+캐릭터·배경·화패는 전부 **코드로 생성한 원본 SVG** 다. 기존 게임의 자산은 한 장도 쓰지 않았다.
+
+하숙생 열 명은 각자 얼굴형·눈매·앞머리·머리 모양·의상 3벌·소품을 따로 갖고 있어
+한 줄로 세워도 서로 구분되고, 46px 썸네일에서도 누군지 알아볼 수 있다
+(`node scripts/char-sheet.mjs` 로 직접 확인). 표정 8종 × 의상 3종 = 1인당 24종,
+열 명이면 **240종이 전부 다르게 그려진다** — `npm test` 가 이걸 검사한다.
+
+원화로 바꾸고 싶으면 파일만 넣으면 된다.
 
 | 종류 | 넣을 위치 | 켜는 법 |
 |---|---|---|
@@ -439,7 +483,8 @@ AI 대 AI 400~1000판 시뮬레이션으로 검증한 실제 승률:
 
 ## 알려진 한계
 
-- 아트는 전부 플레이스홀더다. 게임성 검증에는 충분하지만 상용 수준의 일러스트는 아니다.
+- 아트는 코드로 그린 평면 SVG 다. 열 명이 구분되고 표정·의상이 전부 다르게 나오지만,
+  손으로 그린 일러스트의 질감은 아니다. `public/art/char/` 에 원화를 넣으면 그대로 교체된다.
 - BGM/효과음은 태그만 스크립트에 들어가 있고 실제 음원은 없다. `ScenarioView.bgm` / `sfx` 를 읽어 재생기를 붙이면 된다.
 - 상점은 포인트로만 산다. 현금 결제 연동은 없다(광고 보상도 아직).
 - APK 빌드는 GitHub Actions 에서 검증해야 한다. 이 저장소에서 아직 워크플로를 한 번도 돌리지 않았다면

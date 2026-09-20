@@ -16,3 +16,7 @@ android/app/src/main/assets/capacitor.plugins.json
 
 # Vite 캐시
 .vite/
+
+# 아트 대조표·랜딩 조립용 임시 폴더
+.tmp-chars/
+.tmp-landing/

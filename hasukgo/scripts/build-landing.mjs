@@ -35,9 +35,12 @@ async function loadArt() {
   return { mod, cleanup: () => rmSync(tmpDir, { recursive: true, force: true }) };
 }
 
-/** SVG 문자열을 페이지에 넣기 좋게 다듬는다 (width/height 속성을 지워 CSS 가 크기를 잡게) */
+/**
+ * SVG 문자열을 페이지에 넣기 좋게 다듬는다 (바깥 크기를 지워 CSS 가 크기를 잡게).
+ * 여는 <svg> 태그에서만 지운다 — 전체에서 지우면 안경알·수첩 같은 안쪽 <rect> 가 사라진다.
+ */
 function inline(svg, cls) {
-  let s = svg.replace(/\s(width|height)="[^"]*"/g, '');
+  let s = svg.replace(/^<svg[^>]*>/, (tag) => tag.replace(/\s(width|height)="[^"]*"/g, ''));
   if (cls) s = s.replace('<svg ', `<svg class="${cls}" `);
   return s;
 }

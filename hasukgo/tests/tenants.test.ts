@@ -14,7 +14,9 @@ import { minStake } from '../src/data/tenants';
 import { SHOP_ITEMS, SHOP_TOTAL, ownedCardSkins, ownedThemes, valueOf } from '../src/data/shop';
 import { CARD_SKINS, cardSvg, getSkin } from '../src/art/cards';
 import { baseDeck } from '../src/engine/cards';
+import { portraitDataUri, portraitSvg } from '../src/art/character';
 import type { LineSet, LineSetKey } from '../src/data/types';
+import type { Expression } from '../src/scenario/types';
 
 const LINE_KEYS: LineSetKey[] = [
   'matchStart',
@@ -300,5 +302,82 @@ describe('상점', () => {
     expect(new Set(rendered).size).toBe(CARD_SKINS.length);
     // 알 수 없는 스킨은 기본으로 떨어진다
     expect(getSkin('없는스킨').id).toBe('classic');
+  });
+});
+
+describe('하숙생 입상', () => {
+  const EXPRESSIONS: Expression[] = [
+    'normal',
+    'smile',
+    'sulk',
+    'surprise',
+    'shy',
+    'serious',
+    'win',
+    'lose',
+  ];
+  const OUTFITS: Array<0 | 1 | 2> = [0, 1, 2];
+
+  it('10명 모두 외형 파라미터가 채워져 있다', () => {
+    for (const t of TENANTS) {
+      const l = t.look;
+      expect(['round', 'oval', 'slim'], t.name).toContain(l.face);
+      expect(['round', 'sharp', 'droopy', 'narrow', 'sleepy'], t.name).toContain(l.eyes);
+      expect(['straight', 'split', 'side', 'curtain', 'wispy'], t.name).toContain(l.bangs);
+      expect(['petite', 'average', 'tall'], t.name).toContain(l.build);
+      expect(l.wear, t.name).toHaveLength(3);
+      expect(l.propArt, t.name).toBeTruthy();
+    }
+  });
+
+  it('240종(10명 x 8표정 x 3의상)이 모두 온전한 SVG 로 나온다', () => {
+    let count = 0;
+    for (const t of TENANTS) {
+      for (const e of EXPRESSIONS) {
+        for (const o of OUTFITS) {
+          const svg = portraitSvg({ tenant: t, expression: e, outfit: o });
+          const where = `${t.name}/${e}/${o}`;
+          expect(svg.startsWith('<svg'), where).toBe(true);
+          expect(svg.trimEnd().endsWith('</svg>'), where).toBe(true);
+          // 좌표 계산이 어긋나면 경로에 NaN/undefined 가 섞여 조용히 안 그려진다
+          expect(svg.includes('NaN'), where).toBe(false);
+          expect(svg.includes('undefined'), where).toBe(false);
+          count += 1;
+        }
+      }
+    }
+    expect(count).toBe(240);
+  });
+
+  it('한 줄로 세웠을 때 10명이 서로 다르게 그려진다', () => {
+    const drawn = TENANTS.map((t) =>
+      // 그라디언트 id 는 호출마다 달라지므로 비교에서 뺀다
+      portraitSvg({ tenant: t, expression: 'normal', outfit: 0 }).replace(/\bp[0-9a-z]{1,5}\b/g, ''),
+    );
+    expect(new Set(drawn).size).toBe(TENANTS.length);
+  });
+
+  it('표정 8종이 서로 다른 얼굴을 만든다', () => {
+    for (const t of TENANTS) {
+      const faces = EXPRESSIONS.map((e) =>
+        portraitSvg({ tenant: t, expression: e, outfit: 0 }).replace(/\bp[0-9a-z]{1,5}\b/g, ''),
+      );
+      expect(new Set(faces).size, t.name).toBe(EXPRESSIONS.length);
+    }
+  });
+
+  it('의상 3벌이 서로 다른 옷으로 그려진다', () => {
+    for (const t of TENANTS) {
+      const fits = OUTFITS.map((o) =>
+        portraitSvg({ tenant: t, expression: 'normal', outfit: o }).replace(/\bp[0-9a-z]{1,5}\b/g, ''),
+      );
+      expect(new Set(fits).size, t.name).toBe(3);
+    }
+  });
+
+  it('입상 data URI 는 img src 에 바로 꽂을 수 있다', () => {
+    const uri = portraitDataUri({ tenant: TENANTS[0], expression: 'smile', outfit: 0 });
+    expect(uri.startsWith('data:image/svg+xml;utf8,')).toBe(true);
+    expect(uri).not.toContain('#'); // 인코딩이 안 되면 여기서 잘려 그림이 깨진다
   });
 });

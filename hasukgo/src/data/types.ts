@@ -86,16 +86,66 @@ export interface Tenant {
   reward: { base: number; perStage: number };
   lines: TenantLines;
   events: StageEvent[];
-  /** SVG 플레이스홀더 생성용 외형 파라미터 */
-  look: {
-    hair: string;
-    hairStyle: 'long' | 'bob' | 'ponytail' | 'short' | 'braid' | 'bun' | 'wave';
-    skin: string;
-    outfits: [string, string, string];
-    accent: string;
-    /** 특징 소품 */
-    prop: string;
-  };
+  /** 외형 파라미터. 그림은 전부 이 값으로 코드가 그린다. */
+  look: TenantLook;
+}
+
+/** 앞머리 */
+export type BangsStyle = 'straight' | 'split' | 'side' | 'curtain' | 'wispy';
+/** 눈매 — 캐릭터를 가장 크게 가르는 요소 */
+export type EyeStyle = 'round' | 'sharp' | 'droopy' | 'narrow' | 'sleepy';
+/** 얼굴형 */
+export type FaceStyle = 'round' | 'oval' | 'slim';
+/** 체형 (어깨 너비) */
+export type BuildStyle = 'petite' | 'average' | 'tall';
+/** 얼굴 주변 장신구 */
+export type Accessory = 'none' | 'glasses' | 'hairpin' | 'starpin' | 'ribbon' | 'earring' | 'band';
+/** 의상 종류. 색은 outfits 에서, 모양은 여기서 정해진다. */
+export type Garment =
+  | 'hoodie'
+  | 'tee'
+  | 'shirt'
+  | 'apron'
+  | 'smock'
+  | 'jersey'
+  | 'blouse'
+  | 'knit'
+  | 'suit'
+  | 'dress'
+  | 'cardigan'
+  | 'coat'
+  | 'hanbok';
+/** 손에 든 소품 */
+export type PropArt =
+  | 'none'
+  | 'sketchbook'
+  | 'ladle'
+  | 'brush'
+  | 'tape'
+  | 'notebook'
+  | 'telescope'
+  | 'bag'
+  | 'script'
+  | 'mug'
+  | 'hwatu';
+
+export interface TenantLook {
+  hair: string;
+  hairStyle: 'long' | 'bob' | 'ponytail' | 'short' | 'braid' | 'bun' | 'wave';
+  skin: string;
+  /** 평상복 / 외출복 / 특별복 색 */
+  outfits: [string, string, string];
+  accent: string;
+  /** 특징 소품 (설명용 문구) */
+  prop: string;
+  face: FaceStyle;
+  eyes: EyeStyle;
+  bangs: BangsStyle;
+  build: BuildStyle;
+  accessory: Accessory;
+  /** 평상복 / 외출복 / 특별복 모양 */
+  wear: [Garment, Garment, Garment];
+  propArt: PropArt;
 }
 
 export interface TenantData {

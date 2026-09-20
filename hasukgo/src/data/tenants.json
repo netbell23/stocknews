@@ -247,7 +247,18 @@
           "#fff3e0"
         ],
         "accent": "#e8657f",
-        "prop": "스케치북"
+        "prop": "스케치북",
+        "face": "round",
+        "eyes": "round",
+        "bangs": "straight",
+        "build": "petite",
+        "accessory": "hairpin",
+        "wear": [
+          "hoodie",
+          "tee",
+          "dress"
+        ],
+        "propArt": "sketchbook"
       }
     },
     {
@@ -498,7 +509,18 @@
           "#fdf6e3"
         ],
         "accent": "#3e8e5a",
-        "prop": "앞치마"
+        "prop": "앞치마",
+        "face": "oval",
+        "eyes": "droopy",
+        "bangs": "side",
+        "build": "average",
+        "accessory": "band",
+        "wear": [
+          "apron",
+          "shirt",
+          "hanbok"
+        ],
+        "propArt": "ladle"
       }
     },
     {
@@ -751,7 +773,18 @@
           "#c9c3e0"
         ],
         "accent": "#7a6fd8",
-        "prop": "물감 묻은 소매"
+        "prop": "물감 묻은 소매",
+        "face": "slim",
+        "eyes": "sleepy",
+        "bangs": "curtain",
+        "build": "tall",
+        "accessory": "none",
+        "wear": [
+          "smock",
+          "hoodie",
+          "coat"
+        ],
+        "propArt": "brush"
       }
     },
     {
@@ -1007,7 +1040,18 @@
           "#f5a623"
         ],
         "accent": "#2d6ac9",
-        "prop": "손목 테이핑"
+        "prop": "손목 테이핑",
+        "face": "round",
+        "eyes": "sharp",
+        "bangs": "wispy",
+        "build": "tall",
+        "accessory": "none",
+        "wear": [
+          "jersey",
+          "tee",
+          "dress"
+        ],
+        "propArt": "tape"
       }
     },
     {
@@ -1263,7 +1307,18 @@
           "#9aa5b1"
         ],
         "accent": "#4c6ef5",
-        "prop": "안경"
+        "prop": "안경",
+        "face": "oval",
+        "eyes": "narrow",
+        "bangs": "side",
+        "build": "average",
+        "accessory": "glasses",
+        "wear": [
+          "blouse",
+          "suit",
+          "knit"
+        ],
+        "propArt": "notebook"
       }
     },
     {
@@ -1520,7 +1575,18 @@
           "#dfe7f5"
         ],
         "accent": "#ffd766",
-        "prop": "망원경"
+        "prop": "망원경",
+        "face": "slim",
+        "eyes": "droopy",
+        "bangs": "curtain",
+        "build": "petite",
+        "accessory": "starpin",
+        "wear": [
+          "knit",
+          "coat",
+          "dress"
+        ],
+        "propArt": "telescope"
       }
     },
     {
@@ -1777,7 +1843,18 @@
           "#b6786a"
         ],
         "accent": "#8b5e3c",
-        "prop": "서류 가방"
+        "prop": "서류 가방",
+        "face": "oval",
+        "eyes": "sharp",
+        "bangs": "side",
+        "build": "average",
+        "accessory": "earring",
+        "wear": [
+          "suit",
+          "blouse",
+          "dress"
+        ],
+        "propArt": "bag"
       }
     },
     {
@@ -2034,7 +2111,18 @@
           "#2b2b3a"
         ],
         "accent": "#d94f6e",
-        "prop": "대본"
+        "prop": "대본",
+        "face": "oval",
+        "eyes": "round",
+        "bangs": "split",
+        "build": "average",
+        "accessory": "earring",
+        "wear": [
+          "dress",
+          "cardigan",
+          "hanbok"
+        ],
+        "propArt": "script"
       }
     },
     {
@@ -2291,7 +2379,18 @@
           "#4a3f35"
         ],
         "accent": "#b07d3f",
-        "prop": "머그컵"
+        "prop": "머그컵",
+        "face": "round",
+        "eyes": "droopy",
+        "bangs": "side",
+        "build": "average",
+        "accessory": "hairpin",
+        "wear": [
+          "cardigan",
+          "knit",
+          "hanbok"
+        ],
+        "propArt": "mug"
       }
     },
     {
@@ -2557,7 +2656,18 @@
           "#c8ccd6"
         ],
         "accent": "#9aa7c7",
-        "prop": "낡은 화투갑"
+        "prop": "낡은 화투갑",
+        "face": "slim",
+        "eyes": "narrow",
+        "bangs": "curtain",
+        "build": "tall",
+        "accessory": "none",
+        "wear": [
+          "coat",
+          "knit",
+          "hanbok"
+        ],
+        "propArt": "hwatu"
       }
     }
   ]
