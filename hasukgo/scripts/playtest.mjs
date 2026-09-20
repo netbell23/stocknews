@@ -17,6 +17,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 const HERE = dirname(fileURLToPath(import.meta.url));
 const APP = join(HERE, '..');
 const GAMES = Number(process.argv[2] ?? 300);
+const LOSS_FACTOR = 0.7; // src/save/storage.ts 와 같은 값
 
 // ── UI 연출에 실제로 들어가는 시간 (src/ui/useMatch.ts, MatchScreen.tsx 의 상수) ──
 const T = {
@@ -66,6 +67,7 @@ const {
   curveParams,
   paramsFor,
   rewardFor,
+  minStake,
   TENANTS,
   parseScript,
   startScenario,
@@ -143,7 +145,7 @@ function playMatch({ playerParams, oppParams, seed }) {
     draw: st.winner === null,
     ms,
     turns: s.turnCount,
-    total: st.total,
+    total: st.total, // 이긴 쪽의 최종 점수 = 판돈의 근거
     playerGo,
   };
 }
@@ -210,16 +212,23 @@ for (const [skillName, playerParams] of SKILLS) {
       let turnSum = 0;
       let n = 0;
 
+      let potWin = 0; // 이겼을 때 받는 평균 판돈
+      let potLose = 0; // 졌을 때 내는 평균 판돈
+      let winN = 0;
+      let loseN = 0;
       for (let i = 0; i < GAMES; i++) {
         const r = playMatch({ playerParams, oppParams, seed: (stage * 7919 + i * 104729) >>> 0 });
         if (!r) continue;
         n++;
-        if (r.won) wins++;
+        if (r.won) { wins++; winN++; potWin += r.total * t.rate; }
         else if (r.draw) draws++;
+        else { loseN++; potLose += r.total * t.rate * LOSS_FACTOR; }
         msSum += r.ms;
         turnSum += r.turns;
       }
       if (!n) continue;
+      const avgWinPot = winN ? potWin / winN : 0;
+      const avgLosePot = loseN ? potLose / loseN : 0;
 
       const winRate = wins / n;
       const matchMs = msSum / n + PRE_MATCH_MS;
@@ -228,11 +237,11 @@ for (const [skillName, playerParams] of SKILLS) {
       const eventMs = sceneMs(scenes[t.events[stage - 1].scriptId]);
       const stageMs = attempts * matchMs + eventMs;
 
-      // 포인트 수지: 도전 횟수만큼 참가비가 나가고, 마지막 한 번만 보상을 받는다
-      points -= attempts * t.entryCost;
-      points += rewardFor(t, stage);
+      // 포인트 수지: 이긴 한 판은 판돈을 받고, 나머지 도전은 판돈을 낸다
+      const lossesBefore = Math.max(0, attempts - 1) * (1 - draws / n);
+      points += avgWinPot - lossesBefore * avgLosePot + rewardFor(t, stage);
       if (points < minPoints) minPoints = points;
-      if (points < 0 && !brokeAt) brokeAt = `${t.name} ${stage}단계`;
+      if (points < minStake(t) && !brokeAt) brokeAt = `${t.name} ${stage}단계 (보유 ${Math.round(points)}P < 필요 ${minStake(t)}P)`;
 
       rows.push({
         tenant: t.name,
@@ -246,6 +255,9 @@ for (const [skillName, playerParams] of SKILLS) {
         stageMs,
         turns: turnSum / n,
         points,
+        avgWinPot,
+        avgLosePot,
+        net: avgWinPot - Math.max(0, attempts - 1) * avgLosePot + rewardFor(t, stage),
       });
       grandMs += stageMs;
       grandAttempts += attempts;
@@ -259,7 +271,7 @@ for (const [skill, d] of Object.entries(perSkill)) {
   console.log(`\n${'='.repeat(78)}`);
   console.log(`숙련도: ${skill}`);
   console.log('='.repeat(78));
-  console.log('하숙생   단계  승률   나가리  한판    도전   이벤트  단계합계   누적포인트');
+  console.log('하숙생   단계  승률   도전   이기면   지면    단계순증   누적포인트');
   console.log('-'.repeat(78));
 
   let prev = '';
@@ -271,12 +283,11 @@ for (const [skill, d] of Object.entries(perSkill)) {
     console.log(
       `${name.padEnd(8)}${String(r.stage).padStart(3)}  ` +
         `${(r.winRate * 100).toFixed(0).padStart(4)}%  ` +
-        `${(r.drawRate * 100).toFixed(0).padStart(4)}%  ` +
-        `${fmt(r.matchMs).padStart(7)}  ` +
         `${r.attempts.toFixed(1).padStart(5)}  ` +
-        `${fmt(r.eventMs).padStart(6)}  ` +
-        `${fmt(r.stageMs).padStart(8)}  ` +
-        `${Math.round(r.points).toLocaleString().padStart(9)}P`,
+        `${('+' + Math.round(r.avgWinPot)).padStart(7)}  ` +
+        `${('-' + Math.round(r.avgLosePot)).padStart(6)}  ` +
+        `${(r.net >= 0 ? '+' : '') + Math.round(r.net).toLocaleString().padStart(8)}  ` +
+        `${Math.round(r.points).toLocaleString().padStart(10)}P`,
     );
   }
 
@@ -292,7 +303,8 @@ for (const [skill, d] of Object.entries(perSkill)) {
     `\n  전체 100단계: ${fmt(d.grandMs)}  (총 ${Math.round(d.grandAttempts)}판 도전)`,
   );
   console.log(`  최종 포인트 ${Math.round(d.points).toLocaleString()}P · 최저 ${Math.round(d.minPoints).toLocaleString()}P`);
-  if (d.brokeAt) console.log(`  !! 포인트 고갈: ${d.brokeAt}`);
+  if (d.brokeAt) console.log(`  !! 포인트가 최소 보유액 아래로: ${d.brokeAt}`);
+  else console.log('  포인트 고갈 없음');
 }
 
 console.log(`\n${'='.repeat(78)}`);

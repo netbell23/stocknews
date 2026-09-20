@@ -4,6 +4,7 @@ import { MONTH_NAMES } from '../engine/cards';
 import type { Card, PlayerId, RuleOptions, Settlement } from '../engine/types';
 import type { PlayerProfile } from '../ai/ai';
 import type { Tenant } from '../data/types';
+import { LOSS_FACTOR } from '../save/storage';
 import { Background, CardBack, CardView, Portrait } from './parts';
 import { useMatch } from './useMatch';
 
@@ -17,6 +18,8 @@ export interface MatchOutcome {
   playerWentGo: boolean;
   focus: 'gwang' | 'yeol' | 'tti' | 'pi';
   score: number;
+  /** 이긴 쪽의 최종 점수. 판돈은 여기에 점당 레이트를 곱해 정해진다. */
+  settlementTotal: number;
 }
 
 /** 플레이어가 이번 판에 주로 모은 항목 (AI 패턴 학습에 쓰인다) */
@@ -100,6 +103,7 @@ export default function MatchScreen({
       playerWentGo: me.goCount > 0,
       focus: focusOf(me.captured),
       score: s.settlement.winner === HUMAN ? s.settlement.total : 0,
+      settlementTotal: s.settlement.total,
     };
   }, [s.settlement, me]);
 
@@ -185,6 +189,18 @@ export default function MatchScreen({
             <div>
               내 점수 <strong style={{ color: 'var(--lamp)', fontSize: 16 }}>{view.myScore}</strong>
               {me.goCount > 0 && <span className="badge">{me.goCount}고</span>}
+              <span style={{ marginLeft: 8, fontSize: 11, color: 'var(--paper-dim)' }}>
+                · 점당 {tenant.rate}P
+              </span>
+            </div>
+            <div style={{ fontSize: 11 }}>
+              <span style={{ color: 'var(--ok)' }}>
+                이기면 +{(view.myScore * tenant.rate).toLocaleString()}P
+              </span>
+              <span style={{ color: 'var(--paper-dim)' }}> · </span>
+              <span style={{ color: view.oppScore >= 7 ? 'var(--accent)' : 'var(--paper-dim)' }}>
+                지면 -{Math.round(view.oppScore * tenant.rate * LOSS_FACTOR).toLocaleString()}P
+              </span>
             </div>
             <div style={{ color: 'var(--paper-dim)', fontSize: 11 }}>
               {selected && bombable.includes(me.hand.find((c) => c.id === selected)?.month ?? 0)
@@ -215,8 +231,13 @@ export default function MatchScreen({
             <div className="gostop-line">
               {view.myScore}점입니다. 더 가시겠어요?
               <br />
+              <strong style={{ color: 'var(--ok)', fontSize: 18 }}>
+                지금 스톱하면 +{(view.myScore * tenant.rate).toLocaleString()}P
+              </strong>
+              <br />
               <span style={{ color: 'var(--paper-dim)', fontSize: 13 }}>
-                고를 하면 점수가 오르지만, 상대가 이기면 고박으로 두 배를 물어줍니다.
+                고를 하면 점수가 오르지만, 상대가 이기면 고박으로 두 배를 물어줍니다. 점당 {tenant.rate}P
+                라 크게 뒤집히면 그만큼 나갑니다.
               </span>
             </div>
             <div style={{ display: 'flex', gap: 10 }}>
@@ -260,6 +281,7 @@ function ResultPanel({
 }) {
   const st = outcome.settlement;
   const bd = st?.breakdown;
+  const rate = tenant.rate;
   return (
     <div className="result">
       <h2 style={{ color: outcome.won ? 'var(--lamp)' : outcome.draw ? 'var(--paper-dim)' : 'var(--accent)' }}>
@@ -308,6 +330,21 @@ function ResultPanel({
               <span>x{st.multiplier}</span>
             </div>
           )}
+        </div>
+      )}
+      {st && (
+        <div
+          style={{
+            fontSize: 20,
+            fontWeight: 900,
+            color: outcome.won ? 'var(--ok)' : outcome.draw ? 'var(--paper-dim)' : 'var(--accent)',
+          }}
+        >
+          {outcome.draw
+            ? '판돈 없음'
+            : outcome.won
+              ? `+${(st.total * rate).toLocaleString()}P`
+              : `-${Math.round(st.total * rate * LOSS_FACTOR).toLocaleString()}P`}
         </div>
       )}
       {st && st.reasons.length > 0 && (

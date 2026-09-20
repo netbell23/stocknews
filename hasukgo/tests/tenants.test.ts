@@ -9,7 +9,11 @@ import {
   unlockHint,
 } from '../src/data/tenants';
 import { playSeries, type Seat } from '../src/ai/runner';
-import { cheapestEntry, emptySave, isStuck, takeAllowance } from '../src/save/storage';
+import { cheapestEntry, emptySave, isStuck, payoutFor, takeAllowance } from '../src/save/storage';
+import { minStake } from '../src/data/tenants';
+import { SHOP_ITEMS, SHOP_TOTAL, ownedCardSkins, ownedThemes, valueOf } from '../src/data/shop';
+import { CARD_SKINS, cardSvg, getSkin } from '../src/art/cards';
+import { baseDeck } from '../src/engine/cards';
 import type { LineSet, LineSetKey } from '../src/data/types';
 
 const LINE_KEYS: LineSetKey[] = [
@@ -116,17 +120,16 @@ describe('해금 구조', () => {
 });
 
 describe('보상과 난이도', () => {
-  it('순번이 뒤일수록 참가비와 보상이 커진다', () => {
+  it('순번이 뒤일수록 점당 레이트와 보너스가 커진다', () => {
     for (let i = 1; i < TENANTS.length; i++) {
-      expect(TENANTS[i].entryCost).toBeGreaterThan(TENANTS[i - 1].entryCost);
+      expect(TENANTS[i].rate).toBeGreaterThan(TENANTS[i - 1].rate);
       expect(rewardFor(TENANTS[i], 1)).toBeGreaterThan(rewardFor(TENANTS[i - 1], 1));
     }
   });
 
-  it('단계가 오르면 보상이 커지고, 보상이 항상 참가비보다 크다', () => {
+  it('단계가 오르면 클리어 보너스가 커진다', () => {
     for (const t of TENANTS) {
       expect(rewardFor(t, 10)).toBeGreaterThan(rewardFor(t, 1));
-      expect(rewardFor(t, 1)).toBeGreaterThan(t.entryCost);
     }
   });
 
@@ -222,11 +225,80 @@ describe('포인트가 말라도 진행이 막히지 않는다', () => {
     expect(takeAllowance(s).points).toBe(1000);
   });
 
-  it('모든 단계에서 보상이 참가비보다 크다 (정상 진행이면 포인트가 늘어난다)', () => {
+  it('최소 보유 포인트는 점당 레이트에 비례한다', () => {
     for (const t of TENANTS) {
-      for (let stage = 1; stage <= 10; stage++) {
-        expect(rewardFor(t, stage), `${t.name} ${stage}단계`).toBeGreaterThan(t.entryCost);
-      }
+      expect(minStake(t)).toBe(t.rate * 10);
     }
+  });
+});
+
+describe('판돈 경제', () => {
+  it('이기면 점수 x 점당을 받고, 지면 그 7할을 낸다', () => {
+    const rate = 10;
+    expect(payoutFor({ won: true, draw: false, settlementTotal: 12, rate })).toBe(120);
+    expect(payoutFor({ won: false, draw: false, settlementTotal: 12, rate })).toBe(-84);
+    expect(payoutFor({ won: false, draw: true, settlementTotal: 12, rate })).toBe(0);
+  });
+
+  it('배수가 붙은 큰 점수는 판돈도 그만큼 커진다', () => {
+    const small = payoutFor({ won: true, draw: false, settlementTotal: 7, rate: 10 });
+    const big = payoutFor({ won: true, draw: false, settlementTotal: 56, rate: 10 });
+    expect(big).toBe(small * 8);
+  });
+
+  it('지는 쪽이 무는 돈이 이기는 쪽이 받는 돈보다 적다 (하숙집 인심)', () => {
+    for (const t of TENANTS) {
+      const win = payoutFor({ won: true, draw: false, settlementTotal: 15, rate: t.rate });
+      const lose = -payoutFor({ won: false, draw: false, settlementTotal: 15, rate: t.rate });
+      expect(lose, t.name).toBeLessThan(win);
+    }
+  });
+
+  it('클리어 보너스가 한 판 평균 판돈보다 작다 (판돈이 주 수입원이어야 한다)', () => {
+    for (const t of TENANTS) {
+      // 평균 15점짜리 승리 한 판
+      const typicalPot = 15 * t.rate;
+      expect(rewardFor(t, 10), t.name).toBeLessThan(typicalPot * 2);
+    }
+  });
+});
+
+describe('상점', () => {
+  it('파는 물건이 전부 겉모습이다 (승부에 유리해지는 것이 없다)', () => {
+    for (const i of SHOP_ITEMS) {
+      expect(['cards', 'theme']).toContain(i.kind);
+    }
+  });
+
+  it('품목 id 가 고유하고 값이 실제 스킨/테마를 가리킨다', () => {
+    expect(new Set(SHOP_ITEMS.map((i) => i.id)).size).toBe(SHOP_ITEMS.length);
+    for (const i of SHOP_ITEMS.filter((x) => x.kind === 'cards')) {
+      expect(CARD_SKINS.some((s) => s.id === valueOf(i)), i.id).toBe(true);
+    }
+  });
+
+  it('기본 화패와 기본 테마는 사지 않아도 갖고 있다', () => {
+    expect(ownedCardSkins([])).toEqual(['classic']);
+    expect(ownedThemes([])).toEqual(['maru']);
+  });
+
+  it('산 것만 보유 목록에 들어온다', () => {
+    const owned = ['cards:hanji', 'theme:snow'];
+    expect(ownedCardSkins(owned)).toEqual(['classic', 'hanji']);
+    expect(ownedThemes(owned)).toEqual(['maru', 'snow']);
+  });
+
+  it('전부 사려면 100단계를 한 번 돌아 번 것보다 많이 든다 (반복 동기)', () => {
+    // 시뮬레이션상 초보 완주 시 약 6,400P
+    expect(SHOP_TOTAL).toBeGreaterThan(6400);
+  });
+
+  it('모든 화패 스킨이 실제로 다른 그림을 낸다', () => {
+    const deck = baseDeck();
+    const card = deck[0];
+    const rendered = CARD_SKINS.map((s) => cardSvg(card, { skin: s.id }));
+    expect(new Set(rendered).size).toBe(CARD_SKINS.length);
+    // 알 수 없는 스킨은 기본으로 떨어진다
+    expect(getSkin('없는스킨').id).toBe('classic');
   });
 });

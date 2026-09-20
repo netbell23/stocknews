@@ -76,10 +76,14 @@ export interface Tenant {
   style: TenantStyle;
   /** 해금 조건. 빈 배열이면 처음부터 해금. */
   unlock: Array<{ tenantId: string; stage: number }>;
-  /** 단계 클리어 시 포인트 보상 (기본값 + 단계 x 증가분) */
+  /**
+   * 점당 포인트. 맞고처럼 판돈이 점수에 비례한다.
+   * 이기면 내 점수 x rate 를 받고, 지면 상대 점수 x rate 를 낸다.
+   * 고·피박·광박·고박의 배수가 그대로 포인트에 실린다.
+   */
+  rate: number;
+  /** 단계를 처음 깼을 때 주는 보너스 (기본값 + 단계 x 증가분) */
   reward: { base: number; perStage: number };
-  /** 승부에 필요한 참가비 포인트 */
-  entryCost: number;
   lines: TenantLines;
   events: StageEvent[];
   /** SVG 플레이스홀더 생성용 외형 파라미터 */

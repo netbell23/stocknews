@@ -16,11 +16,13 @@ function filledSave(): SaveData {
   s.seenScenes = ['prologue', 'eunseo_01', 'eunseo_10'];
   s.unlockedCG = ['eunseo_ending'];
   s.recentGames = [
-    { tenantId: 'eunseo', stage: 10, won: true, playerWentGo: true, focus: 'gwang', score: 21 },
+    { tenantId: 'eunseo', stage: 10, won: true, payout: 735, playerWentGo: true, focus: 'gwang', score: 21 },
   ];
-  s.stats = { totalGames: 26, wins: 17, losses: 9, bestScore: 21 };
+  s.stats = { totalGames: 26, wins: 17, losses: 9, bestScore: 21, pointsWon: 4200, pointsLost: 1800, biggestPot: 735 };
   s.settings.rules = { ttiScoring: 'specSheet', bonusPiCount: 3 };
   s.settings.textSpeed = 0;
+  s.owned = ['cards:hanji', 'theme:snow'];
+  s.equipped = { cards: 'hanji', theme: 'snow' };
   return s;
 }
 
@@ -49,6 +51,10 @@ describe('백업 코드', () => {
     expect(r.backup.save.stats).toEqual(save.stats);
     expect(r.backup.save.settings.rules).toEqual(save.settings.rules);
     expect(r.backup.save.settings.textSpeed).toBe(0);
+    // 상점에서 산 것과 장착 상태도 폰을 바꿔도 따라와야 한다
+    expect(r.backup.save.owned).toEqual(save.owned);
+    expect(r.backup.save.equipped).toEqual(save.equipped);
+    expect(r.backup.save.stats.pointsWon).toBe(4200);
   });
 
   it('코드에 만든 기기와 요약이 들어 있다', async () => {

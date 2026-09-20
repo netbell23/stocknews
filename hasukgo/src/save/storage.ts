@@ -24,6 +24,8 @@ export interface GameRecord {
   tenantId: string;
   stage: number;
   won: boolean;
+  /** 이번 판에서 오간 포인트 (이기면 +, 지면 -) */
+  payout: number;
   /** 플레이어가 고를 선언했는가 */
   playerWentGo: boolean;
   /** 플레이어가 주로 모은 항목 */
@@ -56,11 +58,20 @@ export interface SaveData {
   /** 최근 20판 기록 (AI 패턴 학습용) */
   recentGames: GameRecord[];
   settings: Settings;
+  /** 상점에서 산 것들 */
+  owned: string[];
+  /** 지금 쓰고 있는 화패 스킨 / 마루 테마 */
+  equipped: { cards: string; theme: string };
   stats: {
     totalGames: number;
     wins: number;
     losses: number;
     bestScore: number;
+    /** 판돈으로 딴 총액 / 잃은 총액 */
+    pointsWon: number;
+    pointsLost: number;
+    /** 한 판 최고 획득 */
+    biggestPot: number;
   };
 }
 
@@ -87,7 +98,17 @@ export function emptySave(): SaveData {
     unlockedCG: [],
     recentGames: [],
     settings: { ...DEFAULT_SETTINGS },
-    stats: { totalGames: 0, wins: 0, losses: 0, bestScore: 0 },
+    owned: [],
+    equipped: { cards: 'classic', theme: 'maru' },
+    stats: {
+      totalGames: 0,
+      wins: 0,
+      losses: 0,
+      bestScore: 0,
+      pointsWon: 0,
+      pointsLost: 0,
+      biggestPot: 0,
+    },
   };
 }
 
@@ -232,6 +253,8 @@ function migrate(data: SaveData): SaveData {
     recentGames: data.recentGames ?? [],
     deviceId: data.deviceId ?? '',
     savedAt: data.savedAt ?? 0,
+    owned: data.owned ?? [],
+    equipped: { ...base.equipped, ...(data.equipped ?? {}) },
   };
   // 데이터에서 사라진 하숙생 항목은 버린다
   for (const id of Object.keys(merged.tenants)) {
@@ -269,12 +292,14 @@ export function profileFrom(records: GameRecord[]): PlayerProfile {
   };
 }
 
-/** 판 결과를 저장 데이터에 반영한다 */
-export function applyResult(
-  data: SaveData,
-  record: GameRecord,
-  opts: { reward: number; entryCost: number },
-): SaveData {
+/**
+ * 판 결과를 저장 데이터에 반영한다.
+ *
+ * 포인트는 맞고 판돈처럼 오간다 — 이기면 내 점수 x 점당, 지면 상대 점수 x 점당.
+ * 고·피박·광박·고박의 배수가 이미 점수에 실려 있으므로 그대로 포인트가 된다.
+ * 지더라도 호감도와 단계는 그대로다. 잃는 것은 포인트뿐이다.
+ */
+export function applyResult(data: SaveData, record: GameRecord, opts: { reward: number }): SaveData {
   const t = data.tenants[record.tenantId];
   if (!t) return data;
   const next: SaveData = {
@@ -286,10 +311,20 @@ export function applyResult(
   const prog: TenantProgress = { ...t };
 
   next.stats.totalGames++;
+
+  // 판돈 정산
+  next.points = Math.max(0, next.points + record.payout);
+  if (record.payout > 0) {
+    next.stats.pointsWon += record.payout;
+    next.stats.biggestPot = Math.max(next.stats.biggestPot, record.payout);
+  } else {
+    next.stats.pointsLost += -record.payout;
+  }
+
   if (record.won) {
     next.stats.wins++;
     prog.wins++;
-    // 진 경우 호감도는 깎이지 않는다. 이긴 단계에서만 +10.
+    // 단계를 처음 깼을 때만 클리어 보너스와 호감도가 붙는다
     if (record.stage === prog.clearedStage + 1) {
       prog.clearedStage = record.stage;
       prog.affection = Math.min(100, prog.affection + 10);
@@ -301,7 +336,6 @@ export function applyResult(
     prog.losses++;
   }
   next.stats.bestScore = Math.max(next.stats.bestScore, record.score);
-  next.points = Math.max(0, next.points - opts.entryCost);
   next.tenants[record.tenantId] = prog;
   return next;
 }
@@ -313,9 +347,9 @@ export function markSceneSeen(data: SaveData, sceneId: string, cg?: string | nul
   return { ...data, seenScenes: seen, unlockedCG: cgs };
 }
 
-/** 가장 싼 참가비. 이보다 적으면 아무 승부도 못 해 진행이 막힌다. */
+/** 가장 만만한 상대의 최소 보유 포인트. 이보다 적으면 아무 자리에도 앉을 수 없다. */
 export function cheapestEntry(): number {
-  return Math.min(...TENANTS.map((t) => t.entryCost));
+  return Math.min(...TENANTS.map((t) => t.rate * 10));
 }
 
 /**
@@ -328,6 +362,25 @@ export function isStuck(data: SaveData): boolean {
 
 /** 어머니께 용돈 받기. 막힌 상태에서만 쓸 수 있다. */
 export const ALLOWANCE = 100;
+
+/**
+ * 질 때 무는 몫. 딴 사람이 받는 만큼을 다 물리면 잘하는 사람도 결국 마른다.
+ * 하숙집 인심이라는 설정으로 7할만 물려, 자기 수준에 맞는 상대에게는
+ * 꾸준히 벌 수 있고 벅찬 상대에게는 잘해야 본전이 되게 한다.
+ */
+export const LOSS_FACTOR = 0.7;
+
+/** 이번 판에 오갈 포인트. 이기면 +, 지면 -. */
+export function payoutFor(opts: {
+  won: boolean;
+  draw: boolean;
+  settlementTotal: number;
+  rate: number;
+}): number {
+  if (opts.draw) return 0;
+  const pot = opts.settlementTotal * opts.rate;
+  return opts.won ? Math.round(pot) : -Math.round(pot * LOSS_FACTOR);
+}
 
 export function takeAllowance(data: SaveData): SaveData {
   if (!isStuck(data)) return data;

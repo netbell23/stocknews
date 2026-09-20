@@ -26,29 +26,122 @@ const MONTH_BG: Record<number, [string, string]> = {
   0: ['#2a2420', '#3d352e'],
 };
 
-const INK = '#12100e';
-const RED = '#d8402f';
-const GOLD = '#e8b53c';
-const WHITE = '#f4ece0';
+/** 화패 스킨. 도안은 그대로 두고 색만 갈아입힌다. */
+export interface CardSkin {
+  id: string;
+  name: string;
+  /** 월별 바탕색을 이 색조로 물들인다 (0 이면 원래 색) */
+  tint: string | null;
+  tintAmount: number;
+  ink: string;
+  red: string;
+  gold: string;
+  white: string;
+  paperTop: string;
+  paperBottom: string;
+}
+
+export const CARD_SKINS: CardSkin[] = [
+  {
+    id: 'classic',
+    name: '전통',
+    tint: null,
+    tintAmount: 0,
+    ink: '#12100e',
+    red: '#d8402f',
+    gold: '#e8b53c',
+    white: '#f4ece0',
+    paperTop: '#fbf4e6',
+    paperBottom: '#efe2ca',
+  },
+  {
+    id: 'moonlit',
+    name: '달밤',
+    tint: '#1b2b4a',
+    tintAmount: 0.55,
+    ink: '#0a0e18',
+    red: '#e05a6b',
+    gold: '#cfe0ff',
+    white: '#eaf1ff',
+    paperTop: '#dfe8f7',
+    paperBottom: '#c3d2e8',
+  },
+  {
+    id: 'hanji',
+    name: '한지',
+    tint: '#d8c9a8',
+    tintAmount: 0.62,
+    ink: '#4a3a28',
+    red: '#c2584a',
+    gold: '#b89050',
+    white: '#fdf8ec',
+    paperTop: '#fdf8ec',
+    paperBottom: '#f0e4cc',
+  },
+  {
+    id: 'gilt',
+    name: '금박',
+    tint: '#2a2010',
+    tintAmount: 0.5,
+    ink: '#1a1408',
+    red: '#e0483a',
+    gold: '#ffd66b',
+    white: '#fff6da',
+    paperTop: '#3a2e18',
+    paperBottom: '#241c0e',
+  },
+];
+
+export const DEFAULT_SKIN = CARD_SKINS[0];
+
+export function getSkin(id: string): CardSkin {
+  return CARD_SKINS.find((s) => s.id === id) ?? DEFAULT_SKIN;
+}
+
+/**
+ * 도안을 그리는 함수들이 참조하는 현재 팔레트.
+ * cardSvg 가 한 장을 그리기 직전에 갈아끼운다. 렌더가 동기라 한 번에 한 장만 그려져 안전하다.
+ */
+let INK = DEFAULT_SKIN.ink;
+let RED = DEFAULT_SKIN.red;
+let GOLD = DEFAULT_SKIN.gold;
+let WHITE = DEFAULT_SKIN.white;
 const GREEN = '#3f8a52';
 const BLUE = '#3f6fb5';
 
-function frame(month: number): string {
-  const [a, b] = MONTH_BG[month] ?? MONTH_BG[0];
+/** 두 색을 섞는다 */
+function mix(a: string, b: string, t: number): string {
+  const h = (c: string) => [
+    parseInt(c.slice(1, 3), 16),
+    parseInt(c.slice(3, 5), 16),
+    parseInt(c.slice(5, 7), 16),
+  ];
+  const [r1, g1, b1] = h(a);
+  const [r2, g2, b2] = h(b);
+  const p = (x: number, y: number) => Math.round(x * (1 - t) + y * t).toString(16).padStart(2, '0');
+  return `#${p(r1, r2)}${p(g1, g2)}${p(b1, b2)}`;
+}
+
+function frame(month: number, sk: CardSkin, uid: string): string {
+  let [a, b] = MONTH_BG[month] ?? MONTH_BG[0];
+  if (sk.tint) {
+    a = mix(a, sk.tint, sk.tintAmount);
+    b = mix(b, sk.tint, sk.tintAmount);
+  }
   return `
   <defs>
-    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+    <linearGradient id="bg${uid}" x1="0" y1="0" x2="1" y2="1">
       <stop offset="0%" stop-color="${a}"/>
       <stop offset="100%" stop-color="${b}"/>
     </linearGradient>
-    <linearGradient id="paper" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%" stop-color="#fbf4e6"/>
-      <stop offset="100%" stop-color="#efe2ca"/>
+    <linearGradient id="paper${uid}" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="${sk.paperTop}"/>
+      <stop offset="100%" stop-color="${sk.paperBottom}"/>
     </linearGradient>
   </defs>
-  <rect width="${CW}" height="${CH}" rx="10" fill="url(#paper)"/>
-  <rect x="5" y="5" width="${CW - 10}" height="${CH - 10}" rx="7" fill="url(#bg)"/>
-  <rect x="5" y="5" width="${CW - 10}" height="${CH - 10}" rx="7" fill="none" stroke="${INK}" stroke-width="3"/>`;
+  <rect width="${CW}" height="${CH}" rx="10" fill="url(#paper${uid})"/>
+  <rect x="5" y="5" width="${CW - 10}" height="${CH - 10}" rx="7" fill="url(#bg${uid})"/>
+  <rect x="5" y="5" width="${CW - 10}" height="${CH - 10}" rx="7" fill="none" stroke="${sk.ink}" stroke-width="3"/>`;
 }
 
 /** 광 표식 */
@@ -200,9 +293,19 @@ function piArt(card: Card): string {
   return '';
 }
 
-export function cardSvg(card: Card, opts?: { width?: number; height?: number }): string {
+export function cardSvg(
+  card: Card,
+  opts?: { width?: number; height?: number; skin?: string },
+): string {
   const w = opts?.width ?? CW;
   const h = opts?.height ?? CH;
+  const sk = getSkin(opts?.skin ?? DEFAULT_SKIN.id);
+  INK = sk.ink;
+  RED = sk.red;
+  GOLD = sk.gold;
+  WHITE = sk.white;
+  // 한 화면에 여러 장이 뜨므로 그라디언트 id 가 겹치면 안 된다
+  const uid = `${card.id}-${sk.id}`.replace(/[^a-zA-Z0-9-]/g, '');
   const monthLabel = card.month === 0 ? '보너스' : `${card.month}월 ${MONTH_NAMES[card.month]}`;
 
   let art = '';
@@ -217,30 +320,36 @@ export function cardSvg(card: Card, opts?: { width?: number; height?: number }):
   }
 
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${CW} ${CH}" width="${w}" height="${h}" role="img" aria-label="${card.name}">
-  ${frame(card.month)}
+  ${frame(card.month, sk, uid)}
   ${art}
   <rect x="5" y="${CH - 30}" width="${CW - 10}" height="25" fill="#00000055"/>
   <text x="${CW / 2}" y="${CH - 12}" font-size="12" text-anchor="middle" fill="${WHITE}" font-family="sans-serif">${monthLabel}</text>
 </svg>`;
 }
 
-export function cardDataUri(card: Card, opts?: { width?: number; height?: number }): string {
+export function cardDataUri(
+  card: Card,
+  opts?: { width?: number; height?: number; skin?: string },
+): string {
   return `data:image/svg+xml;utf8,${encodeURIComponent(cardSvg(card, opts))}`;
 }
 
 /** 뒷면 */
-export function cardBackSvg(opts?: { width?: number; height?: number }): string {
+export function cardBackSvg(opts?: { width?: number; height?: number; skin?: string }): string {
   const w = opts?.width ?? CW;
   const h = opts?.height ?? CH;
+  const sk = getSkin(opts?.skin ?? DEFAULT_SKIN.id);
+  const back = sk.tint ? mix('#7a2b24', sk.tint, sk.tintAmount * 0.8) : '#7a2b24';
+  const back2 = sk.tint ? mix('#8f342b', sk.tint, sk.tintAmount * 0.8) : '#8f342b';
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${CW} ${CH}" width="${w}" height="${h}" role="img" aria-label="뒷면">
-  <rect width="${CW}" height="${CH}" rx="10" fill="#7a2b24"/>
-  <rect x="7" y="7" width="${CW - 14}" height="${CH - 14}" rx="7" fill="#8f342b" stroke="${GOLD}" stroke-width="2.5"/>
-  <circle cx="${CW / 2}" cy="${CH / 2}" r="30" fill="none" stroke="${GOLD}" stroke-width="3"/>
-  <circle cx="${CW / 2}" cy="${CH / 2}" r="18" fill="none" stroke="${GOLD}" stroke-width="2"/>
-  <path d="M60 60 v60 M30 90 h60" stroke="${GOLD}" stroke-width="2" opacity="0.6"/>
+  <rect width="${CW}" height="${CH}" rx="10" fill="${back}"/>
+  <rect x="7" y="7" width="${CW - 14}" height="${CH - 14}" rx="7" fill="${back2}" stroke="${sk.gold}" stroke-width="2.5"/>
+  <circle cx="${CW / 2}" cy="${CH / 2}" r="30" fill="none" stroke="${sk.gold}" stroke-width="3"/>
+  <circle cx="${CW / 2}" cy="${CH / 2}" r="18" fill="none" stroke="${sk.gold}" stroke-width="2"/>
+  <path d="M60 60 v60 M30 90 h60" stroke="${sk.gold}" stroke-width="2" opacity="0.6"/>
 </svg>`;
 }
 
-export function cardBackDataUri(opts?: { width?: number; height?: number }): string {
+export function cardBackDataUri(opts?: { width?: number; height?: number; skin?: string }): string {
   return `data:image/svg+xml;utf8,${encodeURIComponent(cardBackSvg(opts))}`;
 }

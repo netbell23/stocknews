@@ -46,9 +46,22 @@ function clamp01(v: number): number {
   return Math.max(0, Math.min(1, v));
 }
 
-/** 단계 클리어 보상 포인트 */
+/** 단계 클리어 보너스 */
 export function rewardFor(tenant: Tenant, stage: number): number {
   return tenant.reward.base + tenant.reward.perStage * (stage - 1);
+}
+
+/**
+ * 이 하숙생과 붙으려면 최소한 들고 있어야 하는 포인트.
+ * 10점짜리 패배를 감당할 수 있어야 자리에 앉을 수 있다는 뜻이다.
+ */
+export function minStake(tenant: Tenant): number {
+  return tenant.rate * 10;
+}
+
+/** 예상 판돈 범위 (승부 전 화면에 보여준다) */
+export function stakeRange(tenant: Tenant): { typical: number; big: number } {
+  return { typical: tenant.rate * 8, big: tenant.rate * 24 };
 }
 
 /** 해금 여부 판정 */

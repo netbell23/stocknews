@@ -1,5 +1,5 @@
 /** 하숙집 홈 + 하숙생 선택 */
-import { isUnlocked, rewardFor, TENANTS, unlockHint } from '../data/tenants';
+import { isUnlocked, minStake, rewardFor, TENANTS, unlockHint } from '../data/tenants';
 import type { Tenant } from '../data/types';
 import type { SaveData } from '../save/storage';
 import { ALLOWANCE, clearedStages, isStuck } from '../save/storage';
@@ -9,6 +9,7 @@ export default function HomeScreen({
   data,
   onPick,
   onGallery,
+  onShop,
   onSettings,
   onHidden,
   onAllowance,
@@ -17,6 +18,7 @@ export default function HomeScreen({
   data: SaveData;
   onPick: (t: Tenant) => void;
   onGallery: () => void;
+  onShop: () => void;
   onSettings: () => void;
   onHidden: () => void;
   onAllowance: () => void;
@@ -32,6 +34,9 @@ export default function HomeScreen({
         <div className="topbar">
           <h1>하숙집 마루</h1>
           <span className="points">{data.points.toLocaleString()} P</span>
+          <button className="iconbtn" onClick={onShop} aria-label="상점">
+            🏮
+          </button>
           <button className="iconbtn" onClick={onGallery} aria-label="도감">
             📖
           </button>
@@ -65,7 +70,8 @@ export default function HomeScreen({
             const open = isUnlocked(t, cleared);
             const nextStage = Math.min(10, p.clearedStage + 1);
             const done = p.clearedStage >= 10;
-            const affordable = data.points >= t.entryCost;
+            const need = minStake(t);
+            const affordable = data.points >= need;
             return (
               <button
                 key={t.id}
@@ -101,11 +107,12 @@ export default function HomeScreen({
                           <>모든 단계 클리어 · 커플 모드로 다시 승부</>
                         ) : (
                           <>
-                            {nextStage}단계 · 참가비{' '}
-                            <b style={{ color: affordable ? 'var(--lamp)' : 'var(--accent)' }}>
-                              {t.entryCost}P
-                            </b>{' '}
-                            · 승리 보상 {rewardFor(t, nextStage)}P
+                            {nextStage}단계 · 점당 <b style={{ color: 'var(--lamp)' }}>{t.rate}P</b> ·
+                            클리어 보너스 {rewardFor(t, nextStage)}P
+                            <br />
+                            <span style={{ color: affordable ? 'var(--paper-dim)' : 'var(--accent)' }}>
+                              {affordable ? `최소 ${need.toLocaleString()}P 필요` : `${need.toLocaleString()}P 부족`}
+                            </span>
                           </>
                         )}
                       </div>

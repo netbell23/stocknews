@@ -4,7 +4,8 @@
  */
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { getDevice, type DeviceInfo } from './auth/device';
-import { getTenant, isUnlocked, rewardFor, TENANTS, toneOf } from './data/tenants';
+import { getTheme } from './data/shop';
+import { getTenant, isUnlocked, minStake, rewardFor, TENANTS, toneOf } from './data/tenants';
 import type { Tenant } from './data/types';
 import { getScene, SCRIPT_ISSUES } from './scenario';
 import type { Scene } from './scenario/types';
@@ -16,6 +17,7 @@ import {
   loadBest,
   markSceneSeen,
   profileFrom,
+  payoutFor,
   resetSave,
   save,
   takeAllowance,
@@ -25,8 +27,9 @@ import GalleryScreen from './ui/GalleryScreen';
 import HomeScreen from './ui/HomeScreen';
 import MatchScreen, { type MatchOutcome } from './ui/MatchScreen';
 import NovelScreen, { type NovelResult } from './ui/NovelScreen';
-import { Background, Portrait } from './ui/parts';
+import { Background, Portrait, setCardSkin } from './ui/parts';
 import SettingsScreen from './ui/SettingsScreen';
+import ShopScreen from './ui/ShopScreen';
 
 type Screen =
   | { name: 'title' }
@@ -35,6 +38,7 @@ type Screen =
   | { name: 'preMatch'; tenant: Tenant; stage: number }
   | { name: 'match'; tenant: Tenant; stage: number }
   | { name: 'gallery' }
+  | { name: 'shop' }
   | { name: 'settings' };
 
 /** 승부 직전 대화 컷을 임시 씬으로 만든다 (하숙생 대사 데이터에서 생성) */
@@ -87,6 +91,18 @@ export default function App() {
       alive = false;
     };
   }, []);
+
+  // 장착한 화패 스킨과 마루 테마를 화면 전체에 반영한다
+  useEffect(() => {
+    setCardSkin(data.equipped.cards);
+    const theme = getTheme(data.equipped.theme);
+    const root = document.documentElement;
+    // 이전 테마가 남기고 간 값을 먼저 지운다
+    for (const t of ['--wood-dark', '--wood', '--wood-light', '--paper', '--paper-dim', '--lamp', '--lamp-dim', '--accent']) {
+      root.style.removeProperty(t);
+    }
+    for (const [k, v] of Object.entries(theme.vars)) root.style.setProperty(k, v);
+  }, [data.equipped.cards, data.equipped.theme]);
 
   // 저장은 변경될 때마다 (단, 초기 로딩이 끝난 뒤부터)
   useEffect(() => {
@@ -150,8 +166,13 @@ export default function App() {
   const pickTenant = useCallback(
     (t: Tenant) => {
       const prog = data.tenants[t.id];
-      if (data.points < t.entryCost) {
-        alert(`포인트가 모자랍니다. 참가비 ${t.entryCost}P 가 필요합니다.`);
+      const need = minStake(t);
+      if (data.points < need) {
+        alert(
+          `${t.name}와(과) 붙으려면 ${need.toLocaleString()}P 는 들고 있어야 합니다.
+` +
+            `점당 ${t.rate}P 라 크게 지면 그만큼 물어줘야 하거든요.`,
+        );
         return;
       }
       const stage = Math.min(10, (prog?.clearedStage ?? 0) + 1);
@@ -164,17 +185,24 @@ export default function App() {
   const finishMatch = useCallback(
     (t: Tenant, stage: number, o: MatchOutcome) => {
       const reward = o.won ? rewardFor(t, stage) : 0;
+      const payout = payoutFor({
+        won: o.won,
+        draw: o.draw,
+        settlementTotal: o.settlementTotal,
+        rate: t.rate,
+      });
       const next = applyResult(
         data,
         {
           tenantId: t.id,
           stage,
           won: o.won,
+          payout,
           playerWentGo: o.playerWentGo,
           focus: o.focus,
           score: o.score,
         },
-        { reward, entryCost: t.entryCost },
+        { reward },
       );
       setData(next);
       setLosingStreak((prev) => ({ ...prev, [t.id]: o.won ? 0 : (prev[t.id] ?? 0) + 1 }));
@@ -312,6 +340,18 @@ export default function App() {
     );
   }
 
+  if (screen.name === 'shop') {
+    return (
+      <div className="app">
+        <ShopScreen
+          data={data}
+          onChange={setData}
+          onBack={() => setScreen(data.stats.totalGames > 0 ? { name: 'home' } : { name: 'title' })}
+        />
+      </div>
+    );
+  }
+
   if (screen.name === 'gallery') {
     return (
       <div className="app">
@@ -353,6 +393,7 @@ export default function App() {
         data={data}
         onPick={pickTenant}
         onGallery={() => setScreen({ name: 'gallery' })}
+        onShop={() => setScreen({ name: 'shop' })}
         onSettings={() => setScreen({ name: 'settings' })}
         onAllowance={() => setData((prev) => takeAllowance(prev))}
         allClearedFlag={everyoneDone}

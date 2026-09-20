@@ -13,6 +13,15 @@ import type { BackgroundId, Expression, TimeOfDay } from '../scenario/types';
  */
 const IMAGE_FIRST = false;
 
+/**
+ * 지금 장착한 화패 스킨. 카드는 화면 곳곳에서 그려지는데 스킨은 전역 설정 하나뿐이라,
+ * Context 를 얹는 대신 App 이 여기에 꽂아준다.
+ */
+let currentSkin = 'classic';
+export function setCardSkin(id: string): void {
+  currentSkin = id;
+}
+
 export function Portrait({
   tenant,
   expression = 'normal',
@@ -66,7 +75,7 @@ export function CardView({
   return (
     <img
       className={cls}
-      src={cardDataUri(card)}
+      src={cardDataUri(card, { skin: currentSkin })}
       alt={card.name}
       onClick={selectable ? onClick : undefined}
       draggable={false}
@@ -76,7 +85,12 @@ export function CardView({
 
 export function CardBack({ small }: { small?: boolean }) {
   return (
-    <img className={`card ${small ? 'sm' : ''}`} src={cardBackDataUri()} alt="뒷면" draggable={false} />
+    <img
+      className={`card ${small ? 'sm' : ''}`}
+      src={cardBackDataUri({ skin: currentSkin })}
+      alt="뒷면"
+      draggable={false}
+    />
   );
 }
 
