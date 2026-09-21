@@ -22,6 +22,11 @@ export function setCardSkin(id: string): void {
   currentSkin = id;
 }
 
+/** 지금 스킨으로 그린 화패 이미지 주소. 먹은 패 더미처럼 <img> 를 직접 쓸 때 사용한다. */
+export function cardSrcNow(card: Card): string {
+  return cardDataUri(card, { skin: currentSkin });
+}
+
 export function Portrait({
   tenant,
   expression = 'normal',

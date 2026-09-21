@@ -130,6 +130,7 @@ export default function App() {
   const nextCommonScene = useCallback((d: SaveData): Scene | null => {
     const cl = clearedStages(d);
     const pending: Array<{ id: string; when: boolean }> = [
+      { id: 'world', when: true },
       { id: 'prologue', when: true },
       { id: 'season_summer', when: isUnlocked(getTenant('sua'), cl) },
       { id: 'season_autumn', when: isUnlocked(getTenant('yerin'), cl) },
@@ -324,7 +325,8 @@ export default function App() {
   if (screen.name === 'match') {
     const prog = data.tenants[screen.tenant.id];
     return (
-      <div className="app">
+      // wide: 가로로 들면 맞고 판이 프레임 폭을 넘어 펼쳐진다
+      <div className="app wide">
         <MatchScreen
           key={`${screen.tenant.id}-${screen.stage}-${data.stats.totalGames}`}
           tenant={screen.tenant}
@@ -333,6 +335,7 @@ export default function App() {
           rules={data.settings.rules}
           profile={profile}
           losingStreak={losingStreak[screen.tenant.id] ?? 0}
+          points={data.points}
           onFinish={(o) => finishMatch(screen.tenant, screen.stage, o)}
           onQuit={goHome}
         />

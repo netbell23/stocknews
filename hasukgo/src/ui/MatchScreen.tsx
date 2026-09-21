@@ -1,11 +1,18 @@
-/** 대전 화면 + 결과 연출 */
+/**
+ * 맞고 판 + 결과 연출.
+ *
+ * 화면 구성은 고스톱 판의 관습을 따른다 — 초록 융 바닥, 가운데 더미, 양쪽으로 갈린
+ * 먹은 패 더미(광/띠/열/피), 오른쪽 점수판, 아래 내 손패.
+ * 세로로 들면 위아래로 쌓이고, 눕히거나 넓은 화면이면 좌우로 펼쳐진다.
+ * (배치는 styles.css 의 .board grid-template-areas 가 전부 결정한다)
+ */
 import { useEffect, useMemo, useState } from 'react';
 import { MONTH_NAMES } from '../engine/cards';
 import type { Card, PlayerId, RuleOptions, Settlement } from '../engine/types';
 import type { PlayerProfile } from '../ai/ai';
 import type { Tenant } from '../data/types';
 import { LOSS_FACTOR } from '../save/storage';
-import { Background, CardBack, CardView, Portrait } from './parts';
+import { Background, CardBack, CardView, cardSrcNow, Portrait } from './parts';
 import { useMatch } from './useMatch';
 
 const HUMAN: PlayerId = 0;
@@ -34,6 +41,49 @@ function focusOf(cards: { gwang: Card[]; yeol: Card[]; tti: Card[]; pi: Card[] }
   return entries[0][0];
 }
 
+/** 먹은 패를 광/띠/열/피 네 더미로 나눠 겹쳐 보여준다 */
+function CapturedPiles({
+  captured,
+  side,
+}: {
+  captured: { gwang: Card[]; yeol: Card[]; tti: Card[]; pi: Card[] };
+  side: '상대' | '내 것';
+}) {
+  const rows: Array<[string, Card[]]> = [
+    ['광', captured.gwang],
+    ['띠', captured.tti],
+    ['열', captured.yeol],
+    ['피', captured.pi],
+  ];
+  const total = rows.reduce((a, [, c]) => a + c.length, 0);
+  return (
+    <div className="piles">
+      <div className="piles-head">
+        {side}
+        <b>{total}</b>
+      </div>
+      {rows.map(([label, cards]) => (
+        <div className={`pile ${cards.length === 0 ? 'pile-empty' : ''}`} key={label}>
+          <span className="pile-label">{label}</span>
+          <div className="pile-cards">
+            {cards.map((c, i) => (
+              <img
+                key={c.id}
+                className="pile-card"
+                style={{ marginLeft: i === 0 ? 0 : 'var(--pile-overlap)' }}
+                src={cardSrcNow(c)}
+                alt={c.name}
+                draggable={false}
+              />
+            ))}
+          </div>
+          {cards.length > 0 && <span className="pile-n">{cards.length}</span>}
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export default function MatchScreen({
   tenant,
   stage,
@@ -41,6 +91,7 @@ export default function MatchScreen({
   rules,
   profile,
   losingStreak,
+  points,
   onFinish,
   onQuit,
 }: {
@@ -50,6 +101,8 @@ export default function MatchScreen({
   rules: Partial<RuleOptions>;
   profile: PlayerProfile;
   losingStreak: number;
+  /** 지금 가진 포인트. 판돈이 얼마나 큰 돈인지 옆에 보여준다. */
+  points: number;
   onFinish: (o: MatchOutcome) => void;
   onQuit: () => void;
 }) {
@@ -94,6 +147,24 @@ export default function MatchScreen({
     setSelected(null);
   };
 
+  /** 바닥패를 월별로 묶는다. 같은 월이 겹쳐 놓이는 게 실제 판 모양이다. */
+  const fieldGroups = useMemo(() => {
+    const byMonth = new Map<number, Card[]>();
+    for (const c of s.field) {
+      const arr = byMonth.get(c.month);
+      if (arr) arr.push(c);
+      else byMonth.set(c.month, [c]);
+    }
+    return [...byMonth.entries()].map(([month, cards]) => ({ month, cards }));
+  }, [s.field]);
+
+  const half = Math.ceil(fieldGroups.length / 2);
+  const topRow = fieldGroups.slice(0, half);
+  const bottomRow = fieldGroups.slice(half);
+
+  const winPay = view.myScore * tenant.rate;
+  const losePay = Math.round(view.oppScore * tenant.rate * LOSS_FACTOR);
+
   const result = useMemo<MatchOutcome | null>(() => {
     if (!s.settlement) return null;
     return {
@@ -107,71 +178,124 @@ export default function MatchScreen({
     };
   }, [s.settlement, me]);
 
-  return (
-    <div className="screen">
-      <Background bg="maru" time="night" />
-      <div className="layer match">
-        <div className="opp-panel">
-          <Portrait tenant={tenant} expression={view.expression} outfit={stage >= 10 ? 2 : 0} />
-          <div style={{ flex: 1 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
-              <strong style={{ fontSize: 14 }}>{tenant.name}</strong>
-              <span className="score-chip">{view.oppScore}점</span>
-              {opp.goCount > 0 && <span className="badge">{opp.goCount}고</span>}
-              <button className="iconbtn" style={{ marginLeft: 'auto' }} onClick={onQuit} aria-label="나가기">
-                ✕
-              </button>
-            </div>
-            <div className="opp-line">{view.line}</div>
+  const renderStack = (g: { month: number; cards: Card[] }) => (
+    <div className="fstack" key={g.month}>
+      {g.cards.map((c, i) => {
+        const isCandidate = mustChoose && s.pendingChoice?.candidates.some((x) => x.id === c.id);
+        return (
+          <div
+            className="fslot"
+            key={c.id}
+            style={{ marginLeft: i === 0 ? 0 : 'var(--stack-overlap)', zIndex: i }}
+          >
+            <CardView card={c} selectable={!!isCandidate} onClick={() => isCandidate && choose(c.id)} />
           </div>
+        );
+      })}
+      {s.ppeokPiles[g.month] !== undefined && <span className="fstack-tag">뻑</span>}
+    </div>
+  );
+
+  return (
+    <div className="screen match-screen">
+      <Background bg="maru" time="night" />
+      <div className="layer board">
+        {/* ── 상대 ── */}
+        <div className="board-opp">
+          <Portrait tenant={tenant} expression={view.expression} outfit={stage >= 10 ? 2 : 0} />
+          <div className="chip-body">
+            <div className="chip-name">
+              {tenant.name}
+              {opp.goCount > 0 && <span className="badge">{opp.goCount}고</span>}
+            </div>
+            <div className="chip-score">
+              {view.oppScore}
+              <small>점</small>
+            </div>
+          </div>
+          <button className="iconbtn quit" onClick={onQuit} aria-label="나가기">
+            ✕
+          </button>
+          <div className="speech">{view.line}</div>
         </div>
 
-        <div className="captured">
-          <span className="tag">상대</span>
-          {[...opp.captured.gwang, ...opp.captured.yeol, ...opp.captured.tti, ...opp.captured.pi].map((c) => (
-            <CardView key={c.id} card={c} small />
-          ))}
+        {/* ── 먹은 패 ── */}
+        <div className="board-oppcap">
+          <CapturedPiles captured={opp.captured} side="상대" />
         </div>
 
-        <div className="field">
-          {mustChoose && (
-            <div className="hint-box" style={{ margin: '0 0 6px' }}>
-              같은 월이 두 장입니다. 가져올 패를 고르세요.
+        {/* ── 바닥 ── */}
+        <div className="board-field">
+          <div className="felt">
+            <div className="field-row">{topRow.map(renderStack)}</div>
+            <div className="field-mid">
+              <div className="deck">
+                <CardBack />
+                <span className="deck-n">{s.deck.length}</span>
+              </div>
+              <div className="deck-label">남은 패</div>
+            </div>
+            <div className="field-row">{bottomRow.map(renderStack)}</div>
+          </div>
+          {mustChoose && <div className="felt-notice">같은 월이 두 장입니다. 가져올 패를 고르세요.</div>}
+          {view.hint && !mustChoose && (
+            <div className="felt-notice hint">
+              {tenant.name}: “{view.hint}”
             </div>
           )}
-          <div className="card-row">
-            {s.field.map((c) => {
-              const isCandidate = mustChoose && s.pendingChoice?.candidates.some((x) => x.id === c.id);
-              return (
-                <CardView
-                  key={c.id}
-                  card={c}
-                  selectable={!!isCandidate}
-                  chosen={false}
-                  onClick={() => isCandidate && choose(c.id)}
-                />
-              );
-            })}
+        </div>
+
+        <div className="board-mycap">
+          <CapturedPiles captured={me.captured} side="내 것" />
+        </div>
+
+        {/* ── 점수판 ── */}
+        <div className="board-side">
+          <div className="scorebox">
+            <div className="scorebox-row">
+              <b>{view.myScore}</b>
+              <small>점</small>
+              <span className="x">×</span>
+              <b>{tenant.rate}</b>
+              <small>P</small>
+            </div>
+            <div className="scorebox-eq">
+              = <strong>{winPay.toLocaleString()}P</strong>
+            </div>
+            <div className="scorebox-risk">
+              지면 <span>-{losePay.toLocaleString()}P</span>
+            </div>
           </div>
-          <div style={{ textAlign: 'center', fontSize: 11, color: 'var(--paper-dim)' }}>
-            바닥 {s.field.length}장 · 남은 패 {s.deck.length}장
-            {Object.keys(s.ppeokPiles).length > 0 &&
-              ` · 뻑 ${Object.keys(s.ppeokPiles)
-                .map((m) => `${m}월`)
-                .join(', ')}`}
+
+          <div className="turnline">
+            {selected && bombable.includes(me.hand.find((c) => c.id === selected)?.month ?? 0)
+              ? '한 번 더 누르면 폭탄'
+              : canPlay
+                ? '낼 패를 고르세요'
+                : view.busy
+                  ? `${tenant.name}의 차례…`
+                  : mustChoose
+                    ? '가져올 패를 고르세요'
+                    : ''}
+          </div>
+
+          {shakeable.length > 0 && canPlay && (
+            <button className="btn shake" onClick={() => shake(shakeable[0])}>
+              흔들기 {MONTH_NAMES[shakeable[0]] ?? shakeable[0]}
+            </button>
+          )}
+
+          <div className="me-chip">
+            <div className="chip-name">
+              나
+              {me.goCount > 0 && <span className="badge">{me.goCount}고</span>}
+            </div>
+            <div className="chip-points">{points.toLocaleString()} P</div>
           </div>
         </div>
 
-        <div className="captured">
-          <span className="tag">내 것</span>
-          {[...me.captured.gwang, ...me.captured.yeol, ...me.captured.tti, ...me.captured.pi].map((c) => (
-            <CardView key={c.id} card={c} small />
-          ))}
-        </div>
-
-        {view.hint && <div className="hint-box">{tenant.name}: “{view.hint}”</div>}
-
-        <div className="hand">
+        {/* ── 내 손패 ── */}
+        <div className="board-hand">
           {me.hand.map((c) => (
             <CardView
               key={c.id}
@@ -182,41 +306,6 @@ export default function MatchScreen({
             />
           ))}
           {me.hand.length === 0 && <CardBack small />}
-        </div>
-
-        <div className="action-bar">
-          <div style={{ flex: 1, fontSize: 12 }}>
-            <div>
-              내 점수 <strong style={{ color: 'var(--lamp)', fontSize: 16 }}>{view.myScore}</strong>
-              {me.goCount > 0 && <span className="badge">{me.goCount}고</span>}
-              <span style={{ marginLeft: 8, fontSize: 11, color: 'var(--paper-dim)' }}>
-                · 점당 {tenant.rate}P
-              </span>
-            </div>
-            <div style={{ fontSize: 11 }}>
-              <span style={{ color: 'var(--ok)' }}>
-                이기면 +{(view.myScore * tenant.rate).toLocaleString()}P
-              </span>
-              <span style={{ color: 'var(--paper-dim)' }}> · </span>
-              <span style={{ color: view.oppScore >= 7 ? 'var(--accent)' : 'var(--paper-dim)' }}>
-                지면 -{Math.round(view.oppScore * tenant.rate * LOSS_FACTOR).toLocaleString()}P
-              </span>
-            </div>
-            <div style={{ color: 'var(--paper-dim)', fontSize: 11 }}>
-              {selected && bombable.includes(me.hand.find((c) => c.id === selected)?.month ?? 0)
-                ? '한 번 더 누르면 폭탄'
-                : canPlay
-                  ? '낼 패를 고르세요'
-                  : view.busy
-                    ? `${tenant.name}의 차례…`
-                    : ''}
-            </div>
-          </div>
-          {shakeable.length > 0 && canPlay && (
-            <button className="btn" onClick={() => shake(shakeable[0])}>
-              흔들기 {MONTH_NAMES[shakeable[0]] ?? shakeable[0]}
-            </button>
-          )}
         </div>
 
         {view.shout && (
@@ -232,7 +321,7 @@ export default function MatchScreen({
               {view.myScore}점입니다. 더 가시겠어요?
               <br />
               <strong style={{ color: 'var(--ok)', fontSize: 18 }}>
-                지금 스톱하면 +{(view.myScore * tenant.rate).toLocaleString()}P
+                지금 스톱하면 +{winPay.toLocaleString()}P
               </strong>
               <br />
               <span style={{ color: 'var(--paper-dim)', fontSize: 13 }}>
@@ -253,7 +342,11 @@ export default function MatchScreen({
 
         {view.aiGoStop && (
           <div className="gostop-overlay">
-            <Portrait tenant={tenant} expression={view.aiGoStop.action === 'go' ? 'serious' : 'win'} outfit={stage >= 10 ? 2 : 0} />
+            <Portrait
+              tenant={tenant}
+              expression={view.aiGoStop.action === 'go' ? 'serious' : 'win'}
+              outfit={stage >= 10 ? 2 : 0}
+            />
             <div className="gostop-line">
               <strong style={{ color: 'var(--lamp)' }}>{tenant.name}</strong>
               <br />

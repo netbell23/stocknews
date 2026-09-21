@@ -360,7 +360,7 @@ export function isStuck(data: SaveData): boolean {
   return data.points < cheapestEntry();
 }
 
-/** 어머니께 용돈 받기. 막힌 상태에서만 쓸 수 있다. */
+/** 할머니 비상금 봉투. 집 어딘가에서 하나씩 나온다. 막힌 상태에서만 쓸 수 있다. */
 export const ALLOWANCE = 100;
 
 /**

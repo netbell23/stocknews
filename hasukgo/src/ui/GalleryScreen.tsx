@@ -84,6 +84,11 @@ export default function GalleryScreen({ data, onBack }: { data: SaveData; onBack
               </div>
 
               <div className="section">
+                <h3>이 집에 온 이유</h3>
+                <div style={{ fontSize: 13, lineHeight: 1.7, color: 'var(--paper)' }}>{sel.backstory}</div>
+              </div>
+
+              <div className="section">
                 <h3>맞고 스타일</h3>
                 <div style={{ fontSize: 13, lineHeight: 1.6 }}>{sel.styleLabel}</div>
                 <div className="row">

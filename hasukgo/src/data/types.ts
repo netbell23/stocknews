@@ -73,6 +73,8 @@ export interface Tenant {
   personality: [string, string, string];
   /** 맞고 스타일 한 줄 설명 (도감/선택 화면에 표시) */
   styleLabel: string;
+  /** 이 집에 온 이유. 열 명이 각자 사연을 갖고 들어온다. */
+  backstory: string;
   style: TenantStyle;
   /** 해금 조건. 빈 배열이면 처음부터 해금. */
   unlock: Array<{ tenantId: string; stage: number }>;

@@ -53,7 +53,7 @@ export default function HomeScreen({
               style={{ marginTop: 10, fontSize: 14 }}
               onClick={onAllowance}
             >
-              어머니께 용돈 받기 (+{ALLOWANCE}P)
+              할머니 비상금 봉투 찾기 (+{ALLOWANCE}P)
             </button>
           </div>
         )}

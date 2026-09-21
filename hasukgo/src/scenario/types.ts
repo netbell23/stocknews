@@ -38,7 +38,7 @@ export const EXPRESSION_ALIAS: Record<string, Expression> = {
   패배: 'lose',
 };
 
-/** 배경 12종 */
+/** 배경 13종 */
 export type BackgroundId =
   | 'maru'
   | 'kitchen'
@@ -51,7 +51,8 @@ export type BackgroundId =
   | 'room'
   | 'annex'
   | 'festival'
-  | 'station';
+  | 'station'
+  | 'beach';
 
 export const BACKGROUNDS: BackgroundId[] = [
   'maru',
@@ -66,6 +67,7 @@ export const BACKGROUNDS: BackgroundId[] = [
   'annex',
   'festival',
   'station',
+  'beach',
 ];
 
 export type TimeOfDay = 'morning' | 'evening' | 'night';

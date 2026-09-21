@@ -1,5 +1,5 @@
 /**
- * 배경 12종 x 시간대 3종 SVG 생성기 — 플레이스홀더.
+ * 배경 13종 x 시간대 3종 SVG 생성기 — 플레이스홀더.
  * 원화 교체: public/art/bg/{bg}_{time}.jpg 를 넣으면 우선 사용된다.
  */
 import type { BackgroundId, TimeOfDay } from '../scenario/types';
@@ -17,6 +17,7 @@ export const BACKGROUND_LABEL: Record<BackgroundId, string> = {
   annex: '별채',
   festival: '가을 축제',
   station: '지하철역 앞',
+  beach: '집 앞 바닷가',
 };
 
 interface Palette {
@@ -96,6 +97,37 @@ function floorPlanks(p: Palette, top: number): string {
   return out;
 }
 
+/** hex 를 밝게(+) / 어둡게(-) 민다 */
+function shadeBg(hex: string, amt: number): string {
+  const m = /^#?([0-9a-f]{6})$/i.exec(hex);
+  if (!m) return hex;
+  const n = parseInt(m[1], 16);
+  const t = amt > 0 ? 255 : 0;
+  const k = Math.abs(amt);
+  const out = [(n >> 16) & 255, (n >> 8) & 255, n & 255].map((c) =>
+    Math.round(c + (t - c) * k),
+  );
+  return `#${out.map((c) => c.toString(16).padStart(2, '0')).join('')}`;
+}
+
+/** 수평선과 바다. top 이 수평선 높이다. */
+function sea(p: Palette, time: TimeOfDay, top: number): string {
+  const deep = time === 'night' ? '#16233d' : time === 'evening' ? '#3f5f84' : '#5f95c4';
+  const near = time === 'night' ? '#0f1a2e' : time === 'evening' ? '#2f4867' : '#4a7fb0';
+  const glint = time === 'night' ? p.light : '#ffffff';
+  let out = `<rect x="0" y="${top}" width="${W}" height="${880 - top}" fill="${deep}"/>
+             <rect x="0" y="${top + (880 - top) * 0.55}" width="${W}" height="${(880 - top) * 0.45}" fill="${near}"/>
+             <rect x="0" y="${top - 3}" width="${W}" height="6" fill="${glint}" opacity="0.28"/>`;
+  // 잔물결 — 렌더마다 흔들리지 않게 수식으로 고정 배치
+  for (let i = 0; i < 16; i += 1) {
+    const y = top + 24 + i * ((880 - top - 24) / 16);
+    const x = ((i * 157) % (W - 180)) + 40;
+    const w = 60 + (i % 4) * 34;
+    out += `<path d="M${x} ${y} h${w}" stroke="${glint}" stroke-width="3" opacity="${(0.05 + (i % 3) * 0.045).toFixed(2)}"/>`;
+  }
+  return out;
+}
+
 function scene(bg: BackgroundId, p: Palette, time: TimeOfDay): string {
   switch (bg) {
     case 'maru':
@@ -144,18 +176,30 @@ function scene(bg: BackgroundId, p: Palette, time: TimeOfDay): string {
         <rect x="240" y="516" width="70" height="48" rx="6" fill="#e8d7c2" opacity="0.85"/>
         <rect x="520" y="700" width="120" height="180" rx="8" fill="${p.wall}"/>`;
     case 'yard':
+      // 바닷가 언덕 위 2층 목조 집. 이 집이 이야기의 무대다.
       return `
         ${stars(time)}
-        <rect x="0" y="720" width="${W}" height="${H - 720}" fill="${p.ground}"/>
-        <rect x="80" y="380" width="560" height="350" fill="${p.wall}"/>
-        <rect x="280" y="470" width="160" height="260" rx="6" fill="${p.wood}"/>
-        <circle cx="420" cy="600" r="10" fill="#d8c07a"/>
-        <rect x="270" y="430" width="180" height="44" rx="6" fill="#5a4432"/>
-        <text x="360" y="462" font-size="26" text-anchor="middle" fill="#f0e2c8" font-family="serif">하숙</text>
-        <circle cx="120" cy="640" r="70" fill="#4a6b3f" opacity="0.8"/>
-        <rect x="112" y="640" width="16" height="90" fill="#5b4330"/>
-        <circle cx="600" cy="620" r="55" fill="#4a6b3f" opacity="0.8"/>
-        <rect x="594" y="620" width="14" height="110" fill="#5b4330"/>`;
+        ${sea(p, time, 560)}
+        <rect x="0" y="840" width="${W}" height="${H - 840}" fill="${p.ground}"/>
+        <path d="M0 840 h${W} v40 h-${W}z" fill="#00000022"/>
+        <rect x="150" y="330" width="440" height="230" fill="${p.wall}"/>
+        <rect x="150" y="560" width="440" height="280" fill="${shadeBg(p.wall, -0.1)}"/>
+        <path d="M120 330 L370 190 L620 330 Z" fill="${shadeBg(p.wood, -0.25)}"/>
+        <path d="M120 330 h500 v22 h-500z" fill="${shadeBg(p.wood, -0.4)}"/>
+        <rect x="200" y="390" width="90" height="100" rx="4" fill="${p.light}" opacity="${time === 'night' ? 0.85 : 0.45}"/>
+        <rect x="450" y="390" width="90" height="100" rx="4" fill="${p.light}" opacity="${time === 'night' ? 0.55 : 0.4}"/>
+        <path d="M245 390 v100 M200 440 h90 M495 390 v100 M450 440 h90" stroke="${shadeBg(p.wood, -0.3)}" stroke-width="5"/>
+        <rect x="140" y="548" width="460" height="18" fill="${p.wood}"/>
+        <rect x="330" y="620" width="120" height="220" rx="4" fill="${p.wood}"/>
+        <circle cx="425" cy="740" r="9" fill="#d8c07a"/>
+        <rect x="170" y="640" width="110" height="110" rx="4" fill="${p.light}" opacity="${time === 'night' ? 0.8 : 0.4}"/>
+        <rect x="120" y="828" width="520" height="16" fill="${p.wood}"/>
+        <path d="M130 844 v36 M250 844 v36 M370 844 v36 M490 844 v36 M630 844 v36" stroke="${shadeBg(p.wood, -0.3)}" stroke-width="9"/>
+        <rect x="300" y="570" width="180" height="42" rx="6" fill="#5a4432"/>
+        <text x="390" y="602" font-size="26" text-anchor="middle" fill="#f0e2c8" font-family="serif">하숙</text>
+        <path d="M640 840 q18 -120 6 -190 q30 40 44 -10 q10 70 -6 200z" fill="#4a6b3f" opacity="0.85"/>
+        <circle cx="80" cy="760" r="58" fill="#4a6b3f" opacity="0.8"/>
+        <rect x="72" y="760" width="16" height="90" fill="#5b4330"/>`;
     case 'cvs':
       return `
         <rect x="0" y="760" width="${W}" height="${H - 760}" fill="#6b6b6b"/>
@@ -240,6 +284,20 @@ function scene(bg: BackgroundId, p: Palette, time: TimeOfDay): string {
         <circle cx="67" cy="630" r="24" fill="${p.light}" opacity="0.9"/>
         <rect x="646" y="640" width="14" height="160" fill="#3f3f3f"/>
         <circle cx="653" cy="630" r="24" fill="${p.light}" opacity="0.9"/>`;
+    case 'beach':
+      // 대문을 나서면 바로 백사장. 혼자 생각할 때 나오는 자리다.
+      return `
+        ${stars(time)}
+        ${sea(p, time, 470)}
+        <rect x="0" y="790" width="${W}" height="${H - 790}" fill="${shadeBg(p.ground, 0.18)}"/>
+        <path d="M0 790 q180 26 360 0 q180 -26 360 0 v26 q-180 26 -360 0 q-180 -26 -360 0z" fill="#ffffff" opacity="0.5"/>
+        <path d="M0 872 q180 22 360 0 q180 -22 360 0" stroke="#ffffff" stroke-width="5" fill="none" opacity="0.3"/>
+        <rect x="70" y="560" width="230" height="16" rx="6" fill="#6f6a63" opacity="0.8"/>
+        <rect x="286" y="516" width="22" height="62" fill="#e8e2d6"/>
+        <rect x="284" y="500" width="26" height="18" rx="4" fill="#c4463c"/>
+        <circle cx="297" cy="509" r="5" fill="${p.light}" opacity="0.95"/>
+        <path d="M520 820 l24 -54 l24 54z" fill="#5b4330" opacity="0.7"/>
+        <path d="M120 960 l40 -16 l40 16 l-40 14z" fill="#6f6a63" opacity="0.55"/>`;
   }
 }
 

@@ -203,3 +203,36 @@ describe('건너뛰기는 보상을 잃지 않는다', () => {
     expect(after.done).toBe(true);
   });
 });
+
+describe('세계관', () => {
+  it('첫 접속에 보여줄 세계관 씬이 있다', () => {
+    const world = scenes['world'];
+    expect(world, 'world 씬이 없으면 첫 접속에 세계관이 안 뜬다').toBeTruthy();
+    expect(world.steps.length).toBeGreaterThan(10);
+  });
+
+  it('프롤로그가 은서와의 첫 판으로 이어진다', () => {
+    const pro = scenes['prologue'];
+    expect(pro).toBeTruthy();
+    const speakers = pro.steps.flatMap((x) => (x.kind === 'say' ? [x.speaker] : []));
+    expect(speakers).toContain('은서');
+  });
+
+  it('세계관을 바꾼 뒤 살아 있는 어머니가 남아 있지 않다', () => {
+    // 주인공은 할머니가 남긴 집에 혼자 산다. 어머니가 말을 하면 설정이 어긋난다.
+    for (const scene of Object.values(scenes)) {
+      for (const step of scene.steps) {
+        if (step.kind === 'say') {
+          expect(step.speaker, `${scene.id}`).not.toBe('어머니');
+        }
+      }
+    }
+  });
+
+  it('열 명 모두 이 집에 온 이유가 적혀 있다', () => {
+    for (const t of TENANTS) {
+      expect(t.backstory, t.name).toBeTruthy();
+      expect(t.backstory.length, t.name).toBeGreaterThan(15);
+    }
+  });
+});

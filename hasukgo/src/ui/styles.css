@@ -14,6 +14,10 @@
   --ok: #3f8a52;
   --warn: #d08a2c;
   --shadow: rgba(0, 0, 0, 0.45);
+  /* 맞고 판 — 초록 융. 마루의 따뜻한 톤과 부딪히지 않게 깊은 녹색으로 잡았다. */
+  --felt: #2c6b41;
+  --felt-dark: #17452a;
+  --felt-rim: #0e2d1b;
   --safe-top: env(safe-area-inset-top, 0px);
   --safe-bottom: env(safe-area-inset-bottom, 0px);
 }
@@ -59,7 +63,7 @@ input {
 /* 스크롤 영역은 부드럽게 */
 .panel,
 .tenant-list,
-.field {
+.board-hand {
   -webkit-overflow-scrolling: touch;
   overscroll-behavior: contain;
 }
@@ -404,64 +408,393 @@ button {
   margin-top: 8px;
 }
 
-/* ── 대전 화면 ────────────────────────────── */
-.match {
+/* ── 맞고 판 ──────────────────────────────── */
+/*
+ * 배치는 전부 grid-template-areas 가 정한다.
+ * 기본(세로)은 위에서 아래로 쌓이고, 가로가 넉넉해지면 좌우로 펼쳐진다.
+ */
+.board {
+  display: grid;
+  gap: 4px;
+  padding: 4px;
+  height: 100%;
+  grid-template-areas:
+    'opp'
+    'oppcap'
+    'field'
+    'mycap'
+    'side'
+    'hand';
+  grid-template-rows: auto auto minmax(0, 1fr) auto auto auto;
+  --pile-overlap: -20px;
+  /* 같은 월끼리 겹치는 양. 카드 폭에 비례해야 작은 화면에서 도안이 다 가려지지 않는다 */
+  --stack-overlap: calc(var(--card-h, 69px) * -0.38);
+  /*
+   * 화패 크기를 화면 높이에 매단다. 바닥에는 두 줄 + 더미가 들어가야 하는데
+   * 크기를 고정하면 640px 짜리 작은 폰에서 위아래가 잘린다.
+   */
+  --card-h: clamp(40px, 8.4vh, 69px);
+}
+
+.board-opp {
+  grid-area: opp;
+}
+.board-oppcap {
+  grid-area: oppcap;
+}
+.board-field {
+  grid-area: field;
+  min-height: 0;
+}
+.board-mycap {
+  grid-area: mycap;
+}
+.board-side {
+  grid-area: side;
+}
+.board-hand {
+  grid-area: hand;
+}
+
+/* ── 상대 자리 ── */
+.board-opp {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  grid-template-areas:
+    'face body quit'
+    'speech speech speech';
+  gap: 6px 8px;
+  align-items: center;
+  padding: 6px 8px;
+  background: rgba(0, 0, 0, 0.55);
+  border-radius: 10px;
+}
+
+.board-opp > img {
+  grid-area: face;
+  width: calc(var(--card-h, 69px) * 0.667);
+  height: calc(var(--card-h, 69px) * 0.96);
+  object-fit: contain;
+  object-position: top;
+}
+
+.chip-body {
+  grid-area: body;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  min-width: 0;
+}
+
+.chip-name {
+  font-weight: 800;
+  font-size: 14px;
+  white-space: nowrap;
+}
+
+.chip-score {
+  font-size: 22px;
+  font-weight: 900;
+  color: var(--lamp);
+  line-height: 1;
+}
+
+.chip-score small,
+.scorebox small {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--paper-dim);
+  margin-left: 1px;
+}
+
+.board-opp .quit {
+  grid-area: quit;
+}
+
+.speech {
+  grid-area: speech;
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--paper-dim);
+  background: rgba(0, 0, 0, 0.4);
+  border-radius: 8px;
+  padding: 5px 8px;
+  min-height: 28px;
+}
+
+/* ── 먹은 패 더미 ── */
+/*
+ * 세로에서는 네 더미를 한 줄로 눕힌다. 위아래로 쌓으면 바닥에 남는 높이가
+ * 없어져 바닥패가 잘린다. 가로에서는 다시 세로 기둥으로 세운다.
+ */
+.piles {
+  background: rgba(0, 0, 0, 0.78);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 10px;
+  padding: 4px 6px;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 6px;
+}
+
+.piles-head {
+  font-size: 10px;
+  color: var(--paper-dim);
   display: flex;
   flex-direction: column;
-  height: 100%;
-}
-
-.opp-panel {
-  display: flex;
-  gap: 10px;
-  padding: 8px 12px;
   align-items: center;
-  background: rgba(0, 0, 0, 0.5);
+  flex: 0 0 auto;
+  width: 26px;
+  line-height: 1.3;
 }
 
-.opp-panel img {
-  width: 54px;
-  height: 80px;
-  object-fit: contain;
-}
-
-.opp-line {
-  flex: 1;
-  font-size: 12.5px;
-  line-height: 1.45;
-  background: rgba(0, 0, 0, 0.45);
-  border-radius: 10px;
-  padding: 8px 10px;
-  min-height: 46px;
-}
-
-.score-chip {
-  font-size: 11px;
+.piles-head b {
   color: var(--lamp);
+  font-size: 12px;
+}
+
+.pile {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  min-height: 22px;
+  flex: 1;
+  min-width: 0;
+}
+
+.pile.pile-empty {
+  opacity: 0.32;
+}
+
+.pile-label {
+  font-size: 10px;
+  color: var(--paper-dim);
+  width: 14px;
+  flex: 0 0 auto;
+}
+
+.pile-cards {
+  display: flex;
+  /* 장수가 패 바로 옆에 붙어야 어느 더미 수인지 읽힌다 */
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.pile-card {
+  width: 24px;
+  height: 36px;
+  border-radius: 3px;
+  flex: 0 0 auto;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
+}
+
+.pile-n {
+  font-size: 11px;
+  font-weight: 800;
+  color: var(--lamp);
+  flex: 0 0 auto;
+  min-width: 14px;
+  text-align: right;
+}
+
+/* ── 초록 융 바닥 ── */
+.board-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.felt {
+  flex: 1;
+  min-height: 0;
+  border-radius: 14px;
+  border: 3px solid var(--felt-rim);
+  background:
+    radial-gradient(ellipse at 50% 42%, var(--felt) 0%, var(--felt-dark) 78%),
+    var(--felt-dark);
+  box-shadow: inset 0 0 40px rgba(0, 0, 0, 0.55);
+  display: grid;
+  grid-template-rows: 1fr auto 1fr;
+  align-items: center;
+  padding: 6px;
+  gap: 4px;
+  overflow: hidden;
+}
+
+.field-row {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 5px;
+  min-height: 0;
+}
+
+.fstack {
+  display: flex;
+  position: relative;
+  flex: 0 0 auto;
+}
+
+.fslot {
+  position: relative;
+}
+
+.fstack-tag {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  font-size: 9px;
+  font-weight: 800;
+  background: var(--accent);
+  color: #fff;
+  border-radius: 6px;
+  padding: 1px 4px;
+  z-index: 9;
+}
+
+.field-mid {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.deck {
+  position: relative;
+  filter: drop-shadow(2px 3px 0 rgba(0, 0, 0, 0.5)) drop-shadow(4px 6px 0 rgba(0, 0, 0, 0.35));
+}
+
+.deck-n {
+  position: absolute;
+  inset: auto 0 -2px 0;
+  text-align: center;
+  font-size: 12px;
+  font-weight: 900;
+  color: #fff;
+  text-shadow: 0 1px 3px #000;
+}
+
+.deck-label {
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.55);
+}
+
+.felt-notice {
+  font-size: 11.5px;
+  text-align: center;
+  color: var(--ink);
+  background: var(--lamp);
+  border-radius: 8px;
+  padding: 4px 8px;
+  flex: 0 0 auto;
+}
+
+.felt-notice.hint {
+  background: rgba(0, 0, 0, 0.55);
+  color: var(--lamp);
+}
+
+/* ── 점수판 ── */
+.board-side {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  background: rgba(0, 0, 0, 0.55);
+  border-radius: 10px;
+}
+
+.scorebox {
+  background: linear-gradient(180deg, rgba(255, 217, 138, 0.16), rgba(0, 0, 0, 0.3));
+  border: 1px solid var(--lamp-dim);
+  border-radius: 8px;
+  padding: 4px 8px;
+  flex: 0 0 auto;
+}
+
+.scorebox-row {
+  display: flex;
+  align-items: baseline;
+  gap: 1px;
+  font-size: 12px;
+}
+
+.scorebox-row b {
+  font-size: 19px;
+  font-weight: 900;
+  color: var(--lamp);
+  line-height: 1;
+}
+
+.scorebox-row .x {
+  margin: 0 5px;
+  color: var(--paper-dim);
+}
+
+.scorebox-eq {
+  font-size: 12px;
+  color: var(--paper-dim);
+}
+
+.scorebox-eq strong {
+  color: var(--ok);
+  font-size: 14px;
+}
+
+.scorebox-risk {
+  font-size: 11px;
+  color: var(--paper-dim);
+}
+
+.scorebox-risk span {
+  color: var(--accent);
   font-weight: 700;
 }
 
-.field {
+.turnline {
   flex: 1;
-  padding: 8px;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  justify-content: center;
-  background: radial-gradient(ellipse at 50% 40%, rgba(255, 217, 138, 0.1), transparent 70%);
-  overflow-y: auto;
+  font-size: 11.5px;
+  color: var(--paper-dim);
+  min-width: 0;
 }
 
-.card-row {
+.btn.shake {
+  padding: 7px 10px;
+  font-size: 12.5px;
+  flex: 0 0 auto;
+}
+
+.me-chip {
+  flex: 0 0 auto;
+  text-align: right;
+}
+
+.chip-points {
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--lamp);
+}
+
+/* ── 내 손패 ── */
+.board-hand {
   display: flex;
   flex-wrap: wrap;
   gap: 4px;
   justify-content: center;
+  align-content: center;
+  padding: 6px;
+  background: rgba(0, 0, 0, 0.55);
+  border-radius: 10px;
 }
 
+/* ── 화패 ── */
 .card {
-  width: 46px;
-  height: 69px;
+  height: var(--card-h, 69px);
+  /* 화패 도안이 120x180 이라 가로세로비를 그대로 지킨다 */
+  width: calc(var(--card-h, 69px) * 0.667);
   border-radius: 6px;
   flex: 0 0 auto;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
@@ -470,8 +803,8 @@ button {
 }
 
 .card.sm {
-  width: 30px;
-  height: 45px;
+  height: calc(var(--card-h, 69px) * 0.65);
+  width: calc(var(--card-h, 69px) * 0.434);
 }
 
 .card.selectable {
@@ -488,38 +821,103 @@ button {
   transform: translateY(-8px);
 }
 
-.hand {
-  padding: 8px;
-  background: rgba(0, 0, 0, 0.5);
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
-  justify-content: center;
-  flex: 0 0 auto;
+/*
+ * 가로가 넉넉하면 진짜 맞고 판처럼 좌우로 펼친다.
+ * 먹은 패는 왼쪽 기둥, 바닥은 가운데, 점수판은 오른쪽.
+ */
+@media (min-aspect-ratio: 1/1) {
+  /* 판이 벌어지려면 480px 프레임을 풀어야 한다. 승부 중일 때만 푼다. */
+  .app.wide {
+    max-width: none;
+  }
+
+  .board {
+    --card-h: clamp(40px, 11.5vh, 69px);
+    grid-template-areas:
+      'oppcap field opp'
+      'mycap  field side'
+      'hand   hand  side';
+    grid-template-columns: minmax(96px, 150px) minmax(0, 1fr) minmax(150px, 200px);
+    grid-template-rows: minmax(0, 1fr) minmax(0, 1fr) auto;
+    --pile-overlap: -16px;
+  }
+
+  .board-opp {
+    grid-template-columns: auto 1fr;
+    grid-template-rows: auto auto 1fr;
+    grid-template-areas:
+      'face body'
+      'face quit'
+      'speech speech';
+    align-items: start;
+  }
+
+  .board-opp > img {
+    width: 78px;
+    height: 112px;
+  }
+
+  .board-opp .quit {
+    justify-self: end;
+  }
+
+  .speech {
+    align-self: end;
+  }
+
+  .piles {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 2px;
+    height: 100%;
+  }
+
+  .piles-head {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: baseline;
+    width: auto;
+  }
+
+  .pile {
+    flex: 0 0 auto;
+  }
+
+  .pile-cards {
+    flex: 1;
+  }
+
+  .board-side {
+    flex-direction: column;
+    align-items: stretch;
+    justify-content: center;
+  }
+
+  .scorebox {
+    text-align: center;
+  }
+
+  .scorebox-row {
+    justify-content: center;
+  }
+
+  .turnline {
+    flex: 0 0 auto;
+    text-align: center;
+  }
+
+  .me-chip {
+    text-align: center;
+    border-top: 1px solid rgba(255, 255, 255, 0.12);
+    padding-top: 6px;
+  }
 }
 
-.captured {
-  display: flex;
-  gap: 2px;
-  flex-wrap: wrap;
-  padding: 4px 8px;
-  background: rgba(0, 0, 0, 0.3);
-  align-items: center;
-  min-height: 34px;
-}
-
-.captured .tag {
-  font-size: 10px;
-  color: var(--paper-dim);
-  margin-right: 4px;
-}
-
-.action-bar {
-  display: flex;
-  gap: 8px;
-  padding: 8px 12px 12px;
-  background: rgba(0, 0, 0, 0.55);
-  flex: 0 0 auto;
+/* 눕힌 폰처럼 세로가 아주 짧으면 겹침을 키워 가로 폭을 아낀다 */
+@media (min-aspect-ratio: 1/1) and (max-height: 460px) {
+  .board {
+    --stack-overlap: calc(var(--card-h, 69px) * -0.46);
+  }
 }
 
 /* ── 연출 오버레이 ────────────────────────── */
