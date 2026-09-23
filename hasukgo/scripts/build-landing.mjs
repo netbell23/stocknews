@@ -51,7 +51,9 @@ export async function buildLanding(outDir) {
     const { portraitSvg, cardSvg, backgroundSvg, baseDeck, TENANTS } = mod;
 
     // 히어로 배경 — 밤의 마루
-    const heroBg = inline(backgroundSvg('maru', 'night'));
+    // 히어로는 집 외관. 이 게임이 파는 게 "바닷가 별장에서 벌어지는 밤"이라
+    // 거실보다 집이 먼저 보이는 편이 낫다.
+    const heroBg = inline(backgroundSvg('yard', 'night'));
 
     // 히어로에 세울 하숙생 다섯 (봄~여름)
     const heroTenants = TENANTS.slice(0, 5)
