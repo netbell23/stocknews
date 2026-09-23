@@ -87,15 +87,6 @@ function stars(time: TimeOfDay): string {
   return out;
 }
 
-function floorPlanks(p: Palette, top: number): string {
-  let out = `<rect x="0" y="${top}" width="${W}" height="${H - top}" fill="${p.wood}"/>`;
-  for (let i = 0; i <= 8; i++) {
-    const x = (W / 8) * i;
-    out += `<path d="M${x} ${top} L${x * 0.75 + 90} ${H}" stroke="#00000022" stroke-width="3"/>`;
-  }
-  out += `<rect x="0" y="${top}" width="${W}" height="10" fill="#00000033"/>`;
-  return out;
-}
 
 /** hex 를 밝게(+) / 어둡게(-) 민다 */
 function shadeBg(hex: string, amt: number): string {
@@ -507,7 +498,9 @@ function vFinish(L: Look, horizon: number): string {
 }
 
 /** 실사풍으로 다시 그린 배경들. 전역 헤이즈를 건너뛰고 스스로 색을 잡는다. */
-const SELF_GRADED = new Set<BackgroundId>(['yard', 'beach', 'maru', 'annex']);
+const SELF_GRADED = new Set<BackgroundId>([
+  'yard', 'beach', 'maru', 'annex', 'kitchen', 'hallway', 'room', 'rooftop',
+]);
 
 /** 실사풍 장면이 쓰는 그라디언트·필터 id 목록 */
 const V_IDS = [
@@ -533,6 +526,418 @@ function uniquifyIds(svg: string): string {
     out = out.split(`url(#${id})`).join(`url(#${id}${n})`);
   }
   return out;
+}
+
+/* ── 실내 렌더 도구 ────────────────────────────────────────────
+ *
+ * 집 안은 바깥과 다른 문제를 푼다. 바깥은 빛과 대기가 깊이를 만들지만
+ * 실내는 **투시**가 깊이를 만든다. 그래서 모든 방을 소실점 하나짜리 상자로
+ * 그린다 — 뒷벽 하나, 옆벽 둘, 천장, 바닥. 가구는 그 상자 안에 놓는다.
+ *
+ * 톤은 두 가지다. 거실·옥상은 모던 미니멀(따뜻한 흰 벽 + 오크 바닥),
+ * 복도·주방·방은 웜 플라스터(올리브빛 흙벽 + 타일 바닥).
+ */
+
+/** 방 상자의 기준선. 뒷벽이 이 사각형이고 나머지는 여기서 퍼져나간다. */
+const RB = { top: 214, bottom: 700, left: 112, right: 608 };
+
+interface RoomTone {
+  wall: string;
+  wallLit: string;
+  ceil: string;
+  floor: string;
+  floorDark: string;
+  trim: string;
+  glow: number;
+}
+
+/** 시간대 x 톤 → 실내 색 */
+function roomTone(time: TimeOfDay, warm: boolean): RoomTone {
+  if (warm) {
+    // 웜 플라스터 — 올리브빛 흙벽, 밝은 타일
+    if (time === 'night')
+      return { wall: '#6a6448', wallLit: '#8a8058', ceil: '#4e4a38', floor: '#8e8a80', floorDark: '#5d5a52', trim: '#8a6a3c', glow: 0.9 };
+    if (time === 'evening')
+      return { wall: '#c4b483', wallLit: '#e0cd96', ceil: '#b0a279', floor: '#ded6c6', floorDark: '#a89f8d', trim: '#a9793f', glow: 0.5 };
+    return { wall: '#cfc49a', wallLit: '#e6dcb4', ceil: '#ded6bb', floor: '#ece7db', floorDark: '#c2bcae', trim: '#b08b52', glow: 0.18 };
+  }
+  // 모던 미니멀 — 따뜻한 흰 벽, 오크 바닥
+  if (time === 'night')
+    return { wall: '#4b4b50', wallLit: '#6a6a70', ceil: '#3a3a3f', floor: '#6b4f30', floorDark: '#44311d', trim: '#2a2a2e', glow: 0.9 };
+  if (time === 'evening')
+    return { wall: '#e0d5c6', wallLit: '#f2e2cc', ceil: '#cfc5b8', floor: '#c08f55', floorDark: '#8d6437', trim: '#5a5550', glow: 0.45 };
+  return { wall: '#ece7df', wallLit: '#faf7f2', ceil: '#f2eee8', floor: '#c99a63', floorDark: '#9a7345', trim: '#6b6660', glow: 0.14 };
+}
+
+/** 소실점 하나짜리 방 상자 — 천장·옆벽·뒷벽·바닥 */
+function roomBox(T: RoomTone, floorKind: 'oak' | 'tile'): string {
+  const { top, bottom, left, right } = RB;
+  let out = `
+    <rect width="${W}" height="${H}" fill="${T.wall}"/>
+    <!-- 천장 -->
+    <path d="M0 0 L${W} 0 L${right} ${top} L${left} ${top} Z" fill="${T.ceil}"/>
+    <!-- 옆벽 -->
+    <path d="M0 0 L${left} ${top} L${left} ${bottom} L0 ${H} Z" fill="${shadeBg(T.wall, -0.16)}"/>
+    <path d="M${W} 0 L${right} ${top} L${right} ${bottom} L${W} ${H} Z" fill="${shadeBg(T.wall, -0.24)}"/>
+    <!-- 뒷벽 -->
+    <rect x="${left}" y="${top}" width="${right - left}" height="${bottom - top}" fill="${T.wall}"/>
+    <rect x="${left}" y="${top}" width="${right - left}" height="${bottom - top}" filter="url(#vstucco)"
+          opacity="0.13" style="mix-blend-mode:overlay"/>
+    <!-- 바닥 -->
+    <path d="M${left} ${bottom} L${right} ${bottom} L${W + 200} ${H} L${-200} ${H} Z" fill="${T.floor}"/>`;
+
+  if (floorKind === 'oak') {
+    // 널이 소실점으로 모인다
+    for (let i = 0; i <= 14; i += 1) {
+      const bx = left + ((right - left) / 14) * i;
+      const fx = -200 + ((W + 400) / 14) * i;
+      out += `<path d="M${bx.toFixed(0)} ${bottom} L${fx.toFixed(0)} ${H}" stroke="${T.floorDark}" stroke-width="2" opacity="0.5"/>`;
+    }
+    for (let i = 1; i <= 5; i += 1) {
+      const y = bottom + i * i * 22;
+      if (y < H) out += `<path d="M0 ${y.toFixed(0)} h${W}" stroke="${T.floorDark}" stroke-width="1.5" opacity="0.22"/>`;
+    }
+  } else {
+    // 큰 타일 — 가로줄은 멀수록 촘촘하게
+    for (let i = 0; i <= 10; i += 1) {
+      const bx = left + ((right - left) / 10) * i;
+      const fx = -200 + ((W + 400) / 10) * i;
+      out += `<path d="M${bx.toFixed(0)} ${bottom} L${fx.toFixed(0)} ${H}" stroke="${T.floorDark}" stroke-width="2" opacity="0.35"/>`;
+    }
+    for (let i = 1; i <= 6; i += 1) {
+      const y = bottom + i * i * 17;
+      if (y < H) out += `<path d="M0 ${y.toFixed(0)} h${W}" stroke="${T.floorDark}" stroke-width="2" opacity="0.3"/>`;
+    }
+  }
+  // 바닥 앞쪽이 어두워지며 깊이가 생긴다
+  out += `<rect x="0" y="${bottom}" width="${W}" height="${H - bottom}" fill="${T.floorDark}" opacity="0.2"
+                filter="url(#vblur2)"/>`;
+  // 벽과 바닥이 만나는 걸레받이
+  out += `<path d="M${left} ${bottom - 10} h${right - left} v10 h-${right - left} Z" fill="${shadeBg(T.wall, -0.3)}" opacity="0.6"/>`;
+  return out;
+}
+
+/** 천장 간접조명(코브) + 스팟 — 모던 거실의 인상은 거의 이 선이 만든다 */
+function coveLights(T: RoomTone, time: TimeOfDay): string {
+  const on = time === 'night' || time === 'evening';
+  const c = on ? '#fff0d0' : '#ffffff';
+  let out = '';
+  for (const y of [70, 128]) {
+    out += `<rect x="${140 + (y - 70) * 0.5}" y="${y}" width="${440 - (y - 70)}" height="5" rx="2" fill="${c}"
+                  opacity="${on ? 0.95 : 0.5}"/>`;
+    if (on) out += `<rect x="${130 + (y - 70) * 0.5}" y="${y - 10}" width="${460 - (y - 70)}" height="26" rx="10" fill="${c}"
+                          opacity="0.2" filter="url(#vsoft)"/>`;
+  }
+  // 트랙 스팟
+  out += `<rect x="96" y="176" width="300" height="4" fill="${T.trim}" opacity="0.8"/>`;
+  for (const x of [140, 220, 300]) {
+    out += `<rect x="${x}" y="${172}" width="14" height="22" rx="4" fill="${T.trim}"/>`;
+    if (on)
+      out += `<path d="M${x + 7} ${194} L${x - 50} ${RB.bottom} L${x + 64} ${RB.bottom} Z" fill="${c}" opacity="0.13" filter="url(#vsoft)"/>`;
+  }
+  return out;
+}
+
+/** 라탄 펜던트 등 */
+function pendant(x: number, y: number, r: number, time: TimeOfDay): string {
+  const on = time === 'night' || time === 'evening';
+  return `
+    <rect x="${x - 2}" y="0" width="4" height="${y - r}" fill="#3a3129"/>
+    <path d="M${x - r} ${y} a${r} ${r * 0.92} 0 0 1 ${r * 2} 0 Z" fill="${on ? '#e8bd72' : '#c9a877'}"/>
+    ${[-0.6, -0.2, 0.2, 0.6]
+      .map((t) => `<path d="M${x + r * t} ${y} q${-r * t * 0.3} ${-r * 0.75} 0 ${-r * 0.92}" stroke="#00000033" stroke-width="2" fill="none"/>`)
+      .join('')}
+    <ellipse cx="${x}" cy="${y}" rx="${r}" ry="4" fill="${on ? '#fff0c8' : '#d8cdb8'}"/>
+    ${on ? `<ellipse cx="${x}" cy="${y + 90}" rx="${r * 2.4}" ry="${r * 1.9}" fill="url(#vwarm)"/>` : ''}`;
+}
+
+/** 벽에 드리우는 러그 — 앞쪽이 넓은 사다리꼴 */
+function rug(cy: number, halfTop: number, halfBottom: number, h: number, fill: string): string {
+  return `<path d="M${360 - halfTop} ${cy} L${360 + halfTop} ${cy} L${360 + halfBottom} ${cy + h} L${
+    360 - halfBottom
+  } ${cy + h} Z" fill="${fill}"/>`;
+}
+
+/** L 자 패브릭 소파 (참고 사진의 회색 세로 소파) */
+function sofa(x: number, y: number, w: number, time: TimeOfDay): string {
+  const body = time === 'night' ? '#4e4c49' : time === 'evening' ? '#9c968c' : '#a9a49c';
+  const cush = shadeBg(body, 0.14);
+  return `
+    <ellipse cx="${x + w / 2}" cy="${y + 96}" rx="${w * 0.6}" ry="22" fill="#000" opacity="0.28" filter="url(#vsoft)"/>
+    <rect x="${x}" y="${y}" width="${w}" height="56" rx="14" fill="${shadeBg(body, -0.2)}"/>
+    <rect x="${x + 8}" y="${y + 46}" width="${w - 16}" height="48" rx="12" fill="${cush}"/>
+    <rect x="${x + 8}" y="${y + 46}" width="${w - 16}" height="8" rx="4" fill="#ffffff" opacity="0.12"/>
+    <rect x="${x - 12}" y="${y + 16}" width="30" height="80" rx="12" fill="${body}"/>
+    <rect x="${x + w - 18}" y="${y + 16}" width="30" height="80" rx="12" fill="${shadeBg(body, -0.3)}"/>
+    ${[0.2, 0.46, 0.72]
+      .map(
+        (t) =>
+          `<rect x="${(x + w * t).toFixed(0)}" y="${y + 4}" width="44" height="42" rx="12" fill="${shadeBg(
+            body,
+            0.16,
+          )}" transform="rotate(-6 ${(x + w * t + 22).toFixed(0)} ${y + 25})"/>`,
+      )
+      .join('')}`;
+}
+
+/** 통원목 식탁과 나무 의자 (참고 사진의 우드 다이닝) */
+function diningTable(cx: number, y: number, time: TimeOfDay): string {
+  const wood = time === 'night' ? '#6b4a28' : '#a9763c';
+  const chair = time === 'night' ? '#5a3e22' : '#8a5c2e';
+  const seat = (sx: number, sy: number, s: number) => `
+    <g transform="translate(${sx} ${sy}) scale(${s})">
+      <ellipse cx="0" cy="8" rx="44" ry="14" fill="#000" opacity="0.25" filter="url(#vsoft)"/>
+      <path d="M-40 -6 q40 -22 80 0 q-40 16 -80 0z" fill="${chair}"/>
+      <path d="M-34 -8 q34 -60 68 0 q-34 -30 -68 0z" fill="${shadeBg(chair, -0.18)}"/>
+      <path d="M-30 4 l-8 44 M30 4 l8 44 M-14 8 l-4 44 M14 8 l4 44" stroke="${shadeBg(chair, -0.25)}" stroke-width="7" stroke-linecap="round"/>
+    </g>`;
+  return `
+    ${seat(cx - 96, y - 46, 0.82)}${seat(cx + 4, y - 46, 0.82)}${seat(cx + 104, y - 46, 0.82)}
+    <ellipse cx="${cx}" cy="${y + 96}" rx="235" ry="34" fill="#000" opacity="0.3" filter="url(#vblur)"/>
+    <path d="M${cx - 232} ${y + 4} q232 -22 464 0 l-6 28 q-226 20 -452 0z" fill="${wood}"/>
+    <path d="M${cx - 232} ${y + 4} q232 -22 464 0 l-4 10 q-228 -16 -456 0z" fill="${shadeBg(wood, 0.2)}"/>
+    <rect x="${cx - 176}" y="${y + 30}" width="20" height="74" rx="6" fill="${shadeBg(wood, -0.25)}"/>
+    <rect x="${cx + 156}" y="${y + 30}" width="20" height="74" rx="6" fill="${shadeBg(wood, -0.25)}"/>
+    ${seat(cx - 120, y + 132, 1.06)}${seat(cx + 120, y + 132, 1.06)}`;
+}
+
+/** 아치 통로 — 웜 플라스터 집의 상징 */
+function archway(cx: number, floorY: number, w: number, h: number, T: RoomTone, inner: string): string {
+  const r = w / 2;
+  const d = `M${cx - r} ${floorY} L${cx - r} ${floorY - h + r} A${r} ${r} 0 0 1 ${cx + r} ${
+    floorY - h + r
+  } L${cx + r} ${floorY} Z`;
+  return `
+    <path d="${d}" fill="${inner}"/>
+    <path d="${d}" fill="none" stroke="${shadeBg(T.wall, -0.2)}" stroke-width="14"/>
+    <path d="M${cx - r + 10} ${floorY} L${cx - r + 10} ${floorY - h + r} A${r - 10} ${r - 10} 0 0 1 ${
+      cx + r - 10
+    } ${floorY - h + r}" fill="none" stroke="#000000" stroke-width="16" opacity="0.18"/>`;
+}
+
+/** 붙박이장 한 줄 (주방) */
+function cabinetRun(x: number, y: number, w: number, h: number, body: string, doors: number): string {
+  let out = `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="4" fill="${body}"/>`;
+  for (let i = 1; i < doors; i += 1) {
+    out += `<rect x="${(x + (w / doors) * i - 1.5).toFixed(0)}" y="${y + 4}" width="3" height="${h - 8}" fill="#00000030"/>`;
+  }
+  for (let i = 0; i < doors; i += 1) {
+    out += `<rect x="${(x + (w / doors) * (i + 0.5) - 16).toFixed(0)}" y="${y + h - 16}" width="32" height="4" rx="2" fill="#00000044"/>`;
+  }
+  return out + `<rect x="${x}" y="${y}" width="${w}" height="5" fill="#ffffff" opacity="0.14"/>`;
+}
+
+/** 거실 — 바다로 열린 통유리, 오크 바닥, 러그 위의 방석 두 장. 판은 여기서 벌어진다 */
+function roomMaru(L: Look, time: TimeOfDay): string {
+  const T = roomTone(time, false);
+  const on = time === 'night' || time === 'evening';
+  const horizon = 392;
+  const win = { x: 130, y: 248, w: 460, h: 442 };
+  return `
+    <defs><clipPath id="vwin"><rect x="${win.x}" y="${win.y}" width="${win.w}" height="${win.h}"/></clipPath></defs>
+    ${roomBox(T, 'oak')}
+    <!-- 뒷벽을 통째로 뚫은 슬라이딩 통유리 -->
+    <g clip-path="url(#vwin)">
+      ${vSky(L, time, horizon)}
+      ${vSea(L, time, horizon, 640)}
+      <rect x="${win.x}" y="612" width="${win.w}" height="${win.y + win.h - 612}" fill="${shadeBg(L.deck, -0.1)}"/>
+      <rect x="${win.x}" y="600" width="${win.w}" height="6" fill="${T.trim}" opacity="0.8"/>
+      ${[...Array(9).keys()]
+        .map((i) => `<rect x="${win.x + 18 + i * 52}" y="600" width="4" height="30" fill="${T.trim}" opacity="0.7"/>`)
+        .join('')}
+    </g>
+    <path d="M${win.x} ${win.y + win.h} L${win.x + 250} ${win.y} L${win.x + 360} ${win.y} L${
+      win.x + 110
+    } ${win.y + win.h} Z" fill="#ffffff" opacity="0.08"/>
+    ${[0, 1, 2, 3].map((i) => `<rect x="${win.x + (win.w / 4) * i - 4}" y="${win.y}" width="9" height="${win.h}" fill="${T.trim}"/>`).join('')}
+    <rect x="${win.x}" y="${win.y}" width="${win.w}" height="${win.h}" fill="none" stroke="${T.trim}" stroke-width="12"/>
+
+    ${coveLights(T, time)}
+    <!-- 벽등 -->
+    <circle cx="656" cy="404" r="26" fill="none" stroke="${T.trim}" stroke-width="7"/>
+    <circle cx="656" cy="404" r="11" fill="${on ? '#ffe7b4' : '#d9d3c8'}"/>
+    ${on ? `<ellipse cx="656" cy="404" rx="120" ry="150" fill="url(#vwarm)"/>` : ''}
+
+    <!--
+      가구 배치. 화면 아래 28% 는 대화창이 덮으므로 소파·의자는 중간 높이에 두고,
+      방석은 대화창 위로 살짝 걸치게 놓는다.
+    -->
+    ${rug(742, 270, 430, 470, time === 'night' ? '#857f72' : '#efe9dd')}
+    ${sofa(0, 684, 330, time)}
+    <!-- 오른쪽 라운지 체어와 오토만 -->
+    <ellipse cx="596" cy="812" rx="86" ry="24" fill="#000" opacity="0.3" filter="url(#vsoft)"/>
+    <path d="M534 800 q62 -16 124 0 l-8 22 q-54 14 -110 0z" fill="${time === 'night' ? '#8d8a7c' : '#f4efe3'}"/>
+    <path d="M540 800 q-12 -78 34 -96 q48 -14 64 8 q-46 16 -50 88z" fill="${
+      time === 'night' ? '#a29e8e' : '#fbf7ee'
+    }"/>
+    <ellipse cx="674" cy="838" rx="52" ry="16" fill="${time === 'night' ? '#6b5a3a' : '#c8a06a'}"/>
+
+    <ellipse cx="360" cy="1004" rx="112" ry="34" fill="#000" opacity="0.3" filter="url(#vsoft)"/>
+    <ellipse cx="360" cy="982" rx="108" ry="32" fill="${time === 'night' ? '#6b4a28' : '#9c6a38'}"/>
+    <ellipse cx="360" cy="968" rx="108" ry="32" fill="${time === 'night' ? '#8a6136' : '#c08a4c'}"/>
+    <ellipse cx="342" cy="962" rx="36" ry="11" fill="#3f6bb5" opacity="0.85"/>
+
+    <ellipse cx="180" cy="906" rx="108" ry="36" fill="#000" opacity="0.32" filter="url(#vsoft)"/>
+    <ellipse cx="178" cy="898" rx="106" ry="34" fill="#8d3a33"/>
+    <ellipse cx="178" cy="890" rx="106" ry="34" fill="#b5493f"/>
+    <ellipse cx="540" cy="1070" rx="120" ry="40" fill="#000" opacity="0.32" filter="url(#vsoft)"/>
+    <ellipse cx="538" cy="1062" rx="118" ry="38" fill="#31538c"/>
+    <ellipse cx="538" cy="1054" rx="118" ry="38" fill="#3f6bb5"/>
+
+    ${on ? `<ellipse cx="360" cy="880" rx="360" ry="220" fill="url(#vwarm)" opacity="0.4"/>` : ''}
+    ${vFinish(L, horizon)}`;
+}
+
+/** 주방 — 흙벽, 흰색+우드 붙박이장, 통원목 식탁 */
+function roomKitchen(L: Look, time: TimeOfDay): string {
+  const T = roomTone(time, true);
+  const on = time === 'night' || time === 'evening';
+  const wood = time === 'night' ? '#6b4a28' : '#a9763c';
+  const cab = time === 'night' ? '#b6b0a2' : '#f0ebe0';
+  return `
+    ${roomBox(T, 'tile')}
+    <!-- 상부장과 열린 선반 -->
+    ${cabinetRun(132, 268, 176, 118, cab, 2)}
+    ${cabinetRun(316, 268, 100, 118, wood, 1)}
+    <rect x="440" y="296" width="150" height="7" rx="3" fill="${wood}"/>
+    <rect x="440" y="360" width="150" height="7" rx="3" fill="${wood}"/>
+    ${[458, 492, 526, 558]
+      .map((x, i) => `<rect x="${x}" y="${i % 2 ? 268 : 262}" width="20" height="${i % 2 ? 28 : 34}" rx="4" fill="${
+        ['#c9d6cc', '#d8cbb4', '#b9c4d2', '#cdbfa6'][i]
+      }"/>`)
+      .join('')}
+    <path d="M572 316 q22 -34 44 -6 q-16 30 -44 6z" fill="#5d7c43"/>
+    <path d="M596 316 q30 -22 40 10 q-26 16 -40 -10z" fill="#4e6b39"/>
+    <!-- 창 -->
+    <rect x="440" y="392" width="150" height="86" fill="${on ? shadeBg(L.seaNear, 0.2) : '#cfe0ec'}" stroke="${T.trim}" stroke-width="7"/>
+    <rect x="512" y="392" width="6" height="86" fill="${T.trim}"/>
+    <!-- 하부장 + 상판 -->
+    <rect x="128" y="486" width="466" height="16" rx="4" fill="${shadeBg(cab, 0.06)}"/>
+    ${cabinetRun(132, 502, 190, 186, cab, 3)}
+    ${cabinetRun(330, 502, 126, 186, wood, 2)}
+    ${cabinetRun(464, 502, 126, 186, cab, 2)}
+    <rect x="152" y="470" width="86" height="18" rx="4" fill="#2f3338"/>
+    <!-- 가전 -->
+    <rect x="476" y="416" width="104" height="62" rx="6" fill="#3a3d42"/>
+    <rect x="486" y="426" width="62" height="42" rx="4" fill="${on ? '#6b5a3a' : '#7d8288'}"/>
+    <rect x="344" y="432" width="42" height="46" rx="5" fill="#57534c"/>
+    <circle cx="365" cy="452" r="10" fill="#8f9aa3"/>
+    ${pendant(240, 300, 44, time)}
+    ${diningTable(368, 800, time)}
+    ${on ? `<ellipse cx="360" cy="700" rx="380" ry="300" fill="url(#vwarm)" opacity="0.65"/>` : ''}
+    ${vFinish(L, 300)}`;
+}
+
+/** 복도 — 아치 통로, 라탄 등, 플라스터 벽난로 */
+function roomHallway(L: Look, time: TimeOfDay): string {
+  const T = roomTone(time, true);
+  const on = time === 'night' || time === 'evening';
+  const deep = shadeBg(T.wall, on ? 0.22 : -0.1);
+  return `
+    ${roomBox(T, 'tile')}
+    <!-- 아치 너머 방 -->
+    ${archway(360, RB.bottom, 216, 330, T, deep)}
+    <rect x="286" y="560" width="148" height="140" fill="${shadeBg(deep, -0.12)}"/>
+    <rect x="300" y="470" width="58" height="76" rx="4" fill="${on ? '#8a7a4a' : '#bcd2c4'}"/>
+    <path d="M388 556 q22 -40 46 -8 q-18 34 -46 8z" fill="#4e6b39"/>
+    <!-- 왼쪽 플라스터 벽난로 -->
+    <rect x="104" y="386" width="152" height="24" rx="6" fill="${shadeBg(T.wall, 0.16)}"/>
+    <rect x="116" y="410" width="128" height="290" fill="${shadeBg(T.wall, 0.1)}"/>
+    <path d="M140 700 L140 530 A40 40 0 0 1 220 530 L220 700 Z" fill="${shadeBg(T.wall, -0.55)}"/>
+    ${[
+      [158, 636],
+      [182, 636],
+      [206, 636],
+      [170, 614],
+      [194, 614],
+    ]
+      .map(([cx, cy]) => `<ellipse cx="${cx}" cy="${cy}" rx="11" ry="11" fill="#7a5a34"/>`)
+      .join('')}
+    <rect x="128" y="330" width="106" height="58" rx="4" fill="${shadeBg(T.wall, 0.24)}"/>
+    <!-- 오른쪽 콘솔 -->
+    <rect x="436" y="556" width="176" height="144" fill="${shadeBg(T.trim, -0.1)}"/>
+    <rect x="430" y="546" width="188" height="14" rx="4" fill="${shadeBg(T.trim, 0.18)}"/>
+    <path d="M486 546 l-14 -62 h60 l-14 62z" fill="${on ? '#ffe6b0' : '#e6dfd0'}"/>
+    <rect x="510" y="512" width="46" height="34" rx="4" fill="#8d3a33"/>
+    ${pendant(196, 264, 52, time)}
+    ${rug(880, 200, 300, 380, time === 'night' ? '#6a6252' : '#ece4d2')}
+    ${on ? `<ellipse cx="300" cy="640" rx="360" ry="300" fill="url(#vwarm)" opacity="0.6"/>` : ''}
+    ${vFinish(L, 300)}`;
+}
+
+/** 내 방 — 흙벽, 침대, 바다로 난 창, 책상 */
+function roomMine(L: Look, time: TimeOfDay): string {
+  const T = roomTone(time, true);
+  const on = time === 'night' || time === 'evening';
+  const horizon = 380;
+  return `
+    <defs><clipPath id="vwin"><rect x="152" y="268" width="228" height="292"/></clipPath></defs>
+    ${roomBox(T, 'oak')}
+    <g clip-path="url(#vwin)">
+      ${vSky(L, time, horizon)}
+      ${vSea(L, time, horizon, 560)}
+    </g>
+    <rect x="152" y="268" width="228" height="292" fill="none" stroke="${T.trim}" stroke-width="12"/>
+    <rect x="262" y="268" width="8" height="292" fill="${T.trim}"/>
+    <rect x="152" y="410" width="228" height="7" fill="${T.trim}"/>
+    <!-- 커튼 -->
+    <path d="M132 250 q18 160 0 320 h44 q-16 -160 0 -320z" fill="${shadeBg(T.wall, 0.2)}"/>
+    <path d="M400 250 q-18 160 0 320 h-44 q16 -160 0 -320z" fill="${shadeBg(T.wall, 0.2)}"/>
+    <!-- 책상 -->
+    <rect x="430" y="536" width="176" height="14" rx="4" fill="${T.trim}"/>
+    <rect x="442" y="550" width="12" height="150" fill="${shadeBg(T.trim, -0.2)}"/>
+    <rect x="582" y="550" width="12" height="150" fill="${shadeBg(T.trim, -0.2)}"/>
+    <rect x="452" y="486" width="76" height="50" rx="4" fill="#2f3338"/>
+    <path d="M556 536 l-10 -44 h40 l-10 44z" fill="${on ? '#ffe6b0' : '#e6dfd0'}"/>
+    <!-- 침대 -->
+    <ellipse cx="330" cy="1092" rx="330" ry="52" fill="#000" opacity="0.3" filter="url(#vblur)"/>
+    <rect x="60" y="836" width="540" height="40" rx="10" fill="${shadeBg(T.trim, -0.1)}"/>
+    <rect x="40" y="876" width="580" height="180" rx="16" fill="${time === 'night' ? '#6d6a5e' : '#efe9db'}"/>
+    <rect x="40" y="876" width="580" height="46" rx="16" fill="${time === 'night' ? '#82806f' : '#fbf7ee'}"/>
+    <rect x="90" y="800" width="180" height="70" rx="16" fill="${time === 'night' ? '#8d8a79' : '#fdfaf3'}"/>
+    <rect x="300" y="806" width="160" height="64" rx="16" fill="${time === 'night' ? '#7f7c6c' : '#f4efe3'}"/>
+    ${on ? `<ellipse cx="520" cy="560" rx="260" ry="220" fill="url(#vwarm)" opacity="0.7"/>` : ''}
+    ${vFinish(L, horizon)}`;
+}
+
+/** 옥상 데크 — 바다가 한눈에 들어오는 자리 */
+function roomRooftop(L: Look, time: TimeOfDay): string {
+  const on = time === 'night' || time === 'evening';
+  const horizon = 430;
+  const steel = time === 'night' ? '#15181e' : '#33373e';
+  return `
+    ${vSky(L, time, horizon)}
+    ${vSea(L, time, horizon, 790)}
+    <!-- 난간 -->
+    <rect x="0" y="690" width="${W}" height="6" fill="${steel}"/>
+    ${[...Array(13).keys()].map((i) => `<rect x="${12 + i * 56}" y="690" width="5" height="96" fill="${steel}" opacity="0.9"/>`).join('')}
+    <rect x="0" y="780" width="${W}" height="6" fill="${steel}"/>
+    ${vDeck(0, 786, W, 120)}
+    <path d="M0 906 L${W} 906 L${W} ${H} L0 ${H} Z" fill="${shadeBg(L.deck, -0.12)}"/>
+    ${[...Array(15).keys()]
+      .map((i) => `<path d="M${i * 52} 906 L${(i * 52 - W / 2) * 1.5 + W / 2} ${H}" stroke="#00000055" stroke-width="3"/>`)
+      .join('')}
+    <!-- 라운지 의자 둘과 낮은 테이블 -->
+    <ellipse cx="180" cy="1076" rx="130" ry="34" fill="#000" opacity="0.3" filter="url(#vsoft)"/>
+    <path d="M70 1060 q110 -26 220 0 l-10 34 q-100 22 -200 0z" fill="${time === 'night' ? '#6d6a5e' : '#efe9db'}"/>
+    <path d="M78 1060 q-16 -96 40 -120 q60 -18 84 10 q-60 22 -66 110z" fill="${time === 'night' ? '#82806f' : '#fbf7ee'}"/>
+    <ellipse cx="560" cy="1090" rx="120" ry="32" fill="#000" opacity="0.3" filter="url(#vsoft)"/>
+    <path d="M456 1074 q104 -24 208 0 l-10 32 q-94 20 -188 0z" fill="${time === 'night' ? '#6d6a5e' : '#efe9db'}"/>
+    <path d="M464 1074 q-14 -92 38 -114 q58 -16 80 10 q-58 20 -62 104z" fill="${time === 'night' ? '#82806f' : '#fbf7ee'}"/>
+    <ellipse cx="370" cy="1016" rx="66" ry="20" fill="${time === 'night' ? '#6b4a28' : '#9c6a38'}"/>
+    <ellipse cx="370" cy="1004" rx="66" ry="20" fill="${time === 'night' ? '#8a6136' : '#c08a4c'}"/>
+    <!-- 스트링 라이트 -->
+    <path d="M-10 604 q360 96 740 -20" stroke="${steel}" stroke-width="3" fill="none" opacity="0.8"/>
+    ${[...Array(10).keys()]
+      .map((i) => {
+        const x = 20 + i * 76;
+        const y = 620 + Math.sin((i / 9) * Math.PI) * 44 - (i / 9) * 30;
+        return `<circle cx="${x}" cy="${y.toFixed(0)}" r="9" fill="${on ? '#ffe7b4' : '#ded7c6'}"/>${
+          on ? `<circle cx="${x}" cy="${y.toFixed(0)}" r="26" fill="#ffd18a" opacity="0.28" filter="url(#vsoft)"/>` : ''
+        }`;
+      })
+      .join('')}
+    ${vFinish(L, horizon)}`;
 }
 
 /**
@@ -577,67 +982,20 @@ function realScene(bg: BackgroundId, L: Look, time: TimeOfDay): string {
         ${vFinish(L, horizon)}`;
     }
 
-    // ── 거실 마루. 통유리 너머로 바다가 보이고, 판은 여기서 벌어진다 ──
-    case 'maru': {
-      const horizon = 404;
-      const lit = time === 'night';
-      const wall = shadeBg(L.wallDark, lit ? 0.06 : 0.3);
-      const floor = shadeBg(L.deck, lit ? -0.06 : 0.12);
-      let planks = '';
-      for (let i = 0; i <= 11; i += 1) {
-        const x = (W / 11) * i;
-        planks += `<path d="M${x.toFixed(0)} 704 L${(x + (x - W / 2) * 0.55).toFixed(0)} ${H}" stroke="#00000044" stroke-width="3"/>`;
-      }
-      for (let i = 1; i <= 4; i += 1) {
-        const y = 704 + i * i * 34;
-        planks += `<path d="M0 ${y} h${W}" stroke="#00000026" stroke-width="2"/>`;
-      }
-      return `
-        <defs>
-          <clipPath id="vwin"><rect x="74" y="150" width="572" height="548"/></clipPath>
-          <linearGradient id="vfloor" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stop-color="${shadeBg(floor, -0.3)}"/>
-            <stop offset="45%" stop-color="${floor}"/>
-            <stop offset="100%" stop-color="${shadeBg(floor, -0.34)}"/>
-          </linearGradient>
-        </defs>
-        <rect width="${W}" height="${H}" fill="${wall}"/>
-        <!-- 통유리 너머 -->
-        <g clip-path="url(#vwin)">
-          ${vSky(L, time, horizon)}
-          ${vSea(L, time, horizon, 700)}
-        </g>
-        <!-- 유리 반사와 창틀 -->
-        <path d="M74 698 L360 150 L520 150 L234 698 Z" fill="#ffffff" opacity="0.07"/>
-        ${[172, 270, 368, 466, 564]
-          .map((x) => `<rect x="${x}" y="150" width="7" height="548" fill="#0c0e12"/>`)
-          .join('')}
-        <rect x="74" y="150" width="572" height="548" fill="none" stroke="#0c0e12" stroke-width="12"/>
-        <!-- 천장과 좌우 벽 -->
-        <rect x="0" y="0" width="${W}" height="150" fill="${shadeBg(wall, -0.35)}"/>
-        <rect x="0" y="0" width="74" height="${H}" fill="${shadeBg(wall, -0.2)}"/>
-        <rect x="646" y="0" width="${W - 646}" height="${H}" fill="${shadeBg(wall, -0.26)}"/>
-        <!-- 펜던트 조명 -->
-        <rect x="356" y="0" width="7" height="118" fill="#0c0e12"/>
-        <path d="M312 118 h96 l-22 54 h-52 z" fill="${shadeBg(L.wallDark, 0.2)}"/>
-        <ellipse cx="360" cy="172" rx="26" ry="8" fill="${lit ? '#fff2cf' : '#e8e2d4'}"/>
-        ${lit ? `<ellipse cx="360" cy="330" rx="300" ry="230" fill="url(#vwarm)"/>` : ''}
-        <!-- 마루 바닥 -->
-        <path d="M0 698 h${W} v${H - 698} h-${W} Z" fill="url(#vfloor)"/>
-        ${planks}
-        <ellipse cx="360" cy="960" rx="330" ry="150" fill="${lit ? '#ffca7a' : '#ffffff'}" opacity="${
-          lit ? 0.12 : 0.07
-        }" filter="url(#vblur2)"/>
-        <!-- 러그와 방석 두 장 -->
-        <ellipse cx="360" cy="1010" rx="320" ry="120" fill="${shadeBg(L.wallDark, 0.14)}" opacity="0.55"/>
-        <ellipse cx="238" cy="972" rx="118" ry="42" fill="#000000" opacity="0.4" filter="url(#vsoft)"/>
-        <ellipse cx="482" cy="1046" rx="118" ry="42" fill="#000000" opacity="0.4" filter="url(#vsoft)"/>
-        <ellipse cx="236" cy="964" rx="116" ry="40" fill="#8d3a33"/>
-        <ellipse cx="236" cy="956" rx="116" ry="40" fill="#b5493f"/>
-        <ellipse cx="480" cy="1038" rx="116" ry="40" fill="#31538c"/>
-        <ellipse cx="480" cy="1030" rx="116" ry="40" fill="#3f6bb5"/>
-        ${vFinish(L, horizon)}`;
-    }
+    case 'maru':
+      return roomMaru(L, time);
+
+    case 'kitchen':
+      return roomKitchen(L, time);
+
+    case 'hallway':
+      return roomHallway(L, time);
+
+    case 'room':
+      return roomMine(L, time);
+
+    case 'rooftop':
+      return roomRooftop(L, time);
 
     // ── 마당 끝 별채. 삼십 년째 불이 꺼지지 않는 방 ──
     default: {
@@ -669,41 +1027,11 @@ function scene(bg: BackgroundId, p: Palette, time: TimeOfDay): string {
     case 'beach':
     case 'maru':
     case 'annex':
-      return realScene(bg, LOOKS[time], time);
     case 'kitchen':
-      return `
-        <rect x="0" y="300" width="${W}" height="480" fill="${p.wall}"/>
-        <rect x="40" y="620" width="640" height="140" rx="10" fill="#cfd6d8"/>
-        <rect x="90" y="640" width="180" height="90" rx="8" fill="#8d979c"/>
-        <circle cx="430" cy="686" r="34" fill="#4a4f52"/>
-        <circle cx="530" cy="686" r="34" fill="#4a4f52"/>
-        <rect x="120" y="380" width="480" height="18" rx="6" fill="${p.wood}"/>
-        <rect x="180" y="398" width="24" height="70" fill="#9aa3a8"/>
-        <rect x="260" y="398" width="24" height="90" fill="#9aa3a8"/>
-        <rect x="340" y="398" width="24" height="60" fill="#9aa3a8"/>
-        ${floorPlanks(p, 780)}`;
     case 'hallway':
-      return `
-        <rect x="0" y="240" width="${W}" height="600" fill="${p.wall}"/>
-        <rect x="60" y="360" width="180" height="440" rx="4" fill="${p.wood}"/>
-        <rect x="480" y="360" width="180" height="440" rx="4" fill="${p.wood}"/>
-        <circle cx="222" cy="600" r="9" fill="#d8c07a"/>
-        <circle cx="498" cy="600" r="9" fill="#d8c07a"/>
-        <rect x="120" y="400" width="60" height="34" rx="4" fill="#ffffff" opacity="0.7"/>
-        <rect x="540" y="400" width="60" height="34" rx="4" fill="#ffffff" opacity="0.7"/>
-        <ellipse cx="360" cy="300" rx="240" ry="120" fill="url(#lamp)"/>
-        ${floorPlanks(p, 840)}`;
+    case 'room':
     case 'rooftop':
-      return `
-        ${stars(time)}
-        <rect x="0" y="700" width="${W}" height="${H - 700}" fill="${p.ground}"/>
-        <rect x="0" y="660" width="${W}" height="50" fill="${p.wall}"/>
-        <rect x="0" y="640" width="${W}" height="24" fill="#8f9aa3"/>
-        <path d="M60 640 v-90 M200 640 v-90 M340 640 v-90 M480 640 v-90 M620 640 v-90" stroke="#8f9aa3" stroke-width="7"/>
-        <path d="M40 560 h640" stroke="#b9c3ca" stroke-width="6"/>
-        <rect x="90" y="520" width="90" height="42" rx="6" fill="#dfe6ea" opacity="0.85"/>
-        <rect x="240" y="516" width="70" height="48" rx="6" fill="#e8d7c2" opacity="0.85"/>
-        <rect x="520" y="700" width="120" height="180" rx="8" fill="${p.wall}"/>`;
+      return realScene(bg, LOOKS[time], time);
     case 'cvs':
       return `
         <rect x="0" y="760" width="${W}" height="${H - 760}" fill="#6b6b6b"/>
@@ -742,17 +1070,6 @@ function scene(bg: BackgroundId, p: Palette, time: TimeOfDay): string {
         <rect x="352" y="420" width="16" height="360" fill="#3f3f3f"/>
         <circle cx="360" cy="410" r="30" fill="${p.light}" opacity="0.95"/>
         <ellipse cx="360" cy="470" rx="200" ry="150" fill="url(#lamp)"/>`;
-    case 'room':
-      return `
-        <rect x="0" y="260" width="${W}" height="560" fill="${p.wall}"/>
-        <rect x="80" y="330" width="240" height="200" rx="6" fill="#6f8fb0" opacity="0.6" stroke="${p.wood}" stroke-width="10"/>
-        <rect x="420" y="360" width="230" height="170" rx="6" fill="${p.wood}"/>
-        <rect x="440" y="382" width="190" height="16" fill="#00000022"/>
-        <rect x="440" y="416" width="190" height="16" fill="#00000022"/>
-        <rect x="440" y="450" width="190" height="16" fill="#00000022"/>
-        <rect x="120" y="640" width="280" height="140" rx="10" fill="#d8cdbb"/>
-        <rect x="140" y="600" width="120" height="50" rx="10" fill="#f0e8db"/>
-        ${floorPlanks(p, 820)}`;
     case 'festival':
       return `
         ${stars(time)}
