@@ -27,9 +27,16 @@ const THROW_MS = 300;
 /*
  * 먹은 패가 더미로 들어가는 건 "무엇을 먹었는지" 읽는 순간이라 느려야 한다.
  * 빠르면 뭐가 사라졌는지 모른 채 숫자만 올라간다.
+ * 여러 장이 한꺼번에 날면 겹쳐서 또 안 보이므로 한 장씩 시차를 둔다.
  */
-const SWEEP_MS = 620;
-const SWEEP_WAIT = 360;
+const SWEEP_MS = 780;
+const SWEEP_WAIT = 380;
+const SWEEP_STAGGER = 150;
+
+/** 더미에서 뒤집히는 패: 천천히 들어올려 앞면을 보여준 뒤 내려놓는다 */
+const REVEAL_MS = 900;
+/** 뒤집기 연출이 있는 턴에는 먹는 연출이 그 뒤에 와야 한다 */
+const SWEEP_WAIT_AFTER_REVEAL = 620;
 
 function measure(root: HTMLElement): Map<string, Snap> {
   const out = new Map<string, Snap>();
@@ -76,6 +83,10 @@ export function useCardFlight(
     if (typeof (root as Element).animate !== 'function') return;
 
     const deck = root.querySelector<HTMLElement>('[data-deck]')?.getBoundingClientRect() ?? null;
+    const board = root.getBoundingClientRect();
+    // 이번 갱신에 더미에서 뒤집힌 패가 있는가 (있으면 먹는 연출을 그 뒤로 미룬다)
+    const hasReveal = [...now.keys()].some((k) => !override.current.has(k) && !before.has(k));
+    let sweptCount = 0;
 
     for (const [cid, { rect, el, zone }] of now) {
       const forced = override.current.get(cid);
@@ -111,16 +122,42 @@ export function useCardFlight(
       if (Math.abs(dx) < 2 && Math.abs(dy) < 2 && Math.abs(sc - 1) < 0.03) continue;
       const start = `translate(${dx.toFixed(1)}px, ${dy.toFixed(1)}px) scale(${sc.toFixed(3)})`;
 
+      /*
+       * 더미에서 막 뒤집힌 패. 더미 자리에서 모로 선 채(보이지 않는 각도) 시작해
+       * 판 가운데로 천천히 들어올리며 앞면으로 돌아눕고, 잠깐 세워 보여준 뒤 내려앉는다.
+       * 먹히는 패든 바닥에 앉는 패든 같은 길을 탄다 — 무엇이 나왔는지가 먼저다.
+       */
+      if (fresh) {
+        const liftX = board.left + board.width / 2 - rect.width / 2 - rect.left;
+        const liftY = board.top + board.height * 0.34 - rect.height / 2 - rect.top;
+        const lift = `translate(${liftX.toFixed(1)}px, ${liftY.toFixed(1)}px)`;
+        el.animate(
+          [
+            { transform: `${start} rotateY(90deg)`, offset: 0, easing: 'cubic-bezier(.25,.9,.3,1)' },
+            { transform: `${lift} scale(2.05) rotateY(66deg)`, offset: 0.3 },
+            { transform: `${lift} scale(2.2) rotateY(0deg)`, offset: 0.5, easing: 'linear' },
+            { transform: `${lift} translateY(-5px) scale(2.15)`, offset: 0.7, easing: 'cubic-bezier(.6,0,.9,.5)' },
+            { transform: 'none', offset: 1, easing: 'cubic-bezier(.3,1.35,.45,1)' },
+          ],
+          { duration: REVEAL_MS, fill: 'backwards' },
+        );
+        continue;
+      }
+
       if (zone === 'pile') {
-        // 붙었다가 → 쑉
+        // 붙었다가 → 한 장씩 차례로 쑉
+        const wait = (hasReveal ? SWEEP_WAIT_AFTER_REVEAL : SWEEP_WAIT) + sweptCount * SWEEP_STAGGER;
+        sweptCount += 1;
         el.animate(
           [
             { transform: start, offset: 0 },
-            { transform: `${start} scale(1.22)`, offset: 0.12, easing: 'ease-out' },
-            { transform: `${start} scale(1.1)`, offset: 0.26, easing: 'cubic-bezier(.5,0,.5,1)' },
+            { transform: `${start} scale(1.24)`, offset: 0.1, easing: 'ease-out' },
+            { transform: `${start} scale(1.12)`, offset: 0.22, easing: 'cubic-bezier(.5,0,.5,1)' },
+            // 더미에 닿기 직전에 한 번 더 또렷하게 보여준다
+            { transform: `translate(${(dx * 0.22).toFixed(1)}px, ${(dy * 0.22).toFixed(1)}px) scale(${(sc * 0.55 + 0.45).toFixed(3)})`, offset: 0.62, easing: 'cubic-bezier(.4,0,.5,1)' },
             { transform: 'none', offset: 1, easing: 'cubic-bezier(.45,0,.2,1)' },
           ],
-          { duration: SWEEP_MS, delay: SWEEP_WAIT, fill: 'backwards' },
+          { duration: SWEEP_MS, delay: wait, fill: 'backwards' },
         );
         continue;
       }

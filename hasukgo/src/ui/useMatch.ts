@@ -71,8 +71,11 @@ export interface MatchView {
   busy: boolean;
 }
 
-/** 하숙생이 패를 띄웠다 꽂는 데 걸리는 시간. 화면 연출과 같은 값이어야 한다. */
-export const AI_THROW_MS = 760;
+/**
+ * 하숙생이 패를 띄웠다 꽂는 데 걸리는 시간. 화면 연출과 같은 값이어야 한다.
+ * 상대가 뭘 내는지 눈으로 따라갈 수 있어야 해서 넉넉히 잡았다.
+ */
+export const AI_THROW_MS = 1150;
 
 const EVENT_SHOUT: Partial<Record<GameEvent['type'], string>> = {
   jjok: '쪽!',
@@ -201,7 +204,7 @@ export function useMatch(opts: MatchOptions) {
           setAiThrow(null);
           setState(next);
         }, AI_THROW_MS);
-      }, 620);
+      }, 420);
       return;
     }
 
