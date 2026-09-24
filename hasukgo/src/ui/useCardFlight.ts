@@ -23,9 +23,13 @@ interface Snap {
   zone: CardZone;
 }
 
-const THROW_MS = 280;
-const SWEEP_MS = 360;
-const SWEEP_WAIT = 230;
+const THROW_MS = 300;
+/*
+ * 먹은 패가 더미로 들어가는 건 "무엇을 먹었는지" 읽는 순간이라 느려야 한다.
+ * 빠르면 뭐가 사라졌는지 모른 채 숫자만 올라간다.
+ */
+const SWEEP_MS = 620;
+const SWEEP_WAIT = 360;
 
 function measure(root: HTMLElement): Map<string, Snap> {
   const out = new Map<string, Snap>();
@@ -112,8 +116,9 @@ export function useCardFlight(
         el.animate(
           [
             { transform: start, offset: 0 },
-            { transform: `${start} scale(1.18)`, offset: 0.16, easing: 'ease-out' },
-            { transform: 'none', offset: 1, easing: 'cubic-bezier(.4,0,.18,1)' },
+            { transform: `${start} scale(1.22)`, offset: 0.12, easing: 'ease-out' },
+            { transform: `${start} scale(1.1)`, offset: 0.26, easing: 'cubic-bezier(.5,0,.5,1)' },
+            { transform: 'none', offset: 1, easing: 'cubic-bezier(.45,0,.2,1)' },
           ],
           { duration: SWEEP_MS, delay: SWEEP_WAIT, fill: 'backwards' },
         );

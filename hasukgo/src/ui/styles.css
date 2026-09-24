@@ -438,7 +438,7 @@ button {
    * 화패 크기를 화면 높이에 매단다. 바닥에는 두 줄 + 더미가 들어가야 하는데
    * 크기를 고정하면 640px 짜리 작은 폰에서 위아래가 잘린다.
    */
-  --card-h: clamp(40px, 8.4vh, 69px);
+  --card-h: clamp(46px, 10vh, 86px);
 }
 
 .board-opp {
@@ -525,6 +525,80 @@ button {
   border-radius: 8px;
   padding: 5px 8px;
   min-height: 28px;
+}
+
+/* 내가 잘 맞췄을 때 하숙생이 움찔한다 */
+.board-opp.startled {
+  animation: startle 0.6s cubic-bezier(0.2, 1.4, 0.3, 1);
+}
+
+.board-opp.startled > img {
+  animation: startleFace 0.7s cubic-bezier(0.2, 1.5, 0.3, 1);
+}
+
+@keyframes startle {
+  0% {
+    transform: translate(0, 0);
+  }
+  18% {
+    transform: translate(5px, -6px);
+  }
+  38% {
+    transform: translate(-4px, 2px);
+  }
+  62% {
+    transform: translate(3px, -2px);
+  }
+  100% {
+    transform: translate(0, 0);
+  }
+}
+
+@keyframes startleFace {
+  0% {
+    transform: scale(1) rotate(0deg);
+  }
+  22% {
+    transform: scale(1.18) rotate(-5deg);
+  }
+  55% {
+    transform: scale(1.04) rotate(3deg);
+  }
+  100% {
+    transform: scale(1) rotate(0deg);
+  }
+}
+
+.startle-mark {
+  position: absolute;
+  left: 34px;
+  top: -6px;
+  font-size: 30px;
+  font-weight: 900;
+  color: var(--lamp);
+  -webkit-text-stroke: 3px rgba(40, 14, 6, 0.9);
+  paint-order: stroke fill;
+  pointer-events: none;
+  z-index: 5;
+  animation: startlePop 0.9s cubic-bezier(0.2, 1.7, 0.3, 1) forwards;
+}
+
+@keyframes startlePop {
+  0% {
+    transform: scale(0.2) translateY(10px) rotate(-18deg);
+    opacity: 0;
+  }
+  24% {
+    transform: scale(1.5) translateY(-10px) rotate(9deg);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.1) translateY(-6px) rotate(-4deg);
+  }
+  100% {
+    transform: scale(1.1) translateY(-14px);
+    opacity: 0;
+  }
 }
 
 /* ── 먹은 패 더미 ── */
@@ -662,11 +736,36 @@ button {
   flex: 1;
   min-height: 0;
   border-radius: 14px;
-  border: 3px solid var(--felt-rim);
+  border: 4px solid var(--felt-rim);
+  outline: 1px solid rgba(255, 255, 255, 0.08);
+  /*
+   * 민무늬 초록은 플라스틱처럼 보인다. 사선 결 두 겹과 가는 격자를 겹쳐
+   * 융단의 짜임을 만들고, 가장자리를 눌러 테이블처럼 깊이를 준다.
+   */
   background:
-    radial-gradient(ellipse at 50% 42%, var(--felt) 0%, var(--felt-dark) 78%),
+    repeating-linear-gradient(
+      45deg,
+      rgba(255, 255, 255, 0.028) 0 2px,
+      transparent 2px 6px
+    ),
+    repeating-linear-gradient(
+      -45deg,
+      rgba(0, 0, 0, 0.05) 0 2px,
+      transparent 2px 6px
+    ),
+    repeating-linear-gradient(
+      0deg,
+      rgba(0, 0, 0, 0.045) 0 1px,
+      transparent 1px 26px
+    ),
+    repeating-linear-gradient(
+      90deg,
+      rgba(0, 0, 0, 0.045) 0 1px,
+      transparent 1px 26px
+    ),
+    radial-gradient(ellipse at 50% 40%, var(--felt) 0%, var(--felt-dark) 80%),
     var(--felt-dark);
-  box-shadow: inset 0 0 40px rgba(0, 0, 0, 0.55);
+  box-shadow: inset 0 0 46px rgba(0, 0, 0, 0.6), inset 0 0 0 2px rgba(255, 255, 255, 0.05);
   display: grid;
   grid-template-rows: 1fr auto 1fr;
   align-items: center;
@@ -839,6 +938,32 @@ button {
   border-color: #fff;
   animation-delay: 0.07s;
   animation-duration: 0.42s;
+}
+
+/* 두 패가 딱 맞물리는 순간, 그 자리에 카드 모양 섬광이 한 번 */
+.impact b {
+  position: absolute;
+  left: 0;
+  top: 0;
+  border-radius: 5px;
+  background: #fff;
+  box-shadow: 0 0 34px 10px rgba(255, 236, 190, 0.95);
+  animation: impactSnap 0.34s cubic-bezier(0.1, 0.9, 0.3, 1) forwards;
+}
+
+@keyframes impactSnap {
+  0% {
+    transform: scale(1.65);
+    opacity: 0;
+  }
+  22% {
+    transform: scale(1.06);
+    opacity: 0.95;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 0;
+  }
 }
 
 @keyframes impactRing {
@@ -1084,7 +1209,7 @@ button {
   }
 
   .board {
-    --card-h: clamp(40px, 11.5vh, 69px);
+    --card-h: clamp(46px, 13.5vh, 86px);
     grid-template-areas:
       'oppcap field opp'
       'mycap  field side'

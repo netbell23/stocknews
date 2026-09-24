@@ -18,7 +18,7 @@ import {
 } from '../engine/game';
 import { createRng, randomSeed } from '../engine/rng';
 import { scorePlayer } from '../engine/score';
-import type { GameEvent, GameState, PlayerId, RuleOptions } from '../engine/types';
+import type { Card, GameEvent, GameState, PlayerId, RuleOptions } from '../engine/types';
 import { paramsFor, toneOf } from '../data/tenants';
 import type { Tenant, Tone } from '../data/types';
 import type { Expression } from '../scenario/types';
@@ -40,6 +40,15 @@ export interface MatchOptions {
 export interface Shout {
   key: number;
   text: string;
+  /** 누가 냈는가. 내가 냈으면 상대가 놀라야 한다. */
+  by: PlayerId;
+}
+
+/** 하숙생이 낼 패. 연출이 끝나면 그때 실제로 반영된다. */
+export interface AiThrow {
+  key: number;
+  card: Card;
+  bomb: boolean;
 }
 
 export interface MatchView {
@@ -55,10 +64,15 @@ export interface MatchView {
   aiGoStop: { action: 'go' | 'stop'; line: string } | null;
   /** 3연패 힌트 */
   hint: string | null;
+  /** 하숙생이 지금 던지는 중인 패 (연출용) */
+  aiThrow: AiThrow | null;
   myScore: number;
   oppScore: number;
   busy: boolean;
 }
+
+/** 하숙생이 패를 띄웠다 꽂는 데 걸리는 시간. 화면 연출과 같은 값이어야 한다. */
+export const AI_THROW_MS = 760;
 
 const EVENT_SHOUT: Partial<Record<GameEvent['type'], string>> = {
   jjok: '쪽!',
@@ -104,6 +118,8 @@ export function useMatch(opts: MatchOptions) {
   const [expression, setExpression] = useState<Expression>('normal');
   const [shout, setShout] = useState<Shout | null>(null);
   const [aiGoStop, setAiGoStop] = useState<MatchView['aiGoStop']>(null);
+  const [aiThrow, setAiThrow] = useState<AiThrow | null>(null);
+  const throwKey = useRef(0);
   const [busy, setBusy] = useState(false);
   const shoutKey = useRef(0);
   const timers = useRef<number[]>([]);
@@ -123,9 +139,9 @@ export function useMatch(opts: MatchOptions) {
     [],
   );
 
-  const fireShout = useCallback((text: string) => {
+  const fireShout = useCallback((text: string, by: PlayerId) => {
     shoutKey.current++;
-    setShout({ key: shoutKey.current, text });
+    setShout({ key: shoutKey.current, text, by });
   }, []);
 
   /** 이벤트에 맞춰 연출과 대사를 갱신 */
@@ -136,7 +152,7 @@ export function useMatch(opts: MatchOptions) {
       for (const e of events) {
         const text = EVENT_SHOUT[e.type];
         if (text) {
-          fireShout(text);
+          fireShout(text, e.player);
           break;
         }
       }
@@ -166,14 +182,25 @@ export function useMatch(opts: MatchOptions) {
         const shake = shakeableMonths(s, AI);
         if (shake.length > 0 && rnd() < params.aggression) {
           s = declareShake(s, AI, shake[0]);
-          fireShout('흔들기!');
+          fireShout('흔들기!', AI);
         }
         s = setGukjinUse(s, AI, decideGukjin(s, params));
         const d = chooseCard(s, params, rngRef.current, profile);
         if (!d.cardId) return;
-        const next = playCard(s, d.cardId, d.bomb);
-        reactTo(next);
-        setState(next);
+        const card = s.players[AI].hand.find((c) => c.id === d.cardId);
+        if (!card) return;
+        /*
+         * 하숙생 패도 내가 눈으로 따라갈 수 있어야 한다. 낼 패를 먼저 알려
+         * 화면이 띄웠다 꽂는 연출을 돌리고, 그게 끝나는 시점에 실제로 반영한다.
+         */
+        throwKey.current += 1;
+        setAiThrow({ key: throwKey.current, card, bomb: d.bomb });
+        later(() => {
+          const next = playCard(s, d.cardId!, d.bomb);
+          reactTo(next);
+          setAiThrow(null);
+          setState(next);
+        }, AI_THROW_MS);
       }, 620);
       return;
     }
@@ -197,7 +224,7 @@ export function useMatch(opts: MatchOptions) {
         later(() => {
           setAiGoStop(null);
           const next = d.action === 'go' ? declareGo(state) : declareStop(state);
-          fireShout(d.action === 'go' ? '고!' : '스톱!');
+          fireShout(d.action === 'go' ? '고!' : '스톱!', AI);
           setState(next);
         }, 1600);
       }, 500);
@@ -244,7 +271,7 @@ export function useMatch(opts: MatchOptions) {
   const goStop = useCallback(
     (action: 'go' | 'stop') => {
       if (state.phase !== 'awaitGoStop' || state.turn !== HUMAN) return;
-      fireShout(action === 'go' ? '고!' : '스톱!');
+      fireShout(action === 'go' ? '고!' : '스톱!', HUMAN);
       setState(action === 'go' ? declareGo(state) : declareStop(state));
     },
     [state, fireShout],
@@ -253,7 +280,7 @@ export function useMatch(opts: MatchOptions) {
   const shake = useCallback(
     (month: number) => {
       setState(declareShake(state, HUMAN, month));
-      fireShout('흔들기!');
+      fireShout('흔들기!', HUMAN);
     },
     [state, fireShout],
   );
@@ -271,6 +298,7 @@ export function useMatch(opts: MatchOptions) {
     askGoStop: state.phase === 'awaitGoStop' && state.turn === HUMAN,
     aiGoStop,
     hint: losingStreak >= 3 ? pick(tenant.lines.hints, () => 0.5) : null,
+    aiThrow,
     myScore: currentScore(state, HUMAN),
     oppScore: scorePlayer(state.players[AI], state.rules).base,
     busy,

@@ -14,7 +14,7 @@ import type { Tenant } from '../data/types';
 import { LOSS_FACTOR } from '../save/storage';
 import { Background, CardBack, CardView, cardSrcNow, Portrait } from './parts';
 import { useCardFlight } from './useCardFlight';
-import { useMatch } from './useMatch';
+import { AI_THROW_MS, useMatch } from './useMatch';
 
 const HUMAN: PlayerId = 0;
 const AI: PlayerId = 1;
@@ -149,8 +149,13 @@ export default function MatchScreen({
    * 상태 반영을 미루고, 꽂힌 자리를 FLIP 의 출발점으로 넘겨 이어 붙인다.
    */
   const [hero, setHero] = useState<{ card: Card; from: DOMRect; to: DOMRect; bomb: boolean } | null>(null);
-  const [impact, setImpact] = useState<{ key: number; x: number; y: number } | null>(null);
+  const [impact, setImpact] = useState<{ key: number; x: number; y: number; w: number; h: number } | null>(
+    null,
+  );
   const heroRef = useRef<HTMLImageElement>(null);
+  const aiHeroRef = useRef<HTMLImageElement>(null);
+  /** 내가 잘 맞췄을 때 하숙생이 움찔하는 연출 */
+  const [startled, setStartled] = useState(0);
 
   useEffect(() => {
     if (s.phase === 'ended') {
@@ -249,7 +254,13 @@ export default function MatchScreen({
     );
 
     const hit = window.setTimeout(() => {
-      setImpact({ key: Date.now(), x: to.left + to.width / 2, y: to.top + to.height / 2 });
+      setImpact({
+        key: Date.now(),
+        x: to.left + to.width / 2,
+        y: to.top + to.height / 2,
+        w: to.width,
+        h: to.height,
+      });
       setSlam((n) => n + 1);
       // 꽂힌 자리를 출발점으로 넘겨야 FLIP 이 손에서부터 다시 날리지 않는다
       flight.setOrigin(hero.card.id, to);
@@ -267,9 +278,82 @@ export default function MatchScreen({
 
   useEffect(() => {
     if (!impact) return;
-    const t = window.setTimeout(() => setImpact(null), 520);
+    const t = window.setTimeout(() => setImpact(null), 620);
     return () => window.clearTimeout(t);
   }, [impact]);
+
+  /**
+   * 하숙생이 내는 패도 똑같이 띄웠다 꽂는다.
+   * 손패가 뒷면이라 올라오면서 앞면으로 뒤집힌다.
+   */
+  useEffect(() => {
+    const t = view.aiThrow;
+    if (!t) return;
+    const el = aiHeroRef.current;
+    const root = boardRef.current;
+    if (!el || !root) return;
+    const slots = root.querySelectorAll<HTMLElement>('.opp-hand .ohand-slot');
+    const src = (slots[slots.length - 1] ?? root.querySelector<HTMLElement>('.opp-hand'))?.getBoundingClientRect();
+    const to = landingRect(t.card);
+    if (!src || !to || src.width === 0) return;
+    const b = root.getBoundingClientRect();
+    const upX = b.left + b.width / 2 - src.width / 2 - src.left;
+    const upY = b.top + b.height * 0.36 - src.height / 2 - src.top;
+    const dnX = to.left + to.width / 2 - src.width / 2 - src.left;
+    const dnY = to.top + to.height / 2 - src.height / 2 - src.top;
+
+    el.style.left = `${src.left}px`;
+    el.style.top = `${src.top}px`;
+    el.style.width = `${src.width}px`;
+    el.style.height = `${src.height}px`;
+
+    const anim = el.animate(
+      [
+        { transform: 'translate(0,0) scale(1) rotateY(180deg)', offset: 0, easing: 'cubic-bezier(.2,.9,.25,1)' },
+        { transform: `translate(${upX}px, ${upY}px) scale(2.4) rotateY(0deg) rotate(6deg)`, offset: 0.46 },
+        {
+          transform: `translate(${upX}px, ${upY - 6}px) scale(2.35) rotate(4deg)`,
+          offset: 0.66,
+          easing: 'cubic-bezier(.7,0,.9,.6)',
+        },
+        {
+          transform: `translate(${dnX}px, ${dnY}px) scale(${((to.width / src.width) * 1.06).toFixed(3)}) rotate(-2deg)`,
+          offset: 1,
+        },
+      ],
+      { duration: AI_THROW_MS, fill: 'forwards' },
+    );
+    const hit = window.setTimeout(() => {
+      setImpact({
+        key: Date.now(),
+        x: to.left + to.width / 2,
+        y: to.top + to.height / 2,
+        w: to.width,
+        h: to.height,
+      });
+      setSlam((n) => n + 1);
+      flight.setOrigin(t.card.id, to);
+    }, AI_THROW_MS - 20);
+    return () => {
+      window.clearTimeout(hit);
+      anim.cancel();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [view.aiThrow?.key]);
+
+  /** 내가 쪽·따닥·쓸을 냈으면 하숙생이 놀란다 */
+  useEffect(() => {
+    if (!view.shout || view.shout.by !== HUMAN) return;
+    if (!['쪽!', '따닥!', '쓸!', '폭탄!', '총통!'].includes(view.shout.text)) return;
+    setStartled((n) => n + 1);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [view.shout?.key]);
+
+  useEffect(() => {
+    if (!startled) return;
+    const t = window.setTimeout(() => setStartled(0), 1100);
+    return () => window.clearTimeout(t);
+  }, [startled]);
 
   /** 바닥패를 월별로 묶는다. 같은 월이 겹쳐 놓이는 게 실제 판 모양이다. */
   const fieldGroups = useMemo(() => {
@@ -330,8 +414,13 @@ export default function MatchScreen({
       <Background bg="maru" time="night" />
       <div className="layer board" ref={boardRef}>
         {/* ── 상대 ── */}
-        <div className="board-opp">
-          <Portrait tenant={tenant} expression={view.expression} outfit={stage >= 10 ? 2 : 0} />
+        <div className={`board-opp ${startled ? 'startled' : ''}`}>
+          <Portrait
+            tenant={tenant}
+            expression={startled ? 'surprise' : view.expression}
+            outfit={stage >= 10 ? 2 : 0}
+          />
+          {startled > 0 && <span className="startle-mark">!</span>}
           <div className="chip-body">
             <div className="chip-name">
               {tenant.name}
@@ -479,10 +568,20 @@ export default function MatchScreen({
           />
         )}
 
+        <img
+          ref={aiHeroRef}
+          className="hero-card ai"
+          style={{ display: view.aiThrow ? 'block' : 'none' }}
+          src={view.aiThrow ? cardSrcNow(view.aiThrow.card) : undefined}
+          alt=""
+          draggable={false}
+        />
+
         {impact && (
           <span className="impact" key={impact.key} style={{ left: impact.x, top: impact.y }}>
             <i />
             <i />
+            <b style={{ width: impact.w, height: impact.h, marginLeft: -impact.w / 2, marginTop: -impact.h / 2 }} />
           </span>
         )}
 

@@ -111,6 +111,18 @@ function mix(a: string, b: string, t: number): string {
  * 그리고 띠는 가로줄이 아니라 비스듬히 누운 띠다.
  */
 
+/** hex 를 밝게(+) / 어둡게(-) 민다 */
+function shadeCard(hex: string, amt: number): string {
+  const m = /^#?([0-9a-f]{6})$/i.exec(hex);
+  if (!m) return hex;
+  const n = parseInt(m[1], 16);
+  const t = amt > 0 ? 255 : 0;
+  const k = Math.abs(amt);
+  return `#${[(n >> 16) & 255, (n >> 8) & 255, n & 255]
+    .map((c) => Math.round(c + (t - c) * k).toString(16).padStart(2, '0'))
+    .join('')}`;
+}
+
 /* 원색 — 주홍과 노랑은 스킨이 갈아입히므로 가변이다 */
 let VERM = '#e02b1d'; // 주홍
 let CHROME = '#f2c21c'; // 노랑
@@ -141,9 +153,13 @@ const AY = 12;
 const AW = 96;
 const AH = 152;
 
-/** 검은 면 */
+/**
+ * 검은 면. 화투의 검정은 잉크가 두껍게 얹힌 느낌이라, 위쪽에 아주 옅은
+ * 하이라이트를 한 겹 깔아 납작함을 덜어낸다.
+ */
 function blk(d: string, fill?: string): string {
-  return `<path d="${d}" fill="${fill ?? INK}"/>`;
+  const f = fill ?? INK;
+  return `<path d="${d}" fill="${f}"/><path d="${d}" fill="#ffffff" opacity="0.07" transform="translate(0 -1.6)"/>`;
 }
 
 /**
@@ -164,11 +180,25 @@ function flower(cx: number, cy: number, r: number, fill: string, core: string): 
   let out = '';
   for (let i = 0; i < 5; i += 1) {
     const a = (i / 5) * Math.PI * 2 - Math.PI / 2;
-    out += `<circle cx="${(cx + Math.cos(a) * r * 0.58).toFixed(1)}" cy="${(cy + Math.sin(a) * r * 0.58).toFixed(
-      1,
-    )}" r="${(r * 0.5).toFixed(1)}" fill="${fill}"/>`;
+    const px = cx + Math.cos(a) * r * 0.58;
+    const py = cy + Math.sin(a) * r * 0.58;
+    out += `<circle cx="${px.toFixed(1)}" cy="${py.toFixed(1)}" r="${(r * 0.5).toFixed(1)}" fill="${fill}"/>`;
+    // 꽃잎 골
+    out += `<path d="M${cx.toFixed(1)} ${cy.toFixed(1)} L${px.toFixed(1)} ${py.toFixed(1)}" stroke="${shadeCard(
+      fill,
+      -0.3,
+    )}" stroke-width="${(r * 0.1).toFixed(2)}" opacity="0.55"/>`;
   }
-  return out + `<circle cx="${cx}" cy="${cy}" r="${(r * 0.24).toFixed(1)}" fill="${core}"/>`;
+  out += `<circle cx="${cx}" cy="${cy}" r="${(r * 0.3).toFixed(1)}" fill="${shadeCard(core, -0.2)}"/>`;
+  out += `<circle cx="${cx}" cy="${cy}" r="${(r * 0.21).toFixed(1)}" fill="${core}"/>`;
+  // 수술
+  for (let i = 0; i < 5; i += 1) {
+    const a = (i / 5) * Math.PI * 2;
+    out += `<circle cx="${(cx + Math.cos(a) * r * 0.2).toFixed(1)}" cy="${(cy + Math.sin(a) * r * 0.2).toFixed(
+      1,
+    )}" r="${(r * 0.055).toFixed(2)}" fill="${INK}" opacity="0.6"/>`;
+  }
+  return out;
 }
 
 /** 검은 잎 덩이 (싸리·오동·국화 잎) */
@@ -432,8 +462,20 @@ function frame(month: number, sk: CardSkin, uid: string): string {
       <feColorMatrix type="saturate" values="0"/>
     </filter>
   </defs>
-  <rect width="${CW}" height="${CH}" rx="9" fill="${border}"/>
-  <rect x="${AX}" y="${AY}" width="${AW}" height="${AH}" fill="${paper}"/>`;
+  <defs>
+    <linearGradient id="bd${uid}" x1="0" y1="0" x2="0.4" y2="1">
+      <stop offset="0%" stop-color="${shadeCard(border, 0.18)}"/>
+      <stop offset="52%" stop-color="${border}"/>
+      <stop offset="100%" stop-color="${shadeCard(border, -0.22)}"/>
+    </linearGradient>
+  </defs>
+  <rect width="${CW}" height="${CH}" rx="9" fill="url(#bd${uid})"/>
+  <rect x="2" y="2" width="${CW - 4}" height="${CH - 4}" rx="7.5" fill="none"
+        stroke="#ffffff" stroke-width="1.2" opacity="0.22"/>
+  <rect x="${AX - 2}" y="${AY - 2}" width="${AW + 4}" height="${AH + 4}" fill="${sk.ink}" opacity="0.55"/>
+  <rect x="${AX}" y="${AY}" width="${AW}" height="${AH}" fill="${paper}"/>
+  <rect x="${AX}" y="${AY}" width="${AW}" height="${AH}" fill="none" stroke="${sk.ink}"
+        stroke-width="1.1" opacity="0.35"/>`;
 }
 
 export function cardSvg(
@@ -468,7 +510,9 @@ export function cardSvg(
   <g clip-path="url(#cl${uid})">${art}</g>
   <text x="${CW / 2}" y="${CH - 4}" font-size="11" text-anchor="middle" fill="${WHITE}" font-family="sans-serif"
         opacity="0.9">${foot}</text>
-  <rect width="${CW}" height="${CH}" rx="9" filter="url(#gr${uid})" opacity="0.06" style="mix-blend-mode:multiply"/>
+  <rect x="${AX}" y="${AY}" width="${AW}" height="${AH}" filter="url(#gr${uid})" opacity="0.085"
+        style="mix-blend-mode:multiply"/>
+  <rect width="${CW}" height="${CH}" rx="9" filter="url(#gr${uid})" opacity="0.045" style="mix-blend-mode:multiply"/>
   <rect x="0.75" y="0.75" width="${CW - 1.5}" height="${CH - 1.5}" rx="9" fill="none" stroke="${sk.ink}"
         stroke-width="1.5" opacity="0.45"/>
 </svg>`;
