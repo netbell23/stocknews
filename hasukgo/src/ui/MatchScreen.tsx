@@ -6,7 +6,7 @@
  * 세로로 들면 위아래로 쌓이고, 눕히거나 넓은 화면이면 좌우로 펼쳐진다.
  * (배치는 styles.css 의 .board grid-template-areas 가 전부 결정한다)
  */
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { MONTH_NAMES } from '../engine/cards';
 import type { Card, PlayerId, RuleOptions, Settlement } from '../engine/types';
 import type { PlayerProfile } from '../ai/ai';
@@ -119,6 +119,11 @@ export default function MatchScreen({
   const opp = s.players[AI];
   const [selected, setSelected] = useState<string | null>(null);
   const [showResult, setShowResult] = useState(false);
+  /** 손패를 누르고 있는 동안 바닥의 같은 월을 밝힌다 */
+  const [hintMonth, setHintMonth] = useState<number | null>(null);
+  /** 패를 바닥에 때릴 때마다 판이 한 번 흔들린다 */
+  const [slam, setSlam] = useState(0);
+  const prevDeck = useRef(s.deck.length);
 
   useEffect(() => {
     if (s.phase === 'ended') {
@@ -126,6 +131,18 @@ export default function MatchScreen({
       return () => window.clearTimeout(t);
     }
   }, [s.phase]);
+
+  // 더미가 줄었다 = 누군가 패를 내고 한 장 뒤집었다 = 바닥을 때렸다
+  useEffect(() => {
+    if (s.deck.length < prevDeck.current) setSlam((n) => n + 1);
+    prevDeck.current = s.deck.length;
+  }, [s.deck.length]);
+
+  useEffect(() => {
+    if (slam === 0) return;
+    const t = window.setTimeout(() => setSlam(0), 420);
+    return () => window.clearTimeout(t);
+  }, [slam]);
 
   const myTurn = s.turn === HUMAN && !view.busy;
   const canPlay = myTurn && s.phase === 'awaitPlay';
@@ -184,7 +201,7 @@ export default function MatchScreen({
         const isCandidate = mustChoose && s.pendingChoice?.candidates.some((x) => x.id === c.id);
         return (
           <div
-            className="fslot"
+            className={`fslot ${hintMonth === c.month ? 'match' : ''}`}
             key={c.id}
             style={{ marginLeft: i === 0 ? 0 : 'var(--stack-overlap)', zIndex: i }}
           >
@@ -226,7 +243,15 @@ export default function MatchScreen({
 
         {/* ── 바닥 ── */}
         <div className="board-field">
-          <div className="felt">
+          <div className="opp-hand" aria-label={`${tenant.name}의 남은 패 ${opp.hand.length}장`}>
+            {opp.hand.map((c, i) => (
+              <div className="ohand-slot" key={c.id} style={{ marginLeft: i === 0 ? 0 : 'var(--ohand-overlap)' }}>
+                <CardBack small />
+              </div>
+            ))}
+            <span className="ohand-n">{opp.hand.length}</span>
+          </div>
+          <div className={`felt ${slam ? 'slam' : ''}`}>
             <div className="field-row">{topRow.map(renderStack)}</div>
             <div className="field-mid">
               <div className="deck">
@@ -297,13 +322,21 @@ export default function MatchScreen({
         {/* ── 내 손패 ── */}
         <div className="board-hand">
           {me.hand.map((c) => (
-            <CardView
+            <div
               key={c.id}
-              card={c}
-              selectable={canPlay}
-              chosen={selected === c.id}
-              onClick={() => handCard(c)}
-            />
+              className="hand-slot"
+              onPointerDown={() => canPlay && setHintMonth(c.month)}
+              onPointerEnter={() => canPlay && setHintMonth(c.month)}
+              onPointerLeave={() => setHintMonth(null)}
+              onPointerUp={() => setHintMonth(null)}
+            >
+              <CardView
+                card={c}
+                selectable={canPlay}
+                chosen={selected === c.id}
+                onClick={() => handCard(c)}
+              />
+            </div>
           ))}
           {me.hand.length === 0 && <CardBack small />}
         </div>

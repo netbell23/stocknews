@@ -427,8 +427,13 @@ button {
     'hand';
   grid-template-rows: auto auto minmax(0, 1fr) auto auto auto;
   --pile-overlap: -20px;
-  /* 같은 월끼리 겹치는 양. 카드 폭에 비례해야 작은 화면에서 도안이 다 가려지지 않는다 */
-  --stack-overlap: calc(var(--card-h, 69px) * -0.38);
+  /*
+   * 같은 월끼리 벌리는 간격. 겹쳐 쌓으면 뒤 패의 도안이 가려져 뭘 먹을지 안 보인다.
+   * 실제 판처럼 나란히 펼쳐 놓는다.
+   */
+  --stack-overlap: 4px;
+  /* 상대 손패(뒷면)는 장수만 알면 되므로 촘촘히 겹친다 */
+  --ohand-overlap: calc(var(--card-h, 69px) * -0.34);
   /*
    * 화패 크기를 화면 높이에 매단다. 바닥에는 두 줄 + 더미가 들어가야 하는데
    * 크기를 고정하면 640px 짜리 작은 폰에서 위아래가 잘린다.
@@ -599,6 +604,33 @@ button {
   text-align: right;
 }
 
+/* ── 상대 손패 — 뒷면만, 장수만 읽힌다 ── */
+.opp-hand {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px 8px;
+  flex: 0 0 auto;
+  min-height: 26px;
+}
+
+.ohand-slot {
+  flex: 0 0 auto;
+  filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.5));
+}
+
+.ohand-slot .card {
+  height: calc(var(--card-h, 69px) * 0.5);
+  width: calc(var(--card-h, 69px) * 0.334);
+}
+
+.ohand-n {
+  margin-left: 8px;
+  font-size: 11px;
+  font-weight: 800;
+  color: var(--paper-dim);
+}
+
 /* ── 초록 융 바닥 ── */
 .board-field {
   display: flex;
@@ -640,6 +672,54 @@ button {
 
 .fslot {
   position: relative;
+  transition: transform 0.14s ease;
+}
+
+/* 손패를 누르는 동안, 그 패로 먹을 수 있는 바닥패가 떠오른다 */
+.fslot.match {
+  transform: translateY(-7px) scale(1.06);
+  z-index: 20 !important;
+}
+
+.fslot.match .card {
+  outline: 3px solid var(--lamp);
+  box-shadow: 0 0 0 5px rgba(255, 217, 138, 0.3), 0 6px 12px rgba(0, 0, 0, 0.6);
+  animation: matchPulse 0.7s ease-in-out infinite;
+}
+
+@keyframes matchPulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 4px rgba(255, 217, 138, 0.28), 0 6px 12px rgba(0, 0, 0, 0.6);
+  }
+  50% {
+    box-shadow: 0 0 0 9px rgba(255, 217, 138, 0.1), 0 6px 12px rgba(0, 0, 0, 0.6);
+  }
+}
+
+.hand-slot {
+  flex: 0 0 auto;
+}
+
+/* 패가 바닥에 떨어질 때 판이 한 번 울린다 */
+.felt.slam {
+  animation: feltSlam 0.4s cubic-bezier(0.22, 1.2, 0.3, 1);
+}
+
+@keyframes feltSlam {
+  0% {
+    transform: scale(1);
+  }
+  14% {
+    transform: scale(0.985) translateY(4px);
+    box-shadow: inset 0 0 70px rgba(0, 0, 0, 0.8);
+  }
+  40% {
+    transform: scale(1.006) translateY(-2px);
+  }
+  100% {
+    transform: scale(1);
+  }
 }
 
 .fstack-tag {
@@ -916,11 +996,15 @@ button {
 /* 눕힌 폰처럼 세로가 아주 짧으면 겹침을 키워 가로 폭을 아낀다 */
 @media (min-aspect-ratio: 1/1) and (max-height: 460px) {
   .board {
-    --stack-overlap: calc(var(--card-h, 69px) * -0.46);
+    --stack-overlap: 2px;
   }
 }
 
 /* ── 연출 오버레이 ────────────────────────── */
+/*
+ * 쪽·따닥·뻑은 맞고에서 제일 신나는 순간이다. 작게 뜨면 재미가 없다.
+ * 화면 폭에 비례해 크게 띄우고, 뒤에 붉은 섬광과 퍼지는 고리를 같이 터뜨린다.
+ */
 .shout {
   position: absolute;
   inset: 0;
@@ -930,30 +1014,87 @@ button {
   z-index: 5;
 }
 
+.shout::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 50% 50%, rgba(255, 220, 150, 0.5), transparent 58%);
+  animation: shoutFlash 0.5s ease-out forwards;
+}
+
+.shout::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 40px;
+  height: 40px;
+  margin: -20px 0 0 -20px;
+  border-radius: 50%;
+  border: 7px solid var(--lamp);
+  animation: shoutRing 0.65s cubic-bezier(0.1, 0.8, 0.3, 1) forwards;
+}
+
 .shout span {
-  font-size: 54px;
+  position: relative;
+  font-size: clamp(64px, 22vmin, 148px);
   font-weight: 900;
+  letter-spacing: -0.02em;
   color: var(--lamp);
-  text-shadow: 0 0 20px rgba(0, 0, 0, 0.9), 0 5px 0 rgba(0, 0, 0, 0.6);
-  animation: shout 0.9s ease-out forwards;
+  -webkit-text-stroke: 4px rgba(40, 14, 6, 0.95);
+  paint-order: stroke fill;
+  text-shadow: 0 0 34px rgba(255, 190, 90, 0.9), 0 8px 0 rgba(90, 30, 10, 0.75),
+    0 14px 26px rgba(0, 0, 0, 0.8);
+  animation: shout 0.95s cubic-bezier(0.16, 1.5, 0.3, 1) forwards;
 }
 
 @keyframes shout {
   0% {
-    transform: scale(0.3) rotate(-8deg);
+    transform: scale(0.2) rotate(-14deg);
     opacity: 0;
   }
-  25% {
-    transform: scale(1.15) rotate(3deg);
+  18% {
+    transform: scale(1.45) rotate(6deg);
     opacity: 1;
   }
-  70% {
-    transform: scale(1) rotate(0deg);
+  34% {
+    transform: scale(0.92) rotate(-3deg);
+  }
+  48% {
+    transform: scale(1.12) rotate(1deg);
+  }
+  74% {
+    transform: scale(1.02) rotate(0deg);
     opacity: 1;
   }
   100% {
-    transform: scale(1.1);
+    transform: scale(1.3);
     opacity: 0;
+  }
+}
+
+@keyframes shoutFlash {
+  0% {
+    opacity: 0;
+  }
+  12% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes shoutRing {
+  0% {
+    transform: scale(0.2);
+    opacity: 0.95;
+    border-width: 10px;
+  }
+  100% {
+    transform: scale(9);
+    opacity: 0;
+    border-width: 1px;
   }
 }
 
