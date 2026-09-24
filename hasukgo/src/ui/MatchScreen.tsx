@@ -147,6 +147,8 @@ export default function MatchScreen({
   const myTurn = s.turn === HUMAN && !view.busy;
   const canPlay = myTurn && s.phase === 'awaitPlay';
   const mustChoose = s.turn === HUMAN && s.phase === 'awaitChoice';
+  /** 고르는 중이면 "무엇을 맞출 패인지"를 같이 보여줘야 한다 */
+  const pending = mustChoose ? s.pendingChoice : null;
 
   const handCard = (c: Card) => {
     if (!canPlay) return;
@@ -201,7 +203,7 @@ export default function MatchScreen({
         const isCandidate = mustChoose && s.pendingChoice?.candidates.some((x) => x.id === c.id);
         return (
           <div
-            className={`fslot ${hintMonth === c.month ? 'match' : ''}`}
+            className={`fslot ${isCandidate ? 'candidate' : ''} ${hintMonth === c.month ? 'match' : ''}`}
             key={c.id}
             style={{ marginLeft: i === 0 ? 0 : 'var(--stack-overlap)', zIndex: i }}
           >
@@ -251,9 +253,15 @@ export default function MatchScreen({
             ))}
             <span className="ohand-n">{opp.hand.length}</span>
           </div>
-          <div className={`felt ${slam ? 'slam' : ''}`}>
+          <div className={`felt ${slam ? 'slam' : ''} ${mustChoose ? 'choosing' : ''}`}>
             <div className="field-row">{topRow.map(renderStack)}</div>
             <div className="field-mid">
+              {pending && (
+                <div className="pending">
+                  <CardView card={pending.played} />
+                  <span className="pending-tag">{pending.source === 'deck' ? '뒤집은 패' : '낸 패'}</span>
+                </div>
+              )}
               <div className="deck">
                 <CardBack />
                 <span className="deck-n">{s.deck.length}</span>
@@ -262,7 +270,14 @@ export default function MatchScreen({
             </div>
             <div className="field-row">{bottomRow.map(renderStack)}</div>
           </div>
-          {mustChoose && <div className="felt-notice">같은 월이 두 장입니다. 가져올 패를 고르세요.</div>}
+          {mustChoose && (
+            <div className="felt-notice">
+              {pending
+                ? `${MONTH_NAMES[pending.played.month]}(${pending.played.month}월)이 바닥에 두 장입니다. `
+                : '같은 월이 두 장입니다. '}
+              <b>빛나는 패</b> 중에서 가져올 것을 고르세요.
+            </div>
+          )}
           {view.hint && !mustChoose && (
             <div className="felt-notice hint">
               {tenant.name}: “{view.hint}”

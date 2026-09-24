@@ -118,6 +118,23 @@ const BLUE = '#1766c8';
 const GREEN = '#2a9d4a';
 const ORANGE = '#ef7a20';
 
+/** 월별 종이 색조 — 아주 옅게만 얹는다 */
+const MONTH_TINT: Record<number, string> = {
+  1: '#f3e2b8',
+  2: '#e6b8c8',
+  3: '#f0c2c8',
+  4: '#b9c6d2',
+  5: '#bfd6c2',
+  6: '#e8c4b4',
+  7: '#efd0a8',
+  8: '#b6c8e0',
+  9: '#f0dca4',
+  10: '#f0c49a',
+  11: '#cdc2e0',
+  12: '#b8c2c8',
+  0: '#f2e0b0',
+};
+
 /** 그림이 놓이는 자리 (주홍 테두리 안쪽) */
 const AX = 12;
 const AY = 12;
@@ -129,11 +146,16 @@ function blk(d: string, fill?: string): string {
   return `<path d="${d}" fill="${fill ?? INK}"/>`;
 }
 
-/** 소나무·산 실루엣 하나 */
+/**
+ * 솔봉우리 하나. 8월 공산의 둥근 산과 헷갈리지 않도록 **뾰족하게** 세우고
+ * 끝에 노란 솔잎을 크게 얹는다. (실루엣만으로 갈려야 46px 에서 구분된다)
+ */
 function peak(cx: number, w: number, top: number, tip: string | null): string {
   const b = AY + AH;
-  let out = blk(`M${cx - w / 2} ${b} Q${cx - w * 0.18} ${top + 10} ${cx} ${top} Q${cx + w * 0.18} ${top + 10} ${cx + w / 2} ${b} Z`);
-  if (tip) out += blk(`M${cx - w * 0.22} ${top + 20} Q${cx} ${top - 2} ${cx + w * 0.22} ${top + 20} Q${cx} ${top + 12} ${cx - w * 0.22} ${top + 20} Z`, tip);
+  let out = blk(`M${cx - w / 2} ${b} L${cx - w * 0.1} ${top + 6} L${cx} ${top} L${cx + w * 0.1} ${top + 6} L${cx + w / 2} ${b} Z`);
+  if (tip) {
+    out += blk(`M${cx} ${top - 12} l${w * 0.34} ${w * 0.3} l-${w * 0.34} ${w * 0.16} l-${w * 0.34} -${w * 0.16} Z`, tip);
+  }
   return out;
 }
 
@@ -158,8 +180,8 @@ function leafMass(cx: number, cy: number, rx: number, ry: number, fill?: string)
 function monthArt(month: number): string {
   const b = AY + AH;
   switch (month) {
-    case 1: // 송학 — 검은 솔봉우리 둘
-      return peak(40, 62, 40, CHROME) + peak(86, 54, 56, CHROME);
+    case 1: // 송학 — 뾰족한 검은 솔봉우리 둘
+      return peak(38, 54, 34, CHROME) + peak(84, 46, 58, CHROME);
     case 2: // 매조 — 검은 가지와 붉은 매화
       return `
         ${blk(`M${AX} ${b} Q44 96 40 ${AY + 16} L52 ${AY + 16} Q56 96 ${AX + 22} ${b} Z`)}
@@ -215,8 +237,8 @@ function monthArt(month: number): string {
           return st;
         })
         .join('');
-    case 8: // 공산 — 크고 둥근 검은 산
-      return blk(`M${AX} ${b} Q28 ${b - 76} 60 ${b - 82} Q92 ${b - 76} ${AX + AW} ${b} Z`);
+    case 8: // 공산 — 낮고 넓은 둥근 산 (1월의 뾰족한 솔봉우리와 대비된다)
+      return blk(`M${AX} ${b} C${AX + 6} ${b - 62} 36 ${b - 74} 60 ${b - 74} C84 ${b - 74} ${AX + AW - 6} ${b - 62} ${AX + AW} ${b} Z`);
     case 9: // 국준 — 주황 국화와 검은 잎
       return `
         ${leafMass(32, 112, 24, 15)}
@@ -396,9 +418,12 @@ function piMark(card: Card): string {
 }
 
 /** 주홍 테두리와 흰 바탕 */
-function frame(sk: CardSkin, uid: string): string {
+function frame(month: number, sk: CardSkin, uid: string): string {
   const border = sk.tint ? mix(sk.red, sk.tint, sk.tintAmount * 0.7) : sk.red;
-  const paper = sk.tint ? mix('#ffffff', sk.tint, sk.tintAmount * 0.5) : sk.paperTop;
+  // 실제 화투는 전부 흰 바탕이지만, 46px 손패에서 월을 가리려면 최소한의 색조가 필요하다.
+  // 가까이서는 거의 안 보이고 작게 줄었을 때만 효과가 나는 세기(8%)로 얹는다.
+  let paper = mix(sk.paperTop, MONTH_TINT[month] ?? '#ffffff', 0.08);
+  if (sk.tint) paper = mix(paper, sk.tint, sk.tintAmount * 0.5);
   return `
   <defs>
     <clipPath id="cl${uid}"><rect x="${AX}" y="${AY}" width="${AW}" height="${AH}"/></clipPath>
@@ -439,7 +464,7 @@ export function cardSvg(
   }
 
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${CW} ${CH}" width="${w}" height="${h}" role="img" aria-label="${card.name}">
-  ${frame(sk, uid)}
+  ${frame(card.month, sk, uid)}
   <g clip-path="url(#cl${uid})">${art}</g>
   <text x="${CW / 2}" y="${CH - 4}" font-size="11" text-anchor="middle" fill="${WHITE}" font-family="sans-serif"
         opacity="0.9">${foot}</text>
