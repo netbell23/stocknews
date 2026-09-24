@@ -595,6 +595,26 @@ button {
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
 }
 
+/* 패가 들어오면 장수가 한 번 튄다 */
+.piles-head b {
+  display: inline-block;
+  animation: pileBump 0.42s cubic-bezier(0.2, 1.8, 0.4, 1);
+}
+
+@keyframes pileBump {
+  0% {
+    transform: scale(1);
+  }
+  40% {
+    transform: scale(1.7);
+    color: #fff;
+    text-shadow: 0 0 12px var(--lamp);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
 .pile-n {
   font-size: 11px;
   font-weight: 800;
@@ -970,13 +990,29 @@ button {
   outline: 2px solid transparent;
 }
 
-.card.selectable:active {
-  transform: translateY(-4px);
+/*
+ * 손패는 "집어 드는" 느낌이 있어야 던지는 맛이 난다.
+ * 올리면 살짝 뜨고, 누르면 확실히 들린다.
+ */
+.hand-slot .card {
+  transition: transform 0.13s cubic-bezier(0.2, 1.4, 0.4, 1), box-shadow 0.13s ease;
+  transform-origin: 50% 100%;
+}
+
+.hand-slot:hover .card.selectable {
+  transform: translateY(-8px) scale(1.04);
+  box-shadow: 0 8px 14px rgba(0, 0, 0, 0.6);
+}
+
+.hand-slot:active .card.selectable,
+.card.chosen {
+  transform: translateY(-18px) scale(1.12) rotate(-2deg);
+  box-shadow: 0 16px 22px rgba(0, 0, 0, 0.7), 0 0 0 3px rgba(255, 217, 138, 0.5);
+  z-index: 40;
 }
 
 .card.chosen {
   outline: 3px solid var(--lamp);
-  transform: translateY(-8px);
 }
 
 /*

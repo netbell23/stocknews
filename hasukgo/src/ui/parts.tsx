@@ -66,12 +66,15 @@ export function CardView({
   small,
   selectable,
   chosen,
+  zone,
   onClick,
 }: {
   card: Card;
   small?: boolean;
   selectable?: boolean;
   chosen?: boolean;
+  /** 연출용. useCardFlight 가 이 값으로 날아가는 타이밍을 정한다 */
+  zone?: 'hand' | 'field' | 'pile';
   onClick?: () => void;
 }) {
   const cls = ['card', small ? 'sm' : '', selectable ? 'selectable' : '', chosen ? 'chosen' : '']
@@ -80,6 +83,8 @@ export function CardView({
   return (
     <img
       className={cls}
+      data-cid={card.id}
+      data-zone={zone ?? 'field'}
       src={cardDataUri(card, { skin: currentSkin })}
       alt={card.name}
       onClick={selectable ? onClick : undefined}

@@ -13,6 +13,7 @@ import type { PlayerProfile } from '../ai/ai';
 import type { Tenant } from '../data/types';
 import { LOSS_FACTOR } from '../save/storage';
 import { Background, CardBack, CardView, cardSrcNow, Portrait } from './parts';
+import { useCardFlight } from './useCardFlight';
 import { useMatch } from './useMatch';
 
 const HUMAN: PlayerId = 0;
@@ -56,11 +57,19 @@ function CapturedPiles({
     ['피', captured.pi],
   ];
   const total = rows.reduce((a, [, c]) => a + c.length, 0);
+  // 패가 들어와 장수가 오르면 숫자가 한 번 튄다 — 뭘 먹었는지 눈이 따라간다
+  const [bump, setBump] = useState(0);
+  const prevTotal = useRef(total);
+  useEffect(() => {
+    if (total > prevTotal.current) setBump((n) => n + 1);
+    prevTotal.current = total;
+  }, [total]);
+
   return (
-    <div className="piles">
+    <div className={`piles ${bump ? 'got' : ''}`}>
       <div className="piles-head">
         {side}
-        <b>{total}</b>
+        <b key={bump}>{total}</b>
       </div>
       {rows.map(([label, cards]) => (
         <div className={`pile ${cards.length === 0 ? 'pile-empty' : ''}`} key={label}>
@@ -70,6 +79,8 @@ function CapturedPiles({
               <img
                 key={c.id}
                 className="pile-card"
+                data-cid={c.id}
+                data-zone="pile"
                 style={{ marginLeft: i === 0 ? 0 : 'var(--pile-overlap)' }}
                 src={cardSrcNow(c)}
                 alt={c.name}
@@ -124,6 +135,13 @@ export default function MatchScreen({
   /** 패를 바닥에 때릴 때마다 판이 한 번 흔들린다 */
   const [slam, setSlam] = useState(0);
   const prevDeck = useRef(s.deck.length);
+  const boardRef = useRef<HTMLDivElement>(null);
+
+  /**
+   * 카드가 손 → 바닥 → 먹은 패로 실제로 날아가게 한다.
+   * 결과창이 뜬 뒤에는 끈다 (뒤에서 카드가 혼자 움직이면 산만하다).
+   */
+  useCardFlight(boardRef, [s.field, s.players, s.deck.length], s.phase !== 'ended');
 
   useEffect(() => {
     if (s.phase === 'ended') {
@@ -207,7 +225,12 @@ export default function MatchScreen({
             key={c.id}
             style={{ marginLeft: i === 0 ? 0 : 'var(--stack-overlap)', zIndex: i }}
           >
-            <CardView card={c} selectable={!!isCandidate} onClick={() => isCandidate && choose(c.id)} />
+            <CardView
+              card={c}
+              zone="field"
+              selectable={!!isCandidate}
+              onClick={() => isCandidate && choose(c.id)}
+            />
           </div>
         );
       })}
@@ -218,7 +241,7 @@ export default function MatchScreen({
   return (
     <div className="screen match-screen">
       <Background bg="maru" time="night" />
-      <div className="layer board">
+      <div className="layer board" ref={boardRef}>
         {/* ── 상대 ── */}
         <div className="board-opp">
           <Portrait tenant={tenant} expression={view.expression} outfit={stage >= 10 ? 2 : 0} />
@@ -262,7 +285,7 @@ export default function MatchScreen({
                   <span className="pending-tag">{pending.source === 'deck' ? '뒤집은 패' : '낸 패'}</span>
                 </div>
               )}
-              <div className="deck">
+              <div className="deck" data-deck="">
                 <CardBack />
                 <span className="deck-n">{s.deck.length}</span>
               </div>
@@ -347,6 +370,7 @@ export default function MatchScreen({
             >
               <CardView
                 card={c}
+                zone="hand"
                 selectable={canPlay}
                 chosen={selected === c.id}
                 onClick={() => handCard(c)}
