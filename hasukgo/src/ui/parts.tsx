@@ -67,12 +67,15 @@ export function CardView({
   selectable,
   chosen,
   zone,
+  hidden,
   onClick,
 }: {
   card: Card;
   small?: boolean;
   selectable?: boolean;
   chosen?: boolean;
+  /** 연출로 따로 띄워둔 동안 원본은 자리만 지킨다 */
+  hidden?: boolean;
   /** 연출용. useCardFlight 가 이 값으로 날아가는 타이밍을 정한다 */
   zone?: 'hand' | 'field' | 'pile';
   onClick?: () => void;
@@ -85,6 +88,7 @@ export function CardView({
       className={cls}
       data-cid={card.id}
       data-zone={zone ?? 'field'}
+      style={hidden ? { visibility: 'hidden' } : undefined}
       src={cardDataUri(card, { skin: currentSkin })}
       alt={card.name}
       onClick={selectable ? onClick : undefined}

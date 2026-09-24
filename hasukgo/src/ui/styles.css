@@ -799,6 +799,61 @@ button {
   flex: 0 0 auto;
 }
 
+/*
+ * 낸 패를 화면 가운데로 크게 띄웠다가 바닥에 꽂는다.
+ * 위치는 JS 가 뷰포트 좌표로 잡아주므로 fixed 로 띄운다.
+ */
+.hero-card {
+  position: fixed;
+  z-index: 60;
+  pointer-events: none;
+  border-radius: 6px;
+  transform-origin: 50% 50%;
+  box-shadow: 0 20px 44px rgba(0, 0, 0, 0.75), 0 0 0 2px rgba(255, 217, 138, 0.45),
+    0 0 42px rgba(255, 200, 120, 0.4);
+  will-change: transform;
+}
+
+/* 꽂히는 순간 — 땅! */
+.impact {
+  position: fixed;
+  z-index: 59;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+
+.impact i {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 26px;
+  height: 26px;
+  margin: -13px 0 0 -13px;
+  border-radius: 50%;
+  border: 6px solid var(--lamp);
+  animation: impactRing 0.5s cubic-bezier(0.1, 0.75, 0.25, 1) forwards;
+}
+
+.impact i:last-child {
+  border-color: #fff;
+  animation-delay: 0.07s;
+  animation-duration: 0.42s;
+}
+
+@keyframes impactRing {
+  0% {
+    transform: scale(0.3);
+    opacity: 1;
+    border-width: 9px;
+  }
+  100% {
+    transform: scale(7);
+    opacity: 0;
+    border-width: 1px;
+  }
+}
+
 /* 패가 바닥에 떨어질 때 판이 한 번 울린다 */
 .felt.slam {
   animation: feltSlam 0.4s cubic-bezier(0.22, 1.2, 0.3, 1);
@@ -806,17 +861,20 @@ button {
 
 @keyframes feltSlam {
   0% {
-    transform: scale(1);
+    transform: scale(1) translate(0, 0);
   }
-  14% {
-    transform: scale(0.985) translateY(4px);
-    box-shadow: inset 0 0 70px rgba(0, 0, 0, 0.8);
+  10% {
+    transform: scale(0.975) translate(-3px, 7px);
+    box-shadow: inset 0 0 90px rgba(0, 0, 0, 0.85);
   }
-  40% {
-    transform: scale(1.006) translateY(-2px);
+  26% {
+    transform: scale(1.012) translate(4px, -4px);
+  }
+  46% {
+    transform: scale(0.995) translate(-2px, 2px);
   }
   100% {
-    transform: scale(1);
+    transform: scale(1) translate(0, 0);
   }
 }
 

@@ -141,7 +141,16 @@ export default function MatchScreen({
    * 카드가 손 → 바닥 → 먹은 패로 실제로 날아가게 한다.
    * 결과창이 뜬 뒤에는 끈다 (뒤에서 카드가 혼자 움직이면 산만하다).
    */
-  useCardFlight(boardRef, [s.field, s.players, s.deck.length], s.phase !== 'ended');
+  const flight = useCardFlight(boardRef, [s.field, s.players, s.deck.length], s.phase !== 'ended');
+
+  /**
+   * 낸 패를 화면 가운데로 크게 띄웠다가 바닥의 맞는 패로 내리꽂는 연출.
+   * 엔진은 동기라 그냥 두면 손을 떼는 순간 결과가 다 끝나 있다. 그래서 꽂히는 순간까지
+   * 상태 반영을 미루고, 꽂힌 자리를 FLIP 의 출발점으로 넘겨 이어 붙인다.
+   */
+  const [hero, setHero] = useState<{ card: Card; from: DOMRect; to: DOMRect; bomb: boolean } | null>(null);
+  const [impact, setImpact] = useState<{ key: number; x: number; y: number } | null>(null);
+  const heroRef = useRef<HTMLImageElement>(null);
 
   useEffect(() => {
     if (s.phase === 'ended') {
@@ -168,21 +177,99 @@ export default function MatchScreen({
   /** 고르는 중이면 "무엇을 맞출 패인지"를 같이 보여줘야 한다 */
   const pending = mustChoose ? s.pendingChoice : null;
 
+  /** 낸 패가 내려앉을 자리 — 같은 월이 바닥에 있으면 그 위, 없으면 바닥 한가운데 */
+  const landingRect = (c: Card): DOMRect | null => {
+    const root = boardRef.current;
+    if (!root) return null;
+    const mate = s.field.find((f) => f.month === c.month);
+    if (mate) {
+      const el = root.querySelector<HTMLElement>(`[data-cid="${mate.id}"]`);
+      if (el) return el.getBoundingClientRect();
+    }
+    const felt = root.querySelector<HTMLElement>('.felt');
+    if (!felt) return null;
+    const r = felt.getBoundingClientRect();
+    return new DOMRect(r.left + r.width / 2 - 24, r.top + r.height * 0.62, 48, 72);
+  };
+
+  const launch = (c: Card, bomb: boolean) => {
+    const root = boardRef.current;
+    const el = root?.querySelector<HTMLElement>(`.board-hand [data-cid="${c.id}"]`);
+    const from = el?.getBoundingClientRect();
+    const to = landingRect(c);
+    if (!from || !to) {
+      play(c.id, bomb);
+      return;
+    }
+    setHero({ card: c, from, to, bomb });
+  };
+
   const handCard = (c: Card) => {
-    if (!canPlay) return;
+    if (!canPlay || hero) return;
     if (bombable.includes(c.month)) {
       // 폭탄 가능한 월은 한 번 더 탭해서 확정
       if (selected === c.id) {
-        play(c.id, true);
+        launch(c, true);
         setSelected(null);
       } else {
         setSelected(c.id);
       }
       return;
     }
-    play(c.id);
+    launch(c, false);
     setSelected(null);
   };
+
+  // 띄웠다 꽂는 연출. 꽂히는 순간에 실제 수가 반영된다.
+  useEffect(() => {
+    if (!hero) return;
+    const el = heroRef.current;
+    const root = boardRef.current;
+    if (!el || !root) {
+      play(hero.card.id, hero.bomb);
+      setHero(null);
+      return;
+    }
+    const b = root.getBoundingClientRect();
+    const { from, to } = hero;
+    const upX = b.left + b.width / 2 - from.width / 2 - from.left;
+    const upY = b.top + b.height * 0.36 - from.height / 2 - from.top;
+    const dnX = to.left + to.width / 2 - from.width / 2 - from.left;
+    const dnY = to.top + to.height / 2 - from.height / 2 - from.top;
+    const land = to.width / from.width;
+
+    const anim = el.animate(
+      [
+        { transform: 'translate(0,0) scale(1) rotate(0deg)', offset: 0, easing: 'cubic-bezier(.2,.9,.25,1)' },
+        { transform: `translate(${upX}px, ${upY}px) scale(2.5) rotate(-7deg)`, offset: 0.42 },
+        { transform: `translate(${upX}px, ${upY - 6}px) scale(2.45) rotate(-5deg)`, offset: 0.6, easing: 'cubic-bezier(.7,0,.9,.6)' },
+        { transform: `translate(${dnX}px, ${dnY}px) scale(${(land * 1.06).toFixed(3)}) rotate(2deg)`, offset: 1 },
+      ],
+      { duration: 560, fill: 'forwards' },
+    );
+
+    const hit = window.setTimeout(() => {
+      setImpact({ key: Date.now(), x: to.left + to.width / 2, y: to.top + to.height / 2 });
+      setSlam((n) => n + 1);
+      // 꽂힌 자리를 출발점으로 넘겨야 FLIP 이 손에서부터 다시 날리지 않는다
+      flight.setOrigin(hero.card.id, to);
+      play(hero.card.id, hero.bomb);
+    }, 545);
+    const clear = window.setTimeout(() => setHero(null), 610);
+
+    return () => {
+      window.clearTimeout(hit);
+      window.clearTimeout(clear);
+      anim.cancel();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hero]);
+
+  useEffect(() => {
+    if (!impact) return;
+    const t = window.setTimeout(() => setImpact(null), 520);
+    return () => window.clearTimeout(t);
+  }, [impact]);
 
   /** 바닥패를 월별로 묶는다. 같은 월이 겹쳐 놓이는 게 실제 판 모양이다. */
   const fieldGroups = useMemo(() => {
@@ -373,12 +460,31 @@ export default function MatchScreen({
                 zone="hand"
                 selectable={canPlay}
                 chosen={selected === c.id}
+                hidden={hero?.card.id === c.id}
                 onClick={() => handCard(c)}
               />
             </div>
           ))}
           {me.hand.length === 0 && <CardBack small />}
         </div>
+
+        {hero && (
+          <img
+            ref={heroRef}
+            className="hero-card"
+            src={cardSrcNow(hero.card)}
+            alt={hero.card.name}
+            style={{ left: hero.from.left, top: hero.from.top, width: hero.from.width, height: hero.from.height }}
+            draggable={false}
+          />
+        )}
+
+        {impact && (
+          <span className="impact" key={impact.key} style={{ left: impact.x, top: impact.y }}>
+            <i />
+            <i />
+          </span>
+        )}
 
         {view.shout && (
           <div className="shout" key={view.shout.key}>

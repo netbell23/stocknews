@@ -12,7 +12,7 @@
  * 먹은 패는 0.23초 기다렸다가 — 바닥에 붙어 있는 것처럼 보인다 — 쑉 빨려 들어간다.
  * 직전 자리가 없던 카드(더미에서 뒤집힌 패)는 더미 자리에서 뒤집히며 나온다.
  */
-import { useLayoutEffect, useRef } from 'react';
+import { useCallback, useLayoutEffect, useRef } from 'react';
 
 /** 카드가 지금 어디에 있는가. 연출 타이밍이 이 값으로 갈린다. */
 export type CardZone = 'hand' | 'field' | 'pile';
@@ -38,12 +38,26 @@ function measure(root: HTMLElement): Map<string, Snap> {
   return out;
 }
 
+export interface CardFlight {
+  /**
+   * 이 카드는 "직전에 여기 있었던 걸로 쳐라".
+   * 손패를 크게 띄웠다가 바닥에 꽂는 연출은 별도로 돌아가므로, FLIP 이 그걸 한 번 더
+   * 손에서부터 날리면 두 번 움직인다. 꽂힌 자리를 출발점으로 덮어써서 막는다.
+   */
+  setOrigin(cardId: string, rect: DOMRect): void;
+}
+
 export function useCardFlight(
   boardRef: React.RefObject<HTMLElement | null>,
   deps: React.DependencyList,
   enabled = true,
-): void {
+): CardFlight {
   const prev = useRef<Map<string, { rect: DOMRect; zone: CardZone }> | null>(null);
+  const override = useRef(new Map<string, DOMRect>());
+
+  const setOrigin = useCallback((cardId: string, rect: DOMRect) => {
+    override.current.set(cardId, rect);
+  }, []);
 
   useLayoutEffect(() => {
     const root = boardRef.current;
@@ -60,7 +74,10 @@ export function useCardFlight(
     const deck = root.querySelector<HTMLElement>('[data-deck]')?.getBoundingClientRect() ?? null;
 
     for (const [cid, { rect, el, zone }] of now) {
-      const was = before.get(cid);
+      const forced = override.current.get(cid);
+      override.current.delete(cid);
+      // 덮어쓴 출발점은 바닥에 꽂힌 자리다. 바닥에서 온 것으로 친다.
+      const was = forced ? { rect: forced, zone: 'field' as CardZone } : before.get(cid);
       const from = was?.rect ?? deck;
       if (!from || rect.width === 0) continue;
 
@@ -119,4 +136,6 @@ export function useCardFlight(
       );
     }
   }, deps);
+
+  return { setOrigin };
 }
