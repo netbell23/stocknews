@@ -77,7 +77,7 @@ export function CardView({
   /** 연출로 따로 띄워둔 동안 원본은 자리만 지킨다 */
   hidden?: boolean;
   /** 연출용. useCardFlight 가 이 값으로 날아가는 타이밍을 정한다 */
-  zone?: 'hand' | 'field' | 'pile';
+  zone?: 'hand' | 'field' | 'pile-me' | 'pile-opp';
   onClick?: () => void;
 }) {
   const cls = ['card', small ? 'sm' : '', selectable ? 'selectable' : '', chosen ? 'chosen' : '']

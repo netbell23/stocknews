@@ -432,6 +432,8 @@ button {
    * 실제 판처럼 나란히 펼쳐 놓는다.
    */
   --stack-overlap: 4px;
+  /* 뻑 더미는 묶인 덩어리라 겹쳐 쌓는다 */
+  --ppeok-overlap: calc(var(--card-h, 69px) * -0.44);
   /* 상대 손패(뒷면)는 장수만 알면 되므로 촘촘히 겹친다 */
   --ohand-overlap: calc(var(--card-h, 69px) * -0.34);
   /*
@@ -1016,15 +1018,31 @@ button {
 
 .fstack-tag {
   position: absolute;
-  top: -5px;
-  right: -5px;
-  font-size: 9px;
+  top: -7px;
+  left: 50%;
+  transform: translateX(-50%);
+  white-space: nowrap;
+  font-size: 10px;
   font-weight: 800;
   background: var(--accent);
   color: #fff;
   border-radius: 6px;
-  padding: 1px 4px;
-  z-index: 9;
+  padding: 2px 6px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.6);
+  z-index: 30;
+}
+
+/* 뻑 더미는 한 덩어리로 묶여 보여야 한다 */
+.fstack.ppeok {
+  padding: 5px 6px 3px;
+  border-radius: 9px;
+  background: rgba(181, 73, 63, 0.22);
+  outline: 2px dashed rgba(255, 217, 138, 0.55);
+  outline-offset: -2px;
+}
+
+.fstack.ppeok .card {
+  box-shadow: -3px 2px 5px rgba(0, 0, 0, 0.6);
 }
 
 .field-mid {
@@ -1377,6 +1395,58 @@ button {
   }
   100% {
     transform: scale(1.3);
+    opacity: 0;
+  }
+}
+
+/* 크게 먹었을 때 약 올리는 한마디. 상납 연출이 오는 동안 떠 있다 */
+.taunt {
+  position: absolute;
+  left: 50%;
+  bottom: 16%;
+  transform: translateX(-50%);
+  z-index: 7;
+  pointer-events: none;
+  white-space: nowrap;
+  font-size: clamp(15px, 3vmin, 24px);
+  font-weight: 900;
+  color: var(--ink);
+  background: var(--lamp);
+  border: 3px solid var(--accent);
+  border-radius: 999px;
+  padding: 8px 20px;
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.6);
+  animation: tauntPop 2.6s cubic-bezier(0.2, 1.5, 0.35, 1) forwards;
+}
+
+.taunt::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  bottom: -11px;
+  margin-left: -9px;
+  border: 9px solid transparent;
+  border-top-color: var(--accent);
+}
+
+@keyframes tauntPop {
+  0% {
+    transform: translateX(-50%) scale(0.3) rotate(-10deg);
+    opacity: 0;
+  }
+  10% {
+    transform: translateX(-50%) scale(1.18) rotate(4deg);
+    opacity: 1;
+  }
+  20% {
+    transform: translateX(-50%) scale(1) rotate(-2deg);
+  }
+  84% {
+    transform: translateX(-50%) scale(1) rotate(0deg);
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(-50%) translateY(-14px) scale(0.95);
     opacity: 0;
   }
 }

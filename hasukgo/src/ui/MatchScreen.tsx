@@ -80,7 +80,7 @@ function CapturedPiles({
                 key={c.id}
                 className="pile-card"
                 data-cid={c.id}
-                data-zone="pile"
+                data-zone={side === '내 것' ? 'pile-me' : 'pile-opp'}
                 style={{ marginLeft: i === 0 ? 0 : 'var(--pile-overlap)' }}
                 src={cardSrcNow(c)}
                 alt={c.name}
@@ -173,6 +173,8 @@ export default function MatchScreen({
   const aiHeroRef = useRef<HTMLImageElement>(null);
   /** 내가 잘 맞췄을 때 하숙생이 움찔하는 연출 */
   const [startled, setStartled] = useState(0);
+  /** 크게 먹었을 때 약 올리는 한마디 */
+  const [taunt, setTaunt] = useState<{ key: number; text: string } | null>(null);
 
   useEffect(() => {
     if (s.phase === 'ended') {
@@ -372,6 +374,32 @@ export default function MatchScreen({
     return () => window.clearTimeout(t);
   }, [startled]);
 
+  /*
+   * 내가 크게 먹으면 한마디 던진다. 상납이 오는 연출이 끝날 즈음까지 띄워
+   * "왜 상대 패가 나한테 오는지" 가 말로도 붙게 한다.
+   */
+  useEffect(() => {
+    const sh = view.shout;
+    if (!sh || sh.by !== HUMAN) return;
+    const lines: Record<string, string[]> = {
+      '쪽!': ['쪽이지롱~', '쪽! 한 장 내놔.', '어? 쪽이네?'],
+      '따닥!': ['따닥이지롱~', '따닥! 미안~', '네 장 다 내 거.'],
+      '쓸!': ['싹 쓸었다!', '바닥이 비었네~', '쓸! 하나 더 받을게.'],
+      '폭탄!': ['폭탄이다!', '한 번에 간다.'],
+      '총통!': ['총통!', '시작부터 네 장이야.'],
+    };
+    const pool = lines[sh.text];
+    if (!pool) return;
+    setTaunt({ key: sh.key, text: pool[Math.floor(Math.random() * pool.length)] });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [view.shout?.key]);
+
+  useEffect(() => {
+    if (!taunt) return;
+    const t = window.setTimeout(() => setTaunt(null), 2600);
+    return () => window.clearTimeout(t);
+  }, [taunt]);
+
   /** 바닥패를 월별로 묶는다. 같은 월이 겹쳐 놓이는 게 실제 판 모양이다. */
   const fieldGroups = useMemo(() => {
     const byMonth = new Map<number, Card[]>();
@@ -411,15 +439,21 @@ export default function MatchScreen({
     };
   }, [s.settlement, me]);
 
-  const renderStack = (g: { month: number; cards: Card[] }) => (
-    <div className="fstack" key={g.month}>
+  const renderStack = (g: { month: number; cards: Card[] }) => {
+    // 뻑 더미는 묶여 있는 한 덩어리다. 펼쳐 놓으면 같은 월이 여러 장인 것과 구분이 안 된다
+    const isPpeok = s.ppeokPiles[g.month] !== undefined;
+    return (
+    <div className={`fstack ${isPpeok ? 'ppeok' : ''}`} key={g.month}>
       {g.cards.map((c, i) => {
         const isCandidate = mustChoose && s.pendingChoice?.candidates.some((x) => x.id === c.id);
         return (
           <div
             className={`fslot ${isCandidate ? 'candidate' : ''} ${hintMonth === c.month ? 'match' : ''}`}
             key={c.id}
-            style={{ marginLeft: i === 0 ? 0 : 'var(--stack-overlap)', zIndex: i }}
+            style={{
+              marginLeft: i === 0 ? 0 : isPpeok ? 'var(--ppeok-overlap)' : 'var(--stack-overlap)',
+              zIndex: i,
+            }}
           >
             <CardView
               card={c}
@@ -430,9 +464,10 @@ export default function MatchScreen({
           </div>
         );
       })}
-      {s.ppeokPiles[g.month] !== undefined && <span className="fstack-tag">뻑</span>}
+      {isPpeok && <span className="fstack-tag">뻑 {g.cards.length}장</span>}
     </div>
-  );
+    );
+  };
 
   return (
     <div className="screen match-screen">
@@ -613,6 +648,12 @@ export default function MatchScreen({
             <i />
             <b style={{ width: impact.w, height: impact.h, marginLeft: -impact.w / 2, marginTop: -impact.h / 2 }} />
           </span>
+        )}
+
+        {taunt && (
+          <div className="taunt" key={taunt.key}>
+            {taunt.text}
+          </div>
         )}
 
         {view.shout && (

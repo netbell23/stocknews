@@ -15,7 +15,9 @@
 import { useCallback, useLayoutEffect, useRef } from 'react';
 
 /** 카드가 지금 어디에 있는가. 연출 타이밍이 이 값으로 갈린다. */
-export type CardZone = 'hand' | 'field' | 'pile';
+export type CardZone = 'hand' | 'field' | 'pile-me' | 'pile-opp';
+
+const isPile = (z: CardZone) => z === 'pile-me' || z === 'pile-opp';
 
 interface Snap {
   rect: DOMRect;
@@ -32,6 +34,10 @@ const THROW_MS = 300;
 const SWEEP_MS = 1000;
 const SWEEP_WAIT = 440;
 const SWEEP_STAGGER = 220;
+
+/** 상납(쪽·따닥·쓸): 먹는 게 다 끝난 뒤에 상대 더미에서 한 장을 뺏어온다 */
+const STEAL_MS = 900;
+const STEAL_GAP = 300;
 
 /** 더미에서 뒤집히는 패: 천천히 들어올려 앞면을 보여준 뒤 내려놓는다 */
 const REVEAL_MS = 1200;
@@ -101,6 +107,8 @@ export function useCardFlight(
     const mark = (delay: number, dur: number) => {
       tail = Math.max(tail, delay + dur);
     };
+    /** 상대 더미 → 내 더미(또는 그 반대)로 옮겨간 패. 먹기가 끝난 뒤에 따로 날린다 */
+    const steals: Array<{ el: HTMLElement; dx: number; dy: number; sc: number }> = [];
 
     for (const [cid, { rect, el, zone }] of now) {
       const forced = override.current.get(cid);
@@ -160,7 +168,16 @@ export function useCardFlight(
         continue;
       }
 
-      if (zone === 'pile') {
+      /*
+       * 상납. 더미에서 더미로 건너간 패다.
+       * 자리만 밀린 것으로 보면 조용히 미끄러져 "언제 뺏겼는지" 모르고 지나간다.
+       */
+      if (isPile(zone) && was && isPile(was.zone) && was.zone !== zone) {
+        steals.push({ el, dx, dy, sc });
+        continue;
+      }
+
+      if (isPile(zone)) {
         // 붙었다가 → 한 장씩 차례로 쑉
         const wait = (hasReveal ? SWEEP_WAIT_AFTER_REVEAL : SWEEP_WAIT) + sweptCount * SWEEP_STAGGER;
         sweptCount += 1;
@@ -194,6 +211,29 @@ export function useCardFlight(
         { duration: fresh ? THROW_MS + 60 : THROW_MS, fill: 'backwards' },
       );
       mark(0, fresh ? THROW_MS + 60 : THROW_MS);
+    }
+
+    // 먹는 연출이 전부 끝난 뒤에 상납을 보여준다
+    if (steals.length) {
+      const wait = tail + STEAL_GAP;
+      steals.forEach((st, i) => {
+        const from = `translate(${st.dx.toFixed(1)}px, ${st.dy.toFixed(1)}px) scale(${st.sc.toFixed(3)})`;
+        st.el.animate(
+          [
+            { transform: from, offset: 0 },
+            { transform: `${from} scale(1.9) rotate(-10deg)`, offset: 0.2, easing: 'cubic-bezier(.2,.9,.3,1)' },
+            {
+              transform: `translate(${(st.dx * 0.45).toFixed(1)}px, ${(st.dy * 0.45 - 34).toFixed(1)}px) scale(2)`,
+              offset: 0.5,
+              easing: 'cubic-bezier(.5,0,.4,1)',
+            },
+            { transform: 'scale(1.5)', offset: 0.78, easing: 'cubic-bezier(.4,0,.2,1)' },
+            { transform: 'none', offset: 1 },
+          ],
+          { duration: STEAL_MS, delay: wait + i * 180, fill: 'backwards' },
+        );
+        mark(wait + i * 180, STEAL_MS);
+      });
     }
 
     if (tail > 0) {
