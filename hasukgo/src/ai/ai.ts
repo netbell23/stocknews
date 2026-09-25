@@ -68,12 +68,20 @@ export function marginalValue(s: GameState, p: PlayerId, c: Card, params: AiPara
   return v;
 }
 
-/** 바닥에 남겨두면 상대가 가져갈 위험도 */
+/**
+ * 바닥에 남겨두면 상대가 가져갈 위험도.
+ * 상대가 그 월을 들고 있어야 가져간다 — 이미 넉 장이 다 드러난 월을 깔아도 아무 일 없다.
+ * 추론이 약하면 이 계산 자체를 못 하고 패의 값만 본다.
+ */
 function fieldRisk(s: GameState, opp: PlayerId, c: Card, params: AiParams): number {
-  // 추론이 약하면 위험을 거의 못 본다
   const seen = params.inference;
+  if (seen <= 0) return 0;
   const oppValue = marginalValue(s, opp, c, params);
-  return oppValue * seen * 0.45;
+  const unseen = countUnseen(s, opp === 0 ? 1 : 0);
+  const live = remainingOfMonth(s, opp === 0 ? 1 : 0, c.month);
+  // 상대 손에 그 월이 있을 확률 (못 본 패 중 상대 손패가 차지하는 비율)
+  const inOppHand = unseen === 0 ? 0 : (live / unseen) * s.players[opp].hand.length;
+  return oppValue * seen * Math.min(1, inOppHand) * 0.8;
 }
 
 export interface PlayDecision {
@@ -118,14 +126,19 @@ export function chooseCard(
       v -= marginalValue(s, me, c, params) * 0.25;
       // 쪽 기대값: 같은 월이 아직 덱/상대 손에 남아있을 확률
       const remaining = remainingOfMonth(s, me, c.month);
-      v += (remaining / Math.max(1, unseen)) * 6 * params.inference;
+      v += (remaining / Math.max(1, unseen)) * 3 * params.inference;
     } else if (matches.length === 1) {
       v += marginalValue(s, me, c, params) + marginalValue(s, me, matches[0], params);
       // 견제: 상대가 그 패로 조합을 완성할 참이었다면 끊는 가치가 크다
       v += marginalValue(s, opp, matches[0], params) * params.inference * 0.5;
-      // 뻑 위험: 같은 월 4번째 장이 덱에 남아 있으면 뒤집혀 묶일 수 있다
+      /*
+       * 뻑 위험. 짝을 맞춰 내는데 하필 뒤집은 패가 같은 월이면 셋이 묶인다.
+       * 다만 그건 덱에서 바로 그 한 장이 나와야 하는 일이라 확률이 작다 —
+       * 여기서 크게 겁을 주면 먹을 수 있는 짝도 안 먹는 AI 가 된다.
+       */
       const remaining = remainingOfMonth(s, me, c.month);
-      v -= (remaining / Math.max(1, unseen)) * 9 * params.inference;
+      const inDeck = s.deck.length === 0 ? 0 : Math.min(1, remaining / Math.max(1, unseen));
+      v -= inDeck * 2.5 * params.inference;
     } else {
       // 2장 이상 -> 가장 값진 것을 먹는다
       const sorted = [...matches].sort(
@@ -210,7 +223,14 @@ export interface GoStopDecision {
 
 /**
  * 고/스톱 판단.
- * 남은 패가 많고 내가 유리하면 고, 상대 점수가 코앞이면 스톱.
+ *
+ * 고는 점수를 걸고 하는 거래다. 지금 접으면 확실한 승리고,
+ * 한 번 더 가면 점수는 오르지만 뒤집히면 고박으로 두 배를 문다.
+ * 그래서 이 판단이 곧 실력이다 — 잘 두는 사람은 이겼을 때 접고,
+ * 서툰 사람은 판이 뒤집힐 수 있다는 걸 못 보고 지른다.
+ *
+ * 위험을 얼마나 보는지는 inference 가 정한다. 추론이 0 이면
+ * 상대가 코앞까지 온 것이 아예 안 보여서, 남은 패가 있는 한 계속 간다.
  */
 export function decideGoStop(
   s: GameState,
@@ -224,38 +244,50 @@ export function decideGoStop(
   const oppScore = scorePlayer(s.players[opp], s.rules).base;
   const cardsLeft = s.players[me].hand.length;
 
-  // 실수 구간: 아무 판단 없이 성향대로
+  // 실수 구간: 판을 보지 않고 성향대로 지른다
   if (rng.next() < params.mistakeRate) {
     return { action: rng.next() < params.greed ? 'go' : 'stop', confidence: 0.2 };
   }
 
-  // 이미 충분히 크면 스톱
+  // 칠 패가 없으면 고는 그냥 손해다
+  if (cardsLeft <= 1) return { action: 'stop', confidence: 0.85 };
+  // 이미 충분히 크면 접는다
   if (myScore >= params.stopScore) return { action: 'stop', confidence: 0.9 };
-  // 상대가 코앞이면 스톱
-  if (oppScore >= s.rules.minScoreToStop - 2) return { action: 'stop', confidence: 0.85 };
-  // 칠 패가 얼마 없으면 고가 무의미
-  if (cardsLeft <= 1) return { action: 'stop', confidence: 0.8 };
 
-  // 기대 이득 = 남은 턴 수 x 턴당 기대 득점 - 고박 위험
-  const expectedGain = cardsLeft * 0.55 * (0.6 + params.greed);
-  const goBakRisk = (oppScore / Math.max(1, s.rules.minScoreToStop)) * (1.4 - params.inference);
+  // 한 번 더 가서 벌어들일 몫. 고 한 번이 +1 점이고, 세 번 가면 판돈이 두 배다.
+  const gain = Math.min(4.5, 0.6 + cardsLeft * 0.5) * (0.7 + 0.7 * params.greed);
+
+  /*
+   * 뒤집힐 확률. 상대에게 아직 칠 패가 남아 있고 점수가 붙어 있을수록 높다.
+   * 거의 다 온 조합(3광 직전 · 단 두 장 · 피 8점)이 있으면 한 번에 넘어간다.
+   */
+  const oppCards = s.players[opp].hand.length;
+  const gapToWin = Math.max(0, s.rules.minScoreToStop - oppScore);
+  const oppCap = s.players[opp].captured;
+  const oppPi = oppCap.pi.reduce((a, c) => a + (c.piValue ?? 1), 0);
+  let brewing = 0;
+  if (oppCap.gwang.length >= 2) brewing += 0.16;
+  if (oppCap.yeol.filter((c) => c.isGodori).length >= 2) brewing += 0.1;
+  for (const kind of ['hong', 'cheong', 'cho'] as const) {
+    if (oppCap.tti.filter((c) => c.tti === kind).length >= 2) brewing += 0.1;
+  }
+  if (oppPi >= 8) brewing += 0.12;
+  const overturn = clamp01(0.06 + (oppCards / 10) * Math.max(0, 1 - gapToWin / 9) * 1.1 + brewing);
+
+  // 고박이면 내가 물어줄 점수가 두 배가 된다 — 걸려 있는 판돈 자체가 위험의 크기다
+  const risk = overturn * (myScore * (s.rules.goBak ? 2 : 1) + 3);
+
   // 플레이어가 고를 자주 하는 타입이면 판이 길어질 것을 감안
   const playerGoBias = (profile.goRate - 0.3) * params.patternLearning;
 
-  // 박(2배) 성립이 눈앞이면 한 턴 더 가는 가치가 크다. 추론이 약하면 이걸 못 본다.
-  let bakUpside = 0;
-  if (params.inference > 0.2) {
-    const oppCap = s.players[opp].captured;
-    const oppPi = oppCap.pi.reduce((a, c) => a + (c.piValue ?? 1), 0);
-    const myBd = scorePlayer(s.players[me], s.rules);
-    if (s.rules.piBak && oppPi <= s.rules.piBakThreshold + 2 && myBd.piScore > 0) bakUpside += 2.2;
-    if (s.rules.gwangBak && oppCap.gwang.length === 0 && myBd.gwangScore > 0) bakUpside += 1.8;
-    bakUpside *= params.inference;
-  }
-
-  const net = expectedGain + bakUpside - goBakRisk * 1.6 + playerGoBias;
+  // 위험이 얼마나 보이는가. 이게 곧 난이도다.
+  const net = gain - risk * params.inference + playerGoBias;
   const go = net > 0;
   return { action: go ? 'go' : 'stop', confidence: Math.min(1, Math.abs(net) / 3) };
+}
+
+function clamp01(v: number): number {
+  return Math.max(0, Math.min(1, v));
 }
 
 /** 흔들기 선언 여부 */

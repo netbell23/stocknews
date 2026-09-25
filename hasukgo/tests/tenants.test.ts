@@ -8,6 +8,7 @@ import {
   toneOf,
   unlockHint,
 } from '../src/data/tenants';
+import { curveParams } from '../src/ai/params';
 import { playSeries, type Seat } from '../src/ai/runner';
 import { cheapestEntry, emptySave, isStuck, payoutFor, takeAllowance } from '../src/save/storage';
 import { minStake } from '../src/data/tenants';
@@ -185,6 +186,8 @@ describe('호감도 톤', () => {
 
 describe('실제 대국 난이도 (하숙생 스타일 반영)', () => {
   const seatOf = (id: string, stage: number): Seat => ({ params: paramsFor(getTenant(id), stage) });
+  /** 기준 플레이어: 실수 없이 판을 읽고 이겼을 때 접는, 숙련된 사람 */
+  const REFERENCE: Seat = { params: { ...curveParams(10, 10), greed: 0.25 } };
 
   it('은서 1단계보다 윤 10단계가 확실히 강하다', () => {
     const r = playSeries([seatOf('eunseo', 1), seatOf('yoon', 10)], 500, 5150);
@@ -193,7 +196,28 @@ describe('실제 대국 난이도 (하숙생 스타일 반영)', () => {
 
   it('같은 하숙생이라도 10단계가 1단계보다 강하다', () => {
     const r = playSeries([seatOf('sua', 1), seatOf('sua', 10)], 500, 6160);
-    expect(1 - r.winRate0).toBeGreaterThan(0.5);
+    expect(1 - r.winRate0).toBeGreaterThan(0.55);
+  });
+
+  it('모든 하숙생이 1단계보다 10단계에서 더 잘 이긴다', () => {
+    for (const t of TENANTS) {
+      const easy = playSeries([REFERENCE, seatOf(t.id, 1)], 200, 8100);
+      const hard = playSeries([REFERENCE, seatOf(t.id, 10)], 200, 8100);
+      // 10단계 쪽이 기준 플레이어에게 덜 진다
+      expect(hard.winRate0, `${t.id}: 1단계 ${easy.winRate0} → 10단계 ${hard.winRate0}`).toBeLessThan(
+        easy.winRate0,
+      );
+    }
+  });
+
+  /*
+   * 난이도가 평평해지면 열 명을 만드는 의미가 없다.
+   * 첫 상대와 마지막 상대 사이가 얼마나 벌어져 있는지를 못으로 박아 둔다.
+   */
+  it('첫 상대와 마지막 상대의 승률이 30%p 이상 벌어진다', () => {
+    const first = playSeries([REFERENCE, seatOf('eunseo', 1)], 400, 8200).winRate0;
+    const last = playSeries([REFERENCE, seatOf('yoon', 10)], 400, 8200).winRate0;
+    expect(first - last, `은서1 ${first} · 윤10 ${last}`).toBeGreaterThan(0.3);
   });
 
   it('모든 하숙생이 10단계에서 무한루프 없이 판을 끝낸다', () => {

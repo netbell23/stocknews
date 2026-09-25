@@ -7,9 +7,19 @@ const GAMES = 400;
 const seat = (order: number, stage: number): Seat => ({ params: curveParams(order, stage) });
 
 describe('난이도 곡선 파라미터', () => {
-  it('1번 1단계는 실수율 50%, 10번 10단계는 0%', () => {
-    expect(curveParams(1, 1).mistakeRate).toBeCloseTo(0.5, 5);
+  it('1번 1단계는 실수율 70%, 10번 10단계는 0%', () => {
+    expect(curveParams(1, 1).mistakeRate).toBeCloseTo(0.7, 5);
     expect(curveParams(10, 10).mistakeRate).toBeCloseTo(0, 5);
+  });
+
+  it('욕심은 실력과 반대로 간다 — 초보가 지르고 고수가 접는다', () => {
+    expect(curveParams(1, 1).greed).toBeGreaterThan(curveParams(5, 5).greed);
+    expect(curveParams(5, 5).greed).toBeGreaterThan(curveParams(10, 10).greed);
+  });
+
+  it('두 축의 무게가 같다 — 1번 10단계와 10번 1단계는 같은 실력', () => {
+    expect(curveParams(1, 10).mistakeRate).toBeCloseTo(curveParams(10, 1).mistakeRate, 5);
+    expect(curveParams(1, 10).inference).toBeCloseTo(curveParams(10, 1).inference, 5);
   });
 
   it('순번이 올라가면 실수가 줄고 추론이 강해진다', () => {
@@ -37,7 +47,7 @@ describe('난이도 차이가 실제 승률로 나타난다', () => {
   it('10번 10단계는 1번 1단계를 크게 이긴다', () => {
     const r = playSeries([seat(1, 1), seat(10, 10)], GAMES, 1000);
     const strongWinRate = 1 - r.winRate0;
-    expect(strongWinRate).toBeGreaterThan(0.6);
+    expect(strongWinRate).toBeGreaterThan(0.7);
   });
 
   it('5번 5단계는 1번 1단계보다 강하고 10번 10단계보다 약하다', () => {

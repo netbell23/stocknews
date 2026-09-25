@@ -27,14 +27,23 @@ export function toneOf(affection: number): Tone {
 
 /**
  * 하숙생 + 단계 조합의 실제 AI 파라미터.
- * 난이도 곡선 위에 하숙생 고유 스타일을 곱해서 얹는다.
+ * 난이도 곡선 위에 하숙생 고유 스타일을 얹는다.
+ *
+ * 스타일 배율은 절반만 먹인다. 윤의 mistakeScale 0.3 을 그대로 곱하면
+ * 1단계에서 이미 실수율이 0.13 이라, 10단계까지 올라가도 달라질 폭이
+ * 남지 않는다 — 열 판을 이겨도 상대가 그대로인 셈이다.
+ * 성격은 드러나되 단계가 주는 진도를 덮지 않을 만큼만 민다.
  */
+const STYLE_PULL = 0.55;
+const damp = (scale: number | undefined): number => 1 + ((scale ?? 1) - 1) * STYLE_PULL;
+
 export function paramsFor(tenant: Tenant, stage: number): AiParams {
   const base = curveParams(tenant.order, stage);
   const st = tenant.style;
   return applyStyle(base, {
-    mistakeRate: clamp01(base.mistakeRate * (st.mistakeScale ?? 1)),
-    inference: clamp01(base.inference * (st.inferenceScale ?? 1)),
+    mistakeRate: clamp01(base.mistakeRate * damp(st.mistakeScale)),
+    inference: clamp01(base.inference * damp(st.inferenceScale)),
+    // 욕심과 흔들기는 성격 그 자체라 그대로 둔다
     greed: clamp01(base.greed * (st.greedScale ?? 1)),
     aggression: clamp01(base.aggression * (st.aggressionScale ?? 1)),
     stopScore: Math.max(7, base.stopScore + (st.stopScoreDelta ?? 0)),
