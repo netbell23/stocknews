@@ -331,8 +331,13 @@ export default function App() {
   }
 
   if (screen.name === 'novel') {
+    /*
+     * 대화 장면도 프레임을 푼다. 인물이 사진이라 480px 기둥에 가두면
+     * 가로 화면에서 양옆이 까맣게 남는다. 바로 뒤에 오는 승부 판도
+     * 이미 풀려 있으므로, 같이 펴야 화면이 덜컥거리지 않는다.
+     */
     return (
-      <div className="app">
+      <div className="app wide">
         <NovelScreen
           key={screen.scene.id}
           scene={screen.scene}
@@ -348,7 +353,8 @@ export default function App() {
     const prog = data.tenants[screen.tenant.id];
     const scene = preMatchScene(screen.tenant, prog?.affection ?? 0, screen.stage);
     return (
-      <div className="app">
+      // 대화도 판과 같은 폭으로. 바로 뒤에 승부가 이어지므로 덜컥거리면 안 된다
+      <div className="app wide">
         <NovelScreen
           key={scene.id}
           scene={scene}

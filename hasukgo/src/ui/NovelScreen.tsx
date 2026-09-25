@@ -3,7 +3,8 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { advance, choose, fastForward, startScenario, type ScenarioState } from '../scenario/player';
 import type { Scene } from '../scenario/types';
 import type { Tenant } from '../data/types';
-import { Background, Portrait } from './parts';
+import { charArtSrc } from '../art/artFiles';
+import { Background, PhotoBackdrop, Portrait } from './parts';
 
 export interface NovelResult {
   affectionDelta: number;
@@ -90,10 +91,19 @@ export default function NovelScreen({
   }, [v, onDone]);
 
   const speakerIsTenant = tenant !== null && v.speaker === tenant.name;
+  /*
+   * 원화가 있으면 그 사람의 사진으로 화면을 채운다.
+   * 코드로 그린 방을 뒤에 깔면 서늘한 밤 그림 위에 따뜻한 사진 액자가
+   * 떠 있는 꼴이 된다 — 같은 장면인데 두 세계가 따로 논다.
+   * 사진은 제 방을 달고 오므로, 그 방을 흐리게 깔면 어긋날 데가 없다.
+   */
+  const art = tenant && !v.cg
+    ? charArtSrc(tenant.id, 'full', speakerIsTenant ? v.expression : 'normal')
+    : null;
 
   return (
-    <div className="screen" onClick={next}>
-      <Background bg={v.bg} time={v.time} />
+    <div className={`screen novel-screen ${art ? 'photo' : ''}`} onClick={next}>
+      {art ? <PhotoBackdrop src={art} dim={0.5} /> : <Background bg={v.bg} time={v.time} />}
       <div className="layer">
         <div className="topbar" onClick={(e) => e.stopPropagation()}>
           <h1>{scene.title}</h1>
