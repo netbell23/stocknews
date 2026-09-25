@@ -85,6 +85,24 @@ const SWEEP_WAIT_AFTER_REVEAL = 1280;
  * 연출 동안만 맨 위로 올린다.
  * 바닥패는 .fslot 이 stacking context 를 만들어 카드에만 z-index 를 줘도 소용없다.
  */
+/**
+ * 연출이 겹칠 때 누가 위에 오는가.
+ *
+ * 종류별로 높이를 못박아 두면(뒤집기 80 · 먹기 55 …) 나중에 시작한 패가
+ * 먼저 시작한 패 밑으로 지나간다. 눈에는 방금 움직인 것이 위에 있어야
+ * 자연스러우므로, 시작 시각이 늦을수록 높이 올린다.
+ * 같은 순간에 시작한 것들만 종류로 순서를 가른다.
+ */
+function zAt(delay: number, bias = 0): number {
+  return 40 + Math.round(delay / 5) + bias;
+}
+
+/** 같은 순간에 시작했을 때의 우선순위 */
+const Z_LAND = 0;
+const Z_SWEEP = 2;
+const Z_STEAL = 4;
+const Z_REVEAL = 6;
+
 function lift(el: HTMLElement, anim: Animation, z = 60): void {
   const slot = el.closest<HTMLElement>('.fslot') ?? el;
   const prevZ = slot.style.zIndex;
@@ -266,7 +284,7 @@ export function useCardFlight(
             ],
             { duration: REVEAL_HIT_MS, fill: 'backwards' },
           );
-          lift(el, a, 80);
+          lift(el, a, zAt(0, Z_REVEAL));
           onImpact?.(hit, REVEAL_HIT_MS * HIT_AT);
           mark(0, REVEAL_HIT_MS);
           continue;
@@ -283,7 +301,7 @@ export function useCardFlight(
           { duration: REVEAL_MS, fill: 'backwards' },
         );
         // 들어올려 뒤집는 패는 무조건 제일 위에 있어야 한다
-        lift(el, anim, 80);
+        lift(el, anim, zAt(0, Z_REVEAL));
         mark(0, REVEAL_MS);
         continue;
       }
@@ -316,7 +334,7 @@ export function useCardFlight(
         ],
         { duration: fresh ? THROW_MS + 60 : THROW_MS, fill: 'backwards' },
       );
-      lift(el, anim, 45);
+      lift(el, anim, zAt(0, Z_LAND));
       mark(0, fresh ? THROW_MS + 60 : THROW_MS);
     }
 
@@ -348,7 +366,7 @@ export function useCardFlight(
         ],
         { duration: SWEEP_MS, delay: wait, fill: 'backwards' },
       );
-      lift(el, anim, 55);
+      lift(el, anim, zAt(wait, Z_SWEEP));
       mark(wait, SWEEP_MS);
     });
 
@@ -371,7 +389,7 @@ export function useCardFlight(
           ],
           { duration: STEAL_MS, delay: wait + i * 180, fill: 'backwards' },
         );
-        lift(st.el, anim, 70);
+        lift(st.el, anim, zAt(wait + i * STEAL_GAP, Z_STEAL));
         mark(wait + i * 180, STEAL_MS);
       });
     }

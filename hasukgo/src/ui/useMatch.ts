@@ -113,6 +113,15 @@ const EVENT_SHOUT: Partial<Record<GameEvent['type'], string>> = {
   stop: '스톱!',
 };
 
+/*
+ * 뒤집은 패가 내려앉아야 비로소 성립하는 것들.
+ * 상태에는 패를 내는 순간 이미 적히지만, 화면에서는 아직 뒷장이 날아오는
+ * 중이라 곧바로 외치면 「뻑!」 하고 나서 세 번째 장이 붙는 꼴이 된다.
+ * 뒷장이 붙는 시각에 맞춰 늦춘다.
+ */
+const AFTER_FLIP: ReadonlySet<GameEvent['type']> = new Set(['ppeok', 'jappeok', 'jjok', 'ttadak', 'sseul']);
+const FLIP_LANDS_MS = 980;
+
 /** 이벤트에 어울리는 표정 */
 function expressionFor(events: GameEvent[], who: PlayerId): Expression {
   for (const e of events) {
@@ -187,7 +196,9 @@ export function useMatch(opts: MatchOptions) {
       for (const e of events) {
         const text = EVENT_SHOUT[e.type];
         if (text) {
-          fireShout(text, e.player, e.detail ?? EVENT_NOTE[e.type]);
+          const say = () => fireShout(text, e.player, e.detail ?? EVENT_NOTE[e.type]);
+          if (AFTER_FLIP.has(e.type)) later(say, FLIP_LANDS_MS);
+          else say();
           break;
         }
       }
@@ -197,7 +208,7 @@ export function useMatch(opts: MatchOptions) {
       if (ppeok) setLine(pick(tenant.lines.ppeok[tone], rnd));
       else if (sseul) setLine(pick(tenant.lines.sseulVictim[tone], rnd));
     },
-    [fireShout, rnd, tenant, tone],
+    [fireShout, later, rnd, tenant, tone],
   );
 
   /** 화면 연출이 끝날 때까지 기다렸다가 움직인다 */

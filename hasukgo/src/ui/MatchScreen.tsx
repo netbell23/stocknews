@@ -19,6 +19,24 @@ import { useCardFlight } from './useCardFlight';
 import { AI_THROW_MS, useMatch } from './useMatch';
 
 const HUMAN: PlayerId = 0;
+
+/*
+ * 뒤집은 패가 바닥에 내려앉는 시각. useCardFlight 의 내리치기 연출
+ * (REVEAL_HIT_MS 2000ms × HIT_AT 0.45) 이 끝나는 지점에 맞춰 뻑을 묶는다.
+ */
+export const PPEOK_BIND_MS = 980;
+
+/**
+ * 뻑 묶음을 언제 화면에 반영할 것인가.
+ *
+ * 뻑이 새로 생겼으면 뒷장이 날아와 붙을 때까지 기다린다 — 그래야 세 장이
+ * 모인 뒤에 묶이는 순서로 보인다. 반대로 뻑이 풀려 사라지는 건 누군가
+ * 그 더미를 가져갔다는 뜻이라 곧바로 반영해야 한다. 늦추면 이미 없는
+ * 더미에 묶음 표시가 남는다.
+ */
+export function ppeokBindDelay(shown: string, next: string): number {
+  return next.length > shown.length ? PPEOK_BIND_MS : 0;
+}
 const AI: PlayerId = 1;
 
 export interface MatchOutcome {
@@ -503,13 +521,33 @@ export default function MatchScreen({
     };
   }, [s.settlement, me]);
 
+  /*
+   * 뻑은 뒤집은 패가 세 번째로 붙고 나서야 뻑이다.
+   *
+   * 엔진은 패를 내는 그 순간 이미 뻑으로 적어두는데, 화면에서는 아직
+   * 뒷장이 날아오는 중이다. 그대로 두면 「뻑」 묶음이 먼저 생기고 세 번째
+   * 장이 나중에 날아와 붙는 — 거꾸로 된 순서가 보인다.
+   * 뒷장이 내려앉을 때까지 기다렸다가 묶는다.
+   */
+  const ppeokKey = Object.keys(s.ppeokPiles).sort().join(',');
+  const [shownKey, setShownKey] = useState(ppeokKey);
+  useEffect(() => {
+    if (shownKey === ppeokKey) return;
+    const id = window.setTimeout(() => setShownKey(ppeokKey), ppeokBindDelay(shownKey, ppeokKey));
+    return () => window.clearTimeout(id);
+  }, [ppeokKey, shownKey]);
+  const ppeokShown = useMemo(
+    () => new Set(shownKey ? shownKey.split(',').map(Number) : []),
+    [shownKey],
+  );
+
   /** 빈 자리는 칸만 지킨다 — 그래야 남은 패가 제자리에 머문다 */
   const renderSlot = (g: { month: number; cards: Card[] } | null, i: number) =>
     g ? renderStack(g) : <div className="fslot-empty" key={`empty-${i}`} />;
 
   const renderStack = (g: { month: number; cards: Card[] }) => {
     // 뻑 더미는 묶여 있는 한 덩어리다. 펼쳐 놓으면 같은 월이 여러 장인 것과 구분이 안 된다
-    const isPpeok = s.ppeokPiles[g.month] !== undefined;
+    const isPpeok = ppeokShown.has(g.month);
     return (
     <div className={`fstack ${isPpeok ? 'ppeok' : ''}`} key={g.month}>
       {g.cards.map((c, i) => {
