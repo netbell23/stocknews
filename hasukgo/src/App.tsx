@@ -27,7 +27,7 @@ import GalleryScreen from './ui/GalleryScreen';
 import HomeScreen from './ui/HomeScreen';
 import MatchScreen, { type MatchOutcome } from './ui/MatchScreen';
 import NovelScreen, { type NovelResult } from './ui/NovelScreen';
-import { Background, Portrait, setCardSkin } from './ui/parts';
+import { Background, GameLogo, Portrait, setCardSkin } from './ui/parts';
 import SettingsScreen from './ui/SettingsScreen';
 import ShopScreen from './ui/ShopScreen';
 
@@ -267,24 +267,35 @@ export default function App() {
       <div className="app">
         <div className="screen title-screen">
           <Background bg="maru" time="night" />
-          <div className="layer title-screen" style={{ justifyContent: 'center' }}>
-            <div className="title-logo">하숙생 맞고</div>
+          <div className="title-vignette" />
+          <div className="layer title-layer">
+            <GameLogo className="title-logo" />
             <div className="title-sub">밤마다 마루에서, 열 번의 승부</div>
-            <div className="title-menu">
-              <button className="btn primary wide" onClick={startFromTitle}>
-                {data.stats.totalGames > 0 ? '이어하기' : '시작하기'}
-              </button>
-              <button className="btn wide" onClick={() => setScreen({ name: 'gallery' })}>
-                도감
-              </button>
-              <button className="btn wide" onClick={() => setScreen({ name: 'settings' })}>
-                설정
-              </button>
-            </div>
-            <div style={{ marginTop: 18, display: 'flex', gap: 2 }}>
-              {TENANTS.slice(0, 5).map((t) => (
-                <Portrait key={t.id} tenant={t} expression="smile" style={{ width: 52, opacity: 0.85 }} />
+
+            <div className="title-cast">
+              {TENANTS.slice(0, 7).map((t, i) => (
+                <Portrait
+                  key={t.id}
+                  tenant={t}
+                  expression="smile"
+                  className="title-face"
+                  style={{ zIndex: i === 3 ? 9 : 8 - Math.abs(3 - i) }}
+                />
               ))}
+            </div>
+
+            <div className="title-menu">
+              <button className="btn primary wide gold" onClick={startFromTitle}>
+                ▶ {data.stats.totalGames > 0 ? '이어하기' : '게임 시작'}
+              </button>
+              <div className="title-subrow">
+                <button className="btn wide" onClick={() => setScreen({ name: 'gallery' })}>
+                  📖 도감
+                </button>
+                <button className="btn wide" onClick={() => setScreen({ name: 'settings' })}>
+                  ⚙ 설정
+                </button>
+              </div>
             </div>
           </div>
         </div>

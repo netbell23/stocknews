@@ -695,11 +695,11 @@ export default function MatchScreen({
                 라 크게 뒤집히면 그만큼 나갑니다.
               </span>
             </div>
-            <div style={{ display: 'flex', gap: 10 }}>
-              <button className="btn primary" onClick={() => goStop('go')}>
+            <div className="gostop-btns">
+              <button className="btn gold go" onClick={() => goStop('go')}>
                 고
               </button>
-              <button className="btn" onClick={() => goStop('stop')}>
+              <button className="btn stop" onClick={() => goStop('stop')}>
                 스톱
               </button>
             </div>

@@ -22,6 +22,28 @@ export function setCardSkin(id: string): void {
   currentSkin = id;
 }
 
+/**
+ * 게임 로고. 금색 「하숙생」 + 붉은 「맞고」에 두꺼운 먹테와 입체 그림자.
+ * 글자마다 ::before 로 테두리 층을 깔고 그 위에 그라디언트 글자를 얹는다 —
+ * background-clip:text 와 text-stroke 를 한 글자에 같이 걸면 테두리가 먹히기 때문이다.
+ */
+export function GameLogo({ className = '' }: { className?: string }) {
+  return (
+    <div className={`glogo ${className}`}>
+      <svg className="glogo-house" viewBox="0 0 40 34" aria-hidden="true">
+        <path d="M20 2 L38 15 L34 15 L34 32 L6 32 L6 15 L2 15 Z" fill="#f2c341" stroke="#3a1206" strokeWidth="2.6" strokeLinejoin="round"/>
+        <rect x="14" y="19" width="12" height="13" fill="#b8321f" stroke="#3a1206" strokeWidth="2"/>
+      </svg>
+      <span className="glogo-a" data-text="하숙생">하숙생</span>
+      <span className="glogo-b" data-text="맞고">맞고</span>
+      <svg className="glogo-seal" viewBox="0 0 26 26" aria-hidden="true">
+        <rect x="1.5" y="1.5" width="23" height="23" rx="3" fill="#c9301f" stroke="#3a1206" strokeWidth="2.4"/>
+        <text x="13" y="19" fontSize="15" textAnchor="middle" fill="#ffe9c0" fontFamily="serif" fontWeight="bold">光</text>
+      </svg>
+    </div>
+  );
+}
+
 /** 지금 스킨으로 그린 화패 이미지 주소. 먹은 패 더미처럼 <img> 를 직접 쓸 때 사용한다. */
 export function cardSrcNow(card: Card): string {
   return cardDataUri(card, { skin: currentSkin });

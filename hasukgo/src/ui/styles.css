@@ -62,7 +62,7 @@ input {
 
 /* 스크롤 영역은 부드럽게 */
 .panel,
-.tenant-list,
+.roster,
 .board-hand {
   -webkit-overflow-scrolling: touch;
   overscroll-behavior: contain;
@@ -117,6 +117,62 @@ input {
   height: 100%;
 }
 
+/* ── 게임 로고 ────────────────────────────── */
+.glogo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.06em;
+  font-weight: 900;
+  letter-spacing: -0.03em;
+  line-height: 1;
+  font-size: clamp(30px, 9vw, 62px);
+  user-select: none;
+}
+
+.glogo span {
+  position: relative;
+  color: transparent;
+  background-clip: text;
+  -webkit-background-clip: text;
+}
+
+/* 뒤에 깔리는 테두리 + 두께 층 */
+.glogo span::before {
+  content: attr(data-text);
+  position: absolute;
+  left: 0;
+  top: 0;
+  z-index: -1;
+  color: #5a1a08;
+  -webkit-text-stroke: 0.14em #2e0f05;
+  text-shadow: 0 0.05em 0 #7a2a10, 0 0.09em 0 #5d1e0b, 0 0.16em 0.18em rgba(0, 0, 0, 0.75);
+}
+
+.glogo-a {
+  background-image: linear-gradient(180deg, #fff8d8 6%, #ffd964 36%, #dd9a1e 62%, #fff0b4 92%);
+}
+
+.glogo-b {
+  background-image: linear-gradient(180deg, #ffdcd2 6%, #f4523a 40%, #ab1b12 70%, #ff9077 94%);
+}
+
+.glogo-house {
+  width: 0.72em;
+  height: 0.62em;
+  margin-right: 0.04em;
+  filter: drop-shadow(0 0.06em 0.06em rgba(0, 0, 0, 0.6));
+}
+
+.glogo-seal {
+  width: 0.34em;
+  height: 0.34em;
+  align-self: flex-end;
+  margin-bottom: 0.06em;
+  margin-left: 0.04em;
+  filter: drop-shadow(0 0.04em 0.05em rgba(0, 0, 0, 0.6));
+}
+
 /* ── 공통 버튼 ────────────────────────────── */
 button {
   font: inherit;
@@ -162,32 +218,105 @@ button {
 }
 
 /* ── 타이틀 ───────────────────────────────── */
-.title-screen {
+.title-vignette {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse at 50% 38%, rgba(255, 196, 120, 0.22), transparent 62%),
+    linear-gradient(180deg, rgba(10, 6, 4, 0.66) 0%, rgba(10, 6, 4, 0.18) 38%, rgba(10, 6, 4, 0.82) 100%);
+}
+
+.title-layer {
   justify-content: center;
   align-items: center;
-  gap: 14px;
+  gap: 10px;
   text-align: center;
+  padding: 18px 14px calc(18px + var(--safe-bottom));
 }
 
 .title-logo {
-  font-size: 44px;
-  font-weight: 900;
-  letter-spacing: 4px;
-  color: var(--paper);
-  text-shadow: 0 4px 0 rgba(0, 0, 0, 0.5), 0 0 30px var(--lamp-dim);
+  margin-bottom: 2px;
+  animation: logoIn 0.7s cubic-bezier(0.2, 1.5, 0.35, 1);
+}
+
+@keyframes logoIn {
+  0% {
+    transform: scale(0.72) translateY(14px);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1) translateY(0);
+    opacity: 1;
+  }
 }
 
 .title-sub {
-  color: var(--paper-dim);
-  font-size: 14px;
-  margin-bottom: 16px;
+  color: var(--paper);
+  font-size: clamp(12px, 3.2vw, 15px);
+  font-weight: 700;
+  background: rgba(24, 12, 6, 0.6);
+  border: 1px solid var(--lamp-dim);
+  border-radius: 999px;
+  padding: 5px 16px;
+  margin-bottom: 6px;
+}
+
+/* 하숙생들이 어깨를 겹치고 늘어선 단체 컷 */
+.title-cast {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  margin: 2px 0 12px;
+  max-width: 100%;
+}
+
+.title-face {
+  width: clamp(56px, 17vw, 104px);
+  margin-left: -6%;
+  filter: drop-shadow(0 6px 12px rgba(0, 0, 0, 0.7));
+}
+
+.title-face:first-child {
+  margin-left: 0;
 }
 
 .title-menu {
   display: flex;
   flex-direction: column;
   gap: 10px;
-  width: 220px;
+  width: min(300px, 86%);
+}
+
+.title-subrow {
+  display: flex;
+  gap: 10px;
+}
+
+.title-subrow .btn {
+  flex: 1;
+}
+
+/* 금테 두른 주요 버튼 */
+.btn.gold {
+  font-size: 17px;
+  font-weight: 900;
+  letter-spacing: 1px;
+  padding: 14px 18px;
+  color: #3a1206;
+  background: linear-gradient(180deg, #ffe89a 0%, #f0b93c 46%, #d28c1c 54%, #ffd97a 100%);
+  border: 3px solid #6b3410;
+  border-radius: 14px;
+  box-shadow: 0 5px 0 #6b3410, 0 10px 18px rgba(0, 0, 0, 0.55),
+    inset 0 2px 0 rgba(255, 255, 255, 0.55);
+  text-shadow: 0 1px 0 rgba(255, 245, 210, 0.7);
+}
+
+.btn.gold:active {
+  transform: translateY(4px);
+  box-shadow: 0 1px 0 #6b3410, 0 4px 10px rgba(0, 0, 0, 0.5),
+    inset 0 2px 0 rgba(255, 255, 255, 0.4);
 }
 
 /* ── 상단 바 ──────────────────────────────── */
@@ -226,63 +355,254 @@ button {
   font-size: 16px;
 }
 
-/* ── 하숙생 목록 ──────────────────────────── */
-.tenant-list {
+/* ── 하숙집 로비 ──────────────────────────── */
+.lobby {
+  padding-bottom: 0;
+}
+
+/* 금테 두른 상단 레일 */
+.rail {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  flex: 0 0 auto;
+  background: linear-gradient(180deg, rgba(58, 34, 18, 0.92), rgba(26, 15, 9, 0.92));
+  border-bottom: 2px solid #6b3410;
+  box-shadow: 0 2px 0 rgba(240, 185, 60, 0.35), 0 6px 14px rgba(0, 0, 0, 0.5);
+}
+
+.rail-logo {
   flex: 1;
-  overflow-y: auto;
-  padding: 12px;
+  justify-content: flex-start;
+  font-size: 22px;
+}
+
+.rail-logo .glogo-house {
+  width: 20px;
+}
+
+.rail-logo .glogo-seal {
+  width: 15px;
+}
+
+.purse {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 13px;
+  font-weight: 800;
+  color: #4a2408;
+  padding: 5px 11px;
+  border-radius: 999px;
+  background: linear-gradient(180deg, #ffe89a, #eeb63a);
+  border: 2px solid #6b3410;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6);
+}
+
+.purse i {
+  font-style: normal;
+  font-size: 12px;
+}
+
+/* 지금 고른 하숙생 */
+.stage-wrap {
+  flex: 1;
+  min-height: 0;
   display: flex;
   flex-direction: column;
-  gap: 10px;
-}
-
-.tenant-card {
-  display: flex;
-  gap: 12px;
-  padding: 10px;
-  border-radius: 14px;
-  background: linear-gradient(180deg, rgba(74, 54, 40, 0.92), rgba(42, 31, 24, 0.92));
-  border: 2px solid rgba(0, 0, 0, 0.4);
-  box-shadow: 0 3px 8px var(--shadow);
-  text-align: left;
-  width: 100%;
   align-items: center;
+  gap: 6px;
+  padding: 10px 12px 0;
 }
 
-.tenant-card.locked {
-  filter: grayscale(0.85) brightness(0.55);
-}
-
-.tenant-card img {
-  width: 62px;
-  height: 92px;
-  object-fit: contain;
+.bubble {
+  position: relative;
   flex: 0 0 auto;
-  filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.5));
+  max-width: 330px;
+  margin-bottom: 6px;
+  padding: 9px 14px;
+  border-radius: 14px;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.45;
+  text-align: center;
+  color: #3a2413;
+  background: linear-gradient(180deg, #fffdf4, #f2e5c6);
+  border: 2px solid #6b3410;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+  animation: bubbleIn 260ms ease-out both;
 }
 
-.tenant-meta {
+.bubble::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  bottom: -9px;
+  margin-left: -8px;
+  border: 8px solid transparent;
+  border-top-color: #6b3410;
+  border-bottom: 0;
+}
+
+@keyframes bubbleIn {
+  from {
+    opacity: 0;
+    transform: translateY(-6px) scale(0.96);
+  }
+}
+
+.stage-face {
   flex: 1;
-  min-width: 0;
+  min-height: 0;
+  width: auto;
+  max-width: 64%;
+  object-fit: contain;
+  object-position: bottom center;
+  filter: drop-shadow(0 8px 14px rgba(0, 0, 0, 0.6));
 }
 
-.tenant-name {
-  font-size: 16px;
+.stage-face.locked {
+  filter: grayscale(1) brightness(0.35) drop-shadow(0 8px 14px rgba(0, 0, 0, 0.6));
+}
+
+.plate {
+  flex: 0 0 auto;
+  width: 100%;
+  margin-top: 6px;
+  padding: 9px 12px 10px;
+  text-align: left;
+  border-radius: 14px;
+  background: linear-gradient(180deg, rgba(58, 40, 28, 0.94), rgba(26, 17, 12, 0.94));
+  border: 2px solid #6b3410;
+  box-shadow: inset 0 1px 0 rgba(240, 185, 60, 0.3), 0 4px 14px rgba(0, 0, 0, 0.5);
+}
+
+.plate-name {
+  font-size: 17px;
+  font-weight: 900;
+}
+
+.plate-sub {
+  font-size: 11.5px;
+  color: var(--paper-dim);
+  margin-top: 1px;
+}
+
+.plate-style {
+  font-size: 11.5px;
+  line-height: 1.35;
+  margin: 5px 0 6px;
+  color: var(--paper);
+  opacity: 0.85;
+}
+
+.plate-terms {
+  font-size: 11px;
+  color: var(--paper-dim);
+  margin-top: 6px;
+}
+
+.plate-terms .lamp {
+  color: var(--lamp);
+}
+
+.plate-terms .stake {
+  display: block;
+  margin-top: 2px;
+}
+
+.plate-terms .short {
+  color: var(--accent);
+  font-weight: 700;
+}
+
+.sit {
+  flex: 0 0 auto;
+  margin: 10px 12px 0;
+  width: auto;
+}
+
+/* 하숙생 고르는 줄 */
+.roster {
+  flex: 0 0 auto;
+  display: flex;
+  gap: 7px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 10px 12px calc(10px + var(--safe-bottom));
+  scrollbar-width: none;
+}
+
+.roster::-webkit-scrollbar {
+  display: none;
+}
+
+.chip {
+  flex: 0 0 auto;
+  width: 56px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  padding: 4px 2px 5px;
+  border-radius: 12px;
+  border: 2px solid transparent;
+  background: rgba(0, 0, 0, 0.42);
+}
+
+.chip.on {
+  border-color: var(--lamp);
+  background: linear-gradient(180deg, rgba(240, 185, 60, 0.3), rgba(0, 0, 0, 0.5));
+}
+
+.chip.locked {
+  opacity: 0.55;
+}
+
+.chip b {
+  font-size: 11px;
   font-weight: 800;
 }
 
-.tenant-name small {
-  font-weight: 500;
-  font-size: 12px;
+.chip small {
+  font-size: 9.5px;
   color: var(--paper-dim);
-  margin-left: 6px;
 }
 
-.tenant-style {
-  font-size: 11.5px;
-  color: var(--paper-dim);
-  margin: 3px 0 6px;
-  line-height: 1.35;
+.chip.on small {
+  color: var(--lamp);
+}
+
+.chip-face {
+  position: relative;
+  display: block;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  overflow: hidden;
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(240, 185, 60, 0.35);
+}
+
+.chip-face img {
+  position: absolute;
+  left: -12%;
+  top: -5px;
+  width: 124%;
+}
+
+.chip.locked .chip-face img {
+  filter: grayscale(1) brightness(0.3);
+}
+
+.chip-lock {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  font-size: 15px;
+  font-style: normal;
 }
 
 .meter {
@@ -463,6 +783,19 @@ button {
   grid-area: hand;
 }
 
+/*
+ * 판 위의 패널은 모두 같은 결이다 — 어두운 나무에 금색 실선 한 줄.
+ * 로비의 레일·명패와 같은 재질이라, 화면이 바뀌어도 같은 상 앞에 앉은 느낌이 난다.
+ */
+.board-opp,
+.board-side,
+.board-hand,
+.piles {
+  background: linear-gradient(180deg, rgba(58, 40, 28, 0.92), rgba(22, 14, 10, 0.94));
+  border: 1.5px solid #6b3410;
+  box-shadow: inset 0 1px 0 rgba(240, 185, 60, 0.3), 0 3px 10px rgba(0, 0, 0, 0.45);
+}
+
 /* ── 상대 자리 ── */
 .board-opp {
   display: grid;
@@ -473,7 +806,6 @@ button {
   gap: 6px 8px;
   align-items: center;
   padding: 6px 8px;
-  background: rgba(0, 0, 0, 0.55);
   border-radius: 10px;
 }
 
@@ -497,6 +829,13 @@ button {
   font-weight: 800;
   font-size: 14px;
   white-space: nowrap;
+}
+
+.chip-body .chip-score {
+  padding: 1px 8px 2px;
+  border-radius: 7px;
+  background: rgba(0, 0, 0, 0.5);
+  border: 1px solid var(--lamp-dim);
 }
 
 .chip-score {
@@ -609,8 +948,6 @@ button {
  * 없어져 바닥패가 잘린다. 가로에서는 다시 세로 기둥으로 세운다.
  */
 .piles {
-  background: rgba(0, 0, 0, 0.78);
-  border: 1px solid rgba(255, 255, 255, 0.07);
   border-radius: 10px;
   padding: 4px 6px;
   display: flex;
@@ -748,8 +1085,8 @@ button {
   flex: 1;
   min-height: 0;
   border-radius: 14px;
-  border: 4px solid var(--felt-rim);
-  outline: 1px solid rgba(255, 255, 255, 0.08);
+  /* 판을 감싼 금테. 안쪽으로 금색 구슬선 한 줄, 그 안에 어두운 홈 */
+  border: 5px solid #7a3d13;
   /*
    * 민무늬 초록은 플라스틱처럼 보인다. 사선 결 두 겹과 가는 격자를 겹쳐
    * 융단의 짜임을 만들고, 가장자리를 눌러 테이블처럼 깊이를 준다.
@@ -777,7 +1114,13 @@ button {
     ),
     radial-gradient(ellipse at 50% 40%, var(--felt) 0%, var(--felt-dark) 80%),
     var(--felt-dark);
-  box-shadow: inset 0 0 46px rgba(0, 0, 0, 0.6), inset 0 0 0 2px rgba(255, 255, 255, 0.05);
+  box-shadow:
+    inset 0 0 0 1.5px rgba(0, 0, 0, 0.55),
+    inset 0 0 0 3.5px rgba(245, 198, 92, 0.62),
+    inset 0 0 0 5px rgba(0, 0, 0, 0.4),
+    inset 0 0 46px rgba(0, 0, 0, 0.6),
+    0 0 0 1px rgba(245, 198, 92, 0.3),
+    0 6px 18px rgba(0, 0, 0, 0.6);
   display: grid;
   /* minmax(0,·) 가 없으면 줄이 넘칠 때 안쪽이 밀려 잘린다 */
   grid-template-rows: minmax(0, 1fr) auto minmax(0, 1fr);
@@ -1106,7 +1449,6 @@ button {
   align-items: center;
   gap: 8px;
   padding: 6px 8px;
-  background: rgba(0, 0, 0, 0.55);
   border-radius: 10px;
 }
 
@@ -1189,7 +1531,6 @@ button {
   justify-content: center;
   align-content: center;
   padding: 6px;
-  background: rgba(0, 0, 0, 0.55);
   border-radius: 10px;
 }
 
@@ -1557,6 +1898,36 @@ button {
 .gostop-overlay img {
   max-height: 44%;
   filter: drop-shadow(0 0 24px rgba(255, 217, 138, 0.35));
+}
+
+.gostop-btns {
+  display: flex;
+  gap: 12px;
+}
+
+/* 고는 금패, 스톱은 붉은 패. 크기가 같아야 홧김에 잘못 누르지 않는다 */
+.gostop-btns .btn {
+  min-width: 108px;
+  font-size: 20px;
+  font-weight: 900;
+  letter-spacing: 2px;
+  padding: 13px 20px;
+}
+
+.btn.stop {
+  color: #fff4ec;
+  background: linear-gradient(180deg, #e2705a 0%, #c04430 46%, #9c3222 54%, #d4614a 100%);
+  border: 3px solid #4d1b0f;
+  border-radius: 14px;
+  box-shadow: 0 5px 0 #4d1b0f, 0 10px 18px rgba(0, 0, 0, 0.55),
+    inset 0 2px 0 rgba(255, 255, 255, 0.3);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+.btn.stop:active {
+  transform: translateY(4px);
+  box-shadow: 0 1px 0 #4d1b0f, 0 4px 10px rgba(0, 0, 0, 0.5),
+    inset 0 2px 0 rgba(255, 255, 255, 0.24);
 }
 
 .gostop-line {

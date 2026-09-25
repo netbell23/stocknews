@@ -1,9 +1,12 @@
 /** 하숙집 홈 + 하숙생 선택 */
-import { isUnlocked, minStake, rewardFor, TENANTS, unlockHint } from '../data/tenants';
+import { useMemo, useState } from 'react';
+import { isUnlocked, minStake, rewardFor, TENANTS, toneOf, unlockHint } from '../data/tenants';
 import type { Tenant } from '../data/types';
 import type { SaveData } from '../save/storage';
 import { ALLOWANCE, clearedStages, isStuck } from '../save/storage';
-import { Background, currentTimeOfDay, Meter, Portrait, SEASON_LABEL } from './parts';
+import { Background, currentTimeOfDay, GameLogo, Meter, Portrait, SEASON_LABEL } from './parts';
+
+const EMPTY = { affection: 0, clearedStage: 0, wins: 0, losses: 0, dating: false };
 
 export default function HomeScreen({
   data,
@@ -27,13 +30,39 @@ export default function HomeScreen({
   const cleared = clearedStages(data);
   const time = currentTimeOfDay();
 
+  /** 처음 앉을 자리: 아직 10단계가 남은 해금 하숙생 중 첫 사람 */
+  const firstPick = useMemo(() => {
+    const open = TENANTS.filter((t) => isUnlocked(t, cleared));
+    return (open.find((t) => (data.tenants[t.id]?.clearedStage ?? 0) < 10) ?? open[0] ?? TENANTS[0]).id;
+    // 홈에 들어올 때 한 번만 고른다
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  const [pickedId, setPickedId] = useState(firstPick);
+
+  const t = TENANTS.find((x) => x.id === pickedId) ?? TENANTS[0];
+  const p = data.tenants[t.id] ?? EMPTY;
+  const open = isUnlocked(t, cleared);
+  const done = p.clearedStage >= 10;
+  const nextStage = Math.min(10, p.clearedStage + 1);
+  const need = minStake(t);
+  const affordable = data.points >= need;
+  const tone = toneOf(p.affection);
+  /** 인사말은 고른 사람과 호감도가 바뀔 때만 달라진다 */
+  const greet = useMemo(() => {
+    const lines = t.lines.matchStart[tone];
+    return lines[(t.order + p.clearedStage) % lines.length];
+  }, [t, tone, p.clearedStage]);
+
   return (
     <div className="screen">
       <Background bg="maru" time={time} />
-      <div className="layer">
-        <div className="topbar">
-          <h1>하숙집 마루</h1>
-          <span className="points">{data.points.toLocaleString()} P</span>
+      <div className="layer lobby">
+        <div className="rail">
+          <GameLogo className="rail-logo" />
+          <span className="purse">
+            <i aria-hidden="true">🪙</i>
+            {data.points.toLocaleString()}
+          </span>
           <button className="iconbtn" onClick={onShop} aria-label="상점">
             🏮
           </button>
@@ -64,63 +93,82 @@ export default function HomeScreen({
           </div>
         )}
 
-        <div className="tenant-list">
-          {TENANTS.map((t) => {
-            const p = data.tenants[t.id] ?? { affection: 0, clearedStage: 0, wins: 0, losses: 0, dating: false };
-            const open = isUnlocked(t, cleared);
-            const nextStage = Math.min(10, p.clearedStage + 1);
-            const done = p.clearedStage >= 10;
-            const need = minStake(t);
-            const affordable = data.points >= need;
-            return (
-              <button
-                key={t.id}
-                className={`tenant-card ${open ? '' : 'locked'}`}
-                onClick={() => open && onPick(t)}
-                disabled={!open}
-              >
-                <Portrait tenant={t} expression={done ? 'smile' : 'normal'} outfit={done ? 2 : 0} />
-                <div className="tenant-meta">
-                  <div className="tenant-name">
-                    {t.name}
-                    <small>
-                      {t.nickname} · {t.age}세 · {t.room}
-                    </small>
-                    <span className="badge season">{SEASON_LABEL[t.season]}</span>
-                    {p.dating && <span className="badge">연애중</span>}
-                  </div>
-                  <div className="tenant-style">{t.styleLabel}</div>
-                  {open ? (
-                    <>
-                      <div className="meter-row">
-                        <span style={{ width: 30 }}>호감</span>
-                        <Meter value={p.affection} max={100} />
-                        <span style={{ width: 28, textAlign: 'right' }}>{p.affection}</span>
-                      </div>
-                      <div className="meter-row">
-                        <span style={{ width: 30 }}>단계</span>
-                        <Meter value={p.clearedStage} max={10} kind="stage" />
-                        <span style={{ width: 28, textAlign: 'right' }}>{p.clearedStage}/10</span>
-                      </div>
-                      <div style={{ fontSize: 10.5, color: 'var(--paper-dim)', marginTop: 4 }}>
-                        {done ? (
-                          <>모든 단계 클리어 · 커플 모드로 다시 승부</>
-                        ) : (
-                          <>
-                            {nextStage}단계 · 점당 <b style={{ color: 'var(--lamp)' }}>{t.rate}P</b> ·
-                            클리어 보너스 {rewardFor(t, nextStage)}P
-                            <br />
-                            <span style={{ color: affordable ? 'var(--paper-dim)' : 'var(--accent)' }}>
-                              {affordable ? `최소 ${need.toLocaleString()}P 필요` : `${need.toLocaleString()}P 부족`}
-                            </span>
-                          </>
-                        )}
-                      </div>
-                    </>
+        <div className="stage-wrap">
+          <div className="bubble" key={t.id}>
+            {open ? greet : unlockHint(t)}
+          </div>
+          <Portrait
+            className={`stage-face ${open ? '' : 'locked'}`}
+            tenant={t}
+            expression={open ? (done ? 'smile' : 'normal') : 'normal'}
+            outfit={done ? 2 : 0}
+          />
+          <div className="plate">
+            <div className="plate-name">
+              {t.name}
+              <span className="badge season">{SEASON_LABEL[t.season]}</span>
+              {p.dating && <span className="badge">연애중</span>}
+            </div>
+            <div className="plate-sub">
+              {t.nickname} · {t.age}세 · {t.job} · {t.room}
+            </div>
+            <div className="plate-style">{t.styleLabel}</div>
+            {open ? (
+              <>
+                <div className="meter-row">
+                  <span style={{ width: 30 }}>호감</span>
+                  <Meter value={p.affection} max={100} />
+                  <span style={{ width: 34, textAlign: 'right' }}>{p.affection}</span>
+                </div>
+                <div className="meter-row">
+                  <span style={{ width: 30 }}>단계</span>
+                  <Meter value={p.clearedStage} max={10} kind="stage" />
+                  <span style={{ width: 34, textAlign: 'right' }}>{p.clearedStage}/10</span>
+                </div>
+                <div className="plate-terms">
+                  {done ? (
+                    <>모든 단계 클리어 · 커플 모드로 다시 승부</>
                   ) : (
-                    <div style={{ fontSize: 11, color: 'var(--paper-dim)' }}>🔒 {unlockHint(t)}</div>
+                    <>
+                      <b>{nextStage}단계</b> · 점당 <b className="lamp">{t.rate}P</b> · 클리어 보너스{' '}
+                      <b className="lamp">{rewardFor(t, nextStage)}P</b>
+                      <span className={`stake ${affordable ? '' : 'short'}`}>
+                        {affordable ? `최소 ${need.toLocaleString()}P 필요` : `${need.toLocaleString()}P 부족`}
+                      </span>
+                    </>
                   )}
                 </div>
+              </>
+            ) : (
+              <div className="plate-terms">
+                <span className="short">🔒 {unlockHint(t)}</span>
+              </div>
+            )}
+          </div>
+        </div>
+
+        <button className="btn gold wide sit" disabled={!open} onClick={() => open && onPick(t)}>
+          {done ? '한 판 더 두기' : `${nextStage}단계 · 한 판 두기`}
+        </button>
+
+        <div className="roster" role="tablist" aria-label="하숙생">
+          {TENANTS.map((x) => {
+            const xp = data.tenants[x.id] ?? EMPTY;
+            const xopen = isUnlocked(x, cleared);
+            return (
+              <button
+                key={x.id}
+                role="tab"
+                aria-selected={x.id === pickedId}
+                className={`chip ${x.id === pickedId ? 'on' : ''} ${xopen ? '' : 'locked'}`}
+                onClick={() => setPickedId(x.id)}
+              >
+                <span className="chip-face">
+                  <Portrait tenant={x} expression="normal" outfit={xp.clearedStage >= 10 ? 2 : 0} />
+                  {!xopen && <i className="chip-lock">🔒</i>}
+                </span>
+                <b>{xopen ? x.name : '???'}</b>
+                <small>{xopen ? `${xp.clearedStage}/10` : '잠김'}</small>
               </button>
             );
           })}
