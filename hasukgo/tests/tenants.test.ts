@@ -31,13 +31,13 @@ const LINE_KEYS: LineSetKey[] = [
 ];
 
 describe('하숙생 데이터 무결성', () => {
-  it('10명이고 순번이 1~10으로 유일하다', () => {
-    expect(TENANTS).toHaveLength(10);
-    expect([...TENANTS].map((t) => t.order).sort((a, b) => a - b)).toEqual([
-      1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
-    ]);
-    expect(new Set(TENANTS.map((t) => t.id)).size).toBe(10);
-    expect(new Set(TENANTS.map((t) => t.name)).size).toBe(10);
+  it('열다섯 명이고 순번이 1~15로 유일하다', () => {
+    expect(TENANTS).toHaveLength(15);
+    expect([...TENANTS].map((t) => t.order).sort((a, b) => a - b)).toEqual(
+      Array.from({ length: 15 }, (_, i) => i + 1),
+    );
+    expect(new Set(TENANTS.map((t) => t.id)).size).toBe(15);
+    expect(new Set(TENANTS.map((t) => t.name)).size).toBe(15);
   });
 
   it('전원 성인이고 방 번호가 있다', () => {
@@ -50,9 +50,14 @@ describe('하숙생 데이터 무결성', () => {
     }
   });
 
-  it('계절 배치가 기획대로다 (봄 1~3 / 여름 4~6 / 가을 7~9 / 겨울 10)', () => {
-    const expected = ['spring', 'spring', 'spring', 'summer', 'summer', 'summer', 'autumn', 'autumn', 'autumn', 'winter'];
-    expect(TENANTS.map((t) => t.season)).toEqual(expected);
+  /*
+   * 계절은 순번을 따라 한 번씩만 넘어간다. 봄에 살던 사람이 가을 사람보다
+   * 뒤에 오면 집의 시간이 거꾸로 흐르는 셈이라 이야기가 어긋난다.
+   */
+  it('계절 배치가 기획대로다 (봄 1~4 / 여름 5~8 / 가을 9~13 / 겨울 14~15)', () => {
+    const season = (order: number) =>
+      order <= 4 ? 'spring' : order <= 8 ? 'summer' : order <= 13 ? 'autumn' : 'winter';
+    expect(TENANTS.map((t) => t.season)).toEqual(TENANTS.map((t) => season(t.order)));
   });
 
   it('상황 8종 x 호감도 3톤 대사가 각 3줄 이상이다', () => {
@@ -78,7 +83,7 @@ describe('하숙생 데이터 무결성', () => {
         allScriptIds.add(e.scriptId);
       }
     }
-    expect(allScriptIds.size).toBe(100);
+    expect(allScriptIds.size).toBe(TENANTS.length * 10);
   });
 
   it('4~6단계에는 선택지가 있다', () => {
@@ -354,7 +359,7 @@ describe('하숙생 입상', () => {
     }
   });
 
-  it('240종(10명 x 8표정 x 3의상)이 모두 온전한 SVG 로 나온다', () => {
+  it('하숙생 x 8표정 x 3의상이 모두 온전한 SVG 로 나온다', () => {
     let count = 0;
     for (const t of TENANTS) {
       for (const e of EXPRESSIONS) {
@@ -370,7 +375,7 @@ describe('하숙생 입상', () => {
         }
       }
     }
-    expect(count).toBe(240);
+    expect(count).toBe(TENANTS.length * EXPRESSIONS.length * OUTFITS.length);
   });
 
   it('한 줄로 세웠을 때 10명이 서로 다르게 그려진다', () => {

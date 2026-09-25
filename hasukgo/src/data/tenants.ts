@@ -38,7 +38,7 @@ const STYLE_PULL = 0.55;
 const damp = (scale: number | undefined): number => 1 + ((scale ?? 1) - 1) * STYLE_PULL;
 
 export function paramsFor(tenant: Tenant, stage: number): AiParams {
-  const base = curveParams(tenant.order, stage);
+  const base = curveParams(tenant.order, stage, TENANTS.length);
   const st = tenant.style;
   return applyStyle(base, {
     mistakeRate: clamp01(base.mistakeRate * damp(st.mistakeScale)),

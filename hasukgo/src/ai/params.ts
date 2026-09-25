@@ -58,8 +58,12 @@ export const NEUTRAL_WEIGHTS: AiWeights = {
  * 흔들기·폭탄(aggression)과 점수 항목 취향(weights)은 승패보다 판돈과
  * 스타일에 영향을 준다. 난이도 축이 아니라 하숙생의 성격이다.
  */
-export function curveParams(tenantOrder: number, stage: number): AiParams {
-  const t = (tenantOrder - 1) / 9; // 0~1
+/** 순번 축을 0~1 로 펴는 기준. 하숙생을 더 들이면 paramsFor 가 실제 수를 넘겨준다. */
+const ROSTER = 10;
+
+export function curveParams(tenantOrder: number, stage: number, total = ROSTER): AiParams {
+  // 명단이 늘어도 맨 앞이 0, 맨 뒤가 1 이어야 곡선이 그대로 산다
+  const t = total > 1 ? (tenantOrder - 1) / (total - 1) : 0; // 0~1
   const s = (stage - 1) / 9; // 0~1
   const skill = Math.min(1, 0.5 * t + 0.5 * s);
 
