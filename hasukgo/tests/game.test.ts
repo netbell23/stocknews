@@ -8,7 +8,13 @@ import {
   declareStop,
   playCard,
 } from '../src/engine/game';
-import { DEFAULT_RULES, type Card, type GameState, type PlayerId } from '../src/engine/types';
+import {
+  DEFAULT_RULES,
+  type Card,
+  type GameState,
+  type PlayerId,
+  type RuleOptions,
+} from '../src/engine/types';
 
 const deck = baseDeck();
 const card = (name: string): Card => {
@@ -27,6 +33,7 @@ function makeState(opts: {
   turn?: PlayerId;
   captured0?: Card[];
   captured1?: Card[];
+  rules?: Partial<RuleOptions>;
 }): GameState {
   const mk = (cards: Card[] = []) => {
     const cap = { gwang: [] as Card[], yeol: [] as Card[], tti: [] as Card[], pi: [] as Card[] };
@@ -39,7 +46,7 @@ function makeState(opts: {
     return cap;
   };
   return {
-    rules: DEFAULT_RULES,
+    rules: { ...DEFAULT_RULES, ...(opts.rules ?? {}) },
     deck: opts.deck ?? [],
     field: opts.field ?? [],
     players: [
@@ -214,17 +221,23 @@ describe('뻑', () => {
 });
 
 describe('따닥', () => {
-  it('손패로 2장 + 뒤집어 2장 = 4장이면 따닥', () => {
+  it('같은 월 4장을 한 턴에 쓸면 따닥, 바닥까지 비면 쓸도 함께 성립한다', () => {
     const s = makeState({
       hand0: [piOf(1, 0)],
       hand1: [piOf(7, 0)],
-      field: [card('송학 광'), card('모란 나비')],
-      deck: [card('모란 청단'), piOf(9, 0)],
+      // 바닥에 1월 두 장 → 손에서 1월을 내면 어느 것을 먹을지 고른다
+      field: [card('송학 광'), card('송학 홍단')],
+      deck: [piOf(1, 1), piOf(9, 0)],
       captured1: [piOf(3, 0), piOf(3, 1)],
     });
-    const n = playCard(s, piOf(1, 0).id);
-    expect(n.events.some((e) => e.type === 'ttadak')).toBe(true);
-    // 바닥까지 비었으므로 따닥 + 쓸이 함께 성립해 상납이 2장이다
+    const mid = playCard(s, piOf(1, 0).id);
+    expect(mid.phase).toBe('awaitChoice');
+    // 한 장을 먹고, 뒤집은 1월이 남은 한 장을 먹어 4장을 쓸어간다
+    const n = chooseMatch(mid, card('송학 광').id);
+    const ev = n.events.find((e) => e.type === 'ttadak');
+    expect(ev).toBeTruthy();
+    // 화면에 "무엇이 일어났는지" 를 띄워야 하므로 설명이 실려 있어야 한다
+    expect(ev!.detail, '따닥 설명').toBe('1월 4장을 한 턴에');
     expect(n.events.some((e) => e.type === 'sseul')).toBe(true);
     expect(allCaptured(n, 0)).toHaveLength(4 + 2);
     expect(n.players[1].captured.pi).toHaveLength(0);
@@ -455,5 +468,49 @@ describe('패는 사라지지도 복제되지도 않는다', () => {
       }
     }
     expect(found, '보너스패를 내는 경우가 한 번도 안 나왔다').toBeGreaterThan(0);
+  });
+});
+
+describe('따닥은 같은 월 4장을 쓸었을 때만', () => {
+  it('낸 패로 2월을 먹고 뒤집어서 3월을 먹으면 따닥이 아니다', () => {
+    const s = makeState({
+      hand0: [piOf(2, 0)],
+      hand1: [piOf(7, 0)],
+      field: [piOf(2, 1), piOf(3, 1)],
+      deck: [piOf(3, 0), piOf(6, 0)],
+    });
+    const n = playCard(s, piOf(2, 0).id);
+    // 네 장을 가져오긴 한다
+    expect(allCaptured(n, 0)).toHaveLength(4);
+    expect(n.events.some((e) => e.type === 'ttadak')).toBe(false);
+    // 따닥이 아니니 상납도 없다
+    expect(n.events.some((e) => e.type === 'steal' && e.detail === '따닥')).toBe(false);
+  });
+
+  it('낸 패와 뒤집은 패가 같은 월이면 따닥이다', () => {
+    const s = makeState({
+      hand0: [piOf(2, 0)],
+      hand1: [piOf(7, 0)],
+      field: [piOf(2, 1), card('매조 홍단')],
+      deck: [card('매조 휘파람새'), piOf(6, 0)],
+    });
+    const n = playCard(s, piOf(2, 0).id);
+    // 바닥에 2월이 두 장이라 먼저 고르게 한다
+    expect(n.phase).toBe('awaitChoice');
+    const done = chooseMatch(n, piOf(2, 1).id);
+    expect(allCaptured(done, 0)).toHaveLength(4);
+    expect(done.events.some((e) => e.type === 'ttadak')).toBe(true);
+  });
+
+  it('옵션을 끄면 월이 달라도 따닥으로 친다', () => {
+    const s = makeState({
+      rules: { ttadakSameMonth: false },
+      hand0: [piOf(2, 0)],
+      hand1: [piOf(7, 0)],
+      field: [piOf(2, 1), piOf(3, 1)],
+      deck: [piOf(3, 0), piOf(6, 0)],
+    });
+    const n = playCard(s, piOf(2, 0).id);
+    expect(n.events.some((e) => e.type === 'ttadak')).toBe(true);
   });
 });

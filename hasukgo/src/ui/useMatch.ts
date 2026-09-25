@@ -49,6 +49,8 @@ export interface Shout {
   text: string;
   /** 누가 냈는가. 내가 냈으면 상대가 놀라야 한다. */
   by: PlayerId;
+  /** "3월 4장" 처럼 무슨 일이 일어났는지 한 줄 */
+  detail?: string;
 }
 
 /** 하숙생이 낼 패. 연출이 끝나면 그때 실제로 반영된다. */
@@ -82,10 +84,21 @@ export interface MatchView {
  * 하숙생이 패를 띄웠다 꽂는 데 걸리는 시간. 화면 연출과 같은 값이어야 한다.
  * 상대가 뭘 내는지 눈으로 따라갈 수 있어야 해서 넉넉히 잡았다.
  */
-export const AI_THROW_MS = 1150;
+export const AI_THROW_MS = 1550;
 
 /** 하숙생이 패를 고르는 데 쓰는 최소한의 뜸 */
 const AI_THINK_MS = 420;
+
+/** 연출 밑에 붙는 설명. 무슨 일이 왜 일어났는지 한 줄로 알려준다. */
+const EVENT_NOTE: Partial<Record<GameEvent['type'], string>> = {
+  jjok: '낸 패가 깔리자마자 뒤집은 패가 같은 월 — 둘 다 가져갑니다',
+  ttadak: '같은 월 네 장을 한 턴에 — 상대 피 한 장을 받습니다',
+  ppeok: '세 장이 묶여 바닥에 남습니다. 나중에 먹는 사람이 임자',
+  jappeok: '내가 깔아둔 뻑을 내가 또 만들었습니다',
+  sseul: '바닥을 싹 비웠습니다 — 상대 피 한 장을 받습니다',
+  bomb: '같은 월을 한 번에 몰아냈습니다',
+  chongtong: '한 월 네 장이 처음부터 손에 있었습니다',
+};
 
 const EVENT_SHOUT: Partial<Record<GameEvent['type'], string>> = {
   jjok: '쪽!',
@@ -152,9 +165,9 @@ export function useMatch(opts: MatchOptions) {
     [],
   );
 
-  const fireShout = useCallback((text: string, by: PlayerId) => {
+  const fireShout = useCallback((text: string, by: PlayerId, detail?: string) => {
     shoutKey.current++;
-    setShout({ key: shoutKey.current, text, by });
+    setShout({ key: shoutKey.current, text, by, detail });
   }, []);
 
   /** 이벤트에 맞춰 연출과 대사를 갱신 */
@@ -165,7 +178,7 @@ export function useMatch(opts: MatchOptions) {
       for (const e of events) {
         const text = EVENT_SHOUT[e.type];
         if (text) {
-          fireShout(text, e.player);
+          fireShout(text, e.player, e.detail ?? EVENT_NOTE[e.type]);
           break;
         }
       }

@@ -92,6 +92,13 @@ export interface RuleOptions {
    * 'specSheet' : 기획서 표기 그대로 띠 5장 5점 + 1장당 1점, 단 홍/청/초단 3점은 동일 적용
    */
   ttiScoring: 'standard' | 'specSheet';
+  /**
+   * 따닥 판정 방식.
+   * true  : 낸 패와 뒤집은 패가 **같은 월**이어서 그 월 4장을 한 턴에 쓸어야 따닥
+   *         (한국 온라인 맞고 표준)
+   * false : 한 턴에 손패로도 먹고 뒤집어서도 먹으면 월이 달라도 따닥
+   */
+  ttadakSameMonth: boolean;
   /** 3광에 비광이 포함되면 2점 */
   biGwangPenalty: boolean;
   /** 고 3회부터 곱셈 배수 적용 */
@@ -128,6 +135,7 @@ export interface RuleOptions {
 
 export const DEFAULT_RULES: RuleOptions = {
   ttiScoring: 'standard',
+  ttadakSameMonth: true,
   biGwangPenalty: true,
   goMultiplierFrom3: true,
   piBak: true,
@@ -158,7 +166,7 @@ export type Phase =
 /** 한 수의 결과로 발생한 이벤트 (연출/대사 트리거) */
 export type GameEventType =
   | 'jjok' // 쪽 (낸 패와 뒤집은 패가 같은 월, 바닥에 없던 경우)
-  | 'ttadak' // 따닥 (한 턴에 4장 획득)
+  | 'ttadak' // 따닥 (같은 월 4장을 한 턴에)
   | 'ppeok' // 뻑
   | 'jappeok' // 자뻑
   | 'sseul' // 쓸 (바닥 싹쓸이)

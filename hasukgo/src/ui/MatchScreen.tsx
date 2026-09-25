@@ -618,6 +618,7 @@ export default function MatchScreen({
         {view.shout && (
           <div className="shout" key={view.shout.key}>
             <span>{view.shout.text}</span>
+            {view.shout.detail && <em className="shout-note">{view.shout.detail}</em>}
           </div>
         )}
 

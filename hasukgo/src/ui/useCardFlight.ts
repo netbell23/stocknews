@@ -29,14 +29,14 @@ const THROW_MS = 300;
  * 빠르면 뭐가 사라졌는지 모른 채 숫자만 올라간다.
  * 여러 장이 한꺼번에 날면 겹쳐서 또 안 보이므로 한 장씩 시차를 둔다.
  */
-const SWEEP_MS = 780;
-const SWEEP_WAIT = 380;
-const SWEEP_STAGGER = 150;
+const SWEEP_MS = 1000;
+const SWEEP_WAIT = 440;
+const SWEEP_STAGGER = 220;
 
 /** 더미에서 뒤집히는 패: 천천히 들어올려 앞면을 보여준 뒤 내려놓는다 */
-const REVEAL_MS = 900;
+const REVEAL_MS = 1200;
 /** 뒤집기 연출이 있는 턴에는 먹는 연출이 그 뒤에 와야 한다 */
-const SWEEP_WAIT_AFTER_REVEAL = 980;
+const SWEEP_WAIT_AFTER_REVEAL = 1280;
 
 function measure(root: HTMLElement): Map<string, Snap> {
   const out = new Map<string, Snap>();

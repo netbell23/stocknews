@@ -422,13 +422,27 @@ function finishTurn(n: GameState): GameState {
   const gained = [...ctx.fromHandCapture, ...ctx.fromFlipCapture, ...ctx.bonusFlips];
   addCaptured(me, gained);
 
-  // 따닥: 손패로도 먹고 뒤집어서도 먹어 한 턴에 4장 이상을 가져온 경우
+  /*
+   * 따닥. 낸 패로도 먹고 뒤집어서도 먹은 경우인데, 표준 규칙은 그 둘이
+   * **같은 월**일 것을 요구한다 — 바닥에 같은 월 두 장이 있을 때 손에서 그 월을 내
+   * 한 장을 먹고, 뒤집은 패가 또 그 월이라 나머지를 먹어 4장을 쓸어가는 그림이다.
+   * 월을 보지 않으면 2월 두 장 + 3월 두 장을 먹어도 따닥이 돼버린다.
+   */
+  const bothCaptured = ctx.fromHandCapture.length >= 2 && ctx.fromFlipCapture.length >= 2;
+  const sameMonth =
+    bothCaptured && ctx.fromHandCapture[0].month === ctx.fromFlipCapture[0].month;
   const ttadak =
     ctx.bombCards.length === 0 &&
-    ctx.fromHandCapture.length >= 2 &&
-    ctx.fromFlipCapture.length >= 2;
+    bothCaptured &&
+    (!n.rules.ttadakSameMonth || sameMonth);
   if (ttadak) {
-    n.events.push({ type: 'ttadak', player: p });
+    const m = ctx.fromHandCapture[0].month;
+    const count = ctx.fromHandCapture.length + ctx.fromFlipCapture.length;
+    n.events.push({
+      type: 'ttadak',
+      player: p,
+      detail: sameMonth ? `${m}월 ${count}장을 한 턴에` : `${count}장을 한 턴에`,
+    });
     n.log.push(`P${p} 따닥`);
     stealPi(n, p, '따닥');
   }
