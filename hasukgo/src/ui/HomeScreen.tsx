@@ -95,6 +95,7 @@ export default function HomeScreen({
 
         <div className="stage-wrap">
           <div className="bubble" key={t.id}>
+            <span className="bubble-who">♡ {t.name}</span>
             {open ? greet : unlockHint(t)}
           </div>
           <Portrait
@@ -163,12 +164,13 @@ export default function HomeScreen({
                 className={`chip ${x.id === pickedId ? 'on' : ''} ${xopen ? '' : 'locked'}`}
                 onClick={() => setPickedId(x.id)}
               >
-                <span className="chip-face">
-                  <Portrait tenant={x} expression="normal" shot="face" outfit={xp.clearedStage >= 10 ? 2 : 0} />
+                <span className="chip-shot">
+                  <Portrait tenant={x} expression="normal" outfit={xp.clearedStage >= 10 ? 2 : 0} />
                   {!xopen && <i className="chip-lock">🔒</i>}
+                  {xopen && <em className="chip-stage">{xp.clearedStage}/10</em>}
                 </span>
-                <b>{xopen ? x.name : '???'}</b>
-                <small>{xopen ? `${xp.clearedStage}/10` : '잠김'}</small>
+                <b>{xopen ? `♡ ${x.name}` : '???'}</b>
+                <small>{xopen ? x.nickname : '잠김'}</small>
               </button>
             );
           })}

@@ -287,7 +287,11 @@ export default function App() {
               없으면 코드로 로고를 짜고 하숙생들을 세워 원래 타이틀을 만든다.
             */}
             {titleArt ? (
-              <img className="title-key" src={titleArt} alt="하숙생 맞고" draggable={false} />
+              <>
+                {/* 흐린 확대본을 깔아 화면을 채우고, 그 위에 키아트를 온전히 얹는다 */}
+                <div className="title-key-bed" style={{ backgroundImage: `url("${titleArt}")` }} />
+                <img className="title-key" src={titleArt} alt="하숙생 맞고" draggable={false} />
+              </>
             ) : (
               <>
                 <GameLogo className="title-logo" />

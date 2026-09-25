@@ -12,6 +12,7 @@ import type { Card, PlayerId, RuleOptions, Settlement } from '../engine/types';
 import type { PlayerProfile } from '../ai/ai';
 import type { Tenant } from '../data/types';
 import { LOSS_FACTOR } from '../save/storage';
+import { hasCharArt } from '../art/artFiles';
 import { Background, CardBack, CardView, cardSrcNow, Portrait } from './parts';
 import { useCardFlight } from './useCardFlight';
 import { AI_THROW_MS, useMatch } from './useMatch';
@@ -491,11 +492,12 @@ export default function MatchScreen({
       <Background bg="maru" time="night" />
       <div className="layer board" ref={boardRef}>
         {/* ── 상대 ── */}
-        <div className={`board-opp ${startled ? 'startled' : ''}`}>
+        <div
+          className={`board-opp ${startled ? 'startled' : ''} ${hasCharArt(tenant.id) ? 'has-photo' : ''}`}
+        >
           <Portrait
             tenant={tenant}
             expression={startled ? 'surprise' : view.expression}
-            shot="face"
             outfit={stage >= 10 ? 2 : 0}
           />
           {startled > 0 && <span className="startle-mark">!</span>}
