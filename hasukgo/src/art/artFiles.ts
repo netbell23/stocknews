@@ -22,13 +22,29 @@ function url(dir: string, file: string): string {
 }
 
 /**
+ * 원화는 보통 표정을 몇 개만 그려 온다. 캐릭터 시트가 주는 것은
+ * 기본 · 애교 · 놀람 셋뿐이라, 나머지 다섯은 가장 가까운 얼굴을 빌려 쓴다.
+ * 파일이 실제로 들어오면 그게 먼저 잡히므로 이 줄은 자동으로 비켜난다.
+ */
+const NEAREST: Partial<Record<Expression, Expression[]>> = {
+  smile: ['smile'],
+  win: ['win', 'smile'],
+  shy: ['shy', 'smile'],
+  surprise: ['surprise'],
+  lose: ['lose', 'surprise'],
+  sulk: ['sulk', 'surprise'],
+  serious: ['serious'],
+};
+
+/**
  * 이 하숙생의 원화 주소. 없으면 null — 부르는 쪽이 SVG 로 되돌아가면 된다.
  * 표정 → 기본 순으로 실제로 있는 파일만 고른다.
  */
 export function charArtSrc(tenantId: string, shot: Shot, expression?: Expression): string | null {
   const suffix = shot === 'face' ? '_face' : '';
+  const wanted = expression && expression !== 'normal' ? (NEAREST[expression] ?? [expression]) : [];
   const names = [
-    expression && expression !== 'normal' ? `${tenantId}${suffix}_${expression}.webp` : null,
+    ...wanted.map((e) => `${tenantId}${suffix}_${e}.webp`),
     `${tenantId}${suffix}.webp`,
     // 얼굴 컷이 아직 없으면 전신이라도 쓴다 (칩 쪽에서 잘라 보여준다)
     shot === 'face' ? `${tenantId}.webp` : null,
