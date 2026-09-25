@@ -147,6 +147,15 @@ export function useMatch(opts: MatchOptions) {
   const [aiThrow, setAiThrow] = useState<AiThrow | null>(null);
   const throwKey = useRef(0);
   const [busy, setBusy] = useState(false);
+  /*
+   * 고/스톱을 물어봐도 되는 시점인가.
+   *
+   * 엔진은 마지막 패를 가져간 그 즉시 awaitGoStop 으로 넘어간다. 그런데
+   * 화면에서는 아직 먹은 패가 더미로 날아가는 중이다. 그 위에 창을 띄우면
+   * 몇 점이 됐는지 세어보기도 전에 고를 누르게 된다 — 그러라고 만든 창이 아니다.
+   * 패가 다 들어간 뒤에 연다.
+   */
+  const [goStopReady, setGoStopReady] = useState(false);
   const shoutKey = useRef(0);
   const timers = useRef<number[]>([]);
 
@@ -199,6 +208,19 @@ export function useMatch(opts: MatchOptions) {
     },
     [opts.busyUntil],
   );
+
+  /** 연출이 끝나야 고/스톱 창이 열린다 */
+  useEffect(() => {
+    const asking = state.phase === 'awaitGoStop' && state.turn === HUMAN;
+    if (!asking) {
+      setGoStopReady(false);
+      return;
+    }
+    setGoStopReady(false);
+    // later() 는 취소가 없어서, 국면이 바뀐 뒤에 늦게 켜지지 않도록 직접 건다
+    const id = window.setTimeout(() => setGoStopReady(true), pacedDelay(260));
+    return () => window.clearTimeout(id);
+  }, [state, pacedDelay]);
 
   /** AI 턴 자동 진행 */
   useEffect(() => {
@@ -330,7 +352,7 @@ export function useMatch(opts: MatchOptions) {
     line,
     expression,
     shout,
-    askGoStop: state.phase === 'awaitGoStop' && state.turn === HUMAN,
+    askGoStop: state.phase === 'awaitGoStop' && state.turn === HUMAN && goStopReady,
     aiGoStop,
     hint: losingStreak >= 3 ? pick(tenant.lines.hints, () => 0.5) : null,
     aiThrow,

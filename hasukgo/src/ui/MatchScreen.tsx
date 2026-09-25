@@ -13,6 +13,7 @@ import type { PlayerProfile } from '../ai/ai';
 import type { Tenant } from '../data/types';
 import { LOSS_FACTOR } from '../save/storage';
 import { charArtSrc, hasCharArt } from '../art/artFiles';
+import { scorePlayer } from '../engine/score';
 import { Background, CardBack, CardView, cardSrcNow, PhotoBackdrop, Portrait } from './parts';
 import { useCardFlight } from './useCardFlight';
 import { AI_THROW_MS, useMatch } from './useMatch';
@@ -489,6 +490,17 @@ export default function MatchScreen({
 
   const oppArt = charArtSrc(tenant.id, 'full');
 
+  /** 고/스톱을 물을 때 펼쳐 보여줄 내 점수 내역 */
+  const myTally = useMemo(() => {
+    const b = scorePlayer(s.players[HUMAN], s.rules);
+    const rows: Array<{ label: string; score: number; note?: string }> = [];
+    if (b.gwangScore > 0) rows.push({ label: '광', score: b.gwangScore, note: b.gwangLabel ?? undefined });
+    if (b.ttiScore > 0) rows.push({ label: '띠', score: b.ttiScore, note: b.ttiLabels.join(' · ') || undefined });
+    if (b.yeolScore > 0) rows.push({ label: '열', score: b.yeolScore, note: b.yeolLabels.join(' · ') || undefined });
+    if (b.piScore > 0) rows.push({ label: '피', score: b.piScore, note: `${b.piCount}장` });
+    return rows;
+  }, [s]);
+
   return (
     <div className="screen match-screen">
       {oppArt ? <PhotoBackdrop src={oppArt} dim={0.62} /> : <Background bg="maru" time="night" />}
@@ -690,7 +702,17 @@ export default function MatchScreen({
             <Portrait tenant={tenant} expression="serious" outfit={stage >= 10 ? 2 : 0} />
             <div className="gostop-line">
               {view.myScore}점입니다. 더 가시겠어요?
-              <br />
+              {/* 몇 점인지만 알려주면 왜 그 점수인지 모른다. 항목별로 펼쳐 보여준다 */}
+              <div className="gostop-tally">
+                {myTally.map((row) => (
+                  <span key={row.label}>
+                    <em>{row.label}</em>
+                    <b>{row.score}</b>
+                    <small>점</small>
+                    {row.note && <i>{row.note}</i>}
+                  </span>
+                ))}
+              </div>
               <strong style={{ color: 'var(--ok)', fontSize: 18 }}>
                 지금 스톱하면 +{winPay.toLocaleString()}P
               </strong>
