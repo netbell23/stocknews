@@ -220,23 +220,34 @@ function monthArt(month: number): string {
   switch (month) {
     case 1: // 송학 — 뾰족한 검은 솔봉우리 둘
       return peak(38, 54, 34, CHROME) + peak(84, 46, 58, CHROME);
-    case 2: // 매조 — 검은 가지와 붉은 매화
+    /*
+     * 2월과 3월은 둘 다 「붉은 꽃 핀 가지」라 섞이기 쉽다. 실제 화투에서
+     * 둘을 가르는 것은 꽃이 아니라 배경이다 — 2월은 맨가지에 성글게 핀
+     * 매화, 3월은 위쪽을 가로지르는 만막(붉은 줄무늬 장막)이다.
+     * 그 두 가지를 실루엣 수준에서 갈라 놓는다.
+     */
+    case 2: // 매조 — 굵은 대각 맨가지에 성글게 핀 매화 셋
       return `
-        ${blk(`M${AX} ${b} Q44 96 40 ${AY + 16} L52 ${AY + 16} Q56 96 ${AX + 22} ${b} Z`)}
-        ${blk('M44 74 Q68 66 92 44 L96 54 Q72 76 48 84 Z')}
-        ${flower(88, 34, 13, VERM, CHROME)}
-        ${flower(62, 60, 11, VERM, CHROME)}
-        ${flower(96, 74, 10, VERM, CHROME)}
-        ${flower(34, 108, 10, VERM, CHROME)}`;
-    case 3: // 벚꽃 — 붉은 벚꽃 무더기
+        ${blk(`M${AX + 4} ${b} C30 118 34 78 30 ${AY + 10} L44 ${AY + 10} C48 80 44 120 ${AX + 20} ${b} Z`)}
+        ${blk('M38 62 C58 52 80 36 96 26 L102 38 C84 50 62 66 44 76 Z')}
+        ${blk('M40 100 C58 98 76 104 92 114 L88 124 C72 116 56 110 40 112 Z')}
+        ${flower(98, 30, 15, VERM, INK)}
+        ${flower(60, 60, 13, VERM, INK)}
+        ${flower(92, 118, 12, VERM, INK)}`;
+    case 3: // 벚꽃 — 위를 가로지르는 만막, 그 아래 벚꽃 무더기
       return `
-        ${blk('M30 146 Q34 100 26 60 L38 58 Q46 102 42 146 Z')}
-        ${blk('M38 82 Q64 76 94 56 L98 66 Q70 88 42 92 Z')}
-        ${flower(84, 42, 15, VERM, CHROME)}
-        ${flower(56, 64, 13, VERM, CHROME)}
-        ${flower(98, 84, 12, VERM, CHROME)}
-        ${flower(34, 112, 12, VERM, CHROME)}
-        ${flower(74, 116, 11, VERM, CHROME)}`;
+        <rect x="${AX}" y="${AY}" width="${AW}" height="44" fill="${VERM}"/>
+        ${[0, 1, 2, 3].map((k) => `<rect x="${AX + 8 + k * 23}" y="${AY}" width="11" height="44" fill="${WHITE}" opacity="0.92"/>`).join('')}
+        <rect x="${AX}" y="${AY}" width="${AW}" height="44" fill="none" stroke="${INK}" stroke-width="2.4"/>
+        <rect x="${AX}" y="${AY + 44}" width="${AW}" height="5" fill="${INK}"/>
+        ${blk(`M${AX + 16} ${AY + 49} l9 0 l0 15 l-9 0 Z`)}
+        ${blk(`M${AX + AW - 25} ${AY + 49} l9 0 l0 15 l-9 0 Z`)}
+        ${blk('M56 146 C54 124 58 106 56 92 L68 92 C70 108 66 126 68 146 Z')}
+        ${flower(38, 86, 15, VERM, CHROME)}
+        ${flower(84, 84, 15, VERM, CHROME)}
+        ${flower(61, 112, 16, VERM, CHROME)}
+        ${flower(98, 116, 12, VERM, CHROME)}
+        ${flower(26, 120, 12, VERM, CHROME)}`;
     case 4: // 흑싸리 — 아래로 쏟아지는 검은 잎
       return [0, 1, 2]
         .map((k) => {
@@ -263,18 +274,27 @@ function monthArt(month: number): string {
         ${leafMass(62, 128, 26, 14)}
         ${flower(58, 62, 26, VERM, CHROME)}
         ${flower(92, 96, 17, VERM, CHROME)}`;
-    case 7: // 홍싸리 — 붉은 싸리
-      return [0, 1]
-        .map((k) => {
-          const x = 44 + k * 30;
-          let st = blk(`M${x} ${AY + 10} q7 58 ${-2} ${AH - 24} l6 0 q4 -64 -3 ${-(AH - 26)} Z`);
-          for (let i = 0; i < 6; i += 1) {
-            const y = AY + 24 + i * 18;
-            st += leafMass(x - 10, y, 8, 4.6, VERM) + leafMass(x + 12, y + 8, 8, 4.6, VERM);
-          }
-          return st;
-        })
-        .join('');
+    /*
+     * 4월 흑싸리와 7월 홍싸리는 색만 다르면 작게 줄었을 때 섞인다.
+     * 4월은 위에서 아래로 늘어진 가는 잎, 7월은 둥글게 뭉친 덤불로 가른다.
+     */
+    case 7: {
+      // 홍싸리 — 옆으로 낮게 퍼지는 덤불. 4월은 세로로 늘어지고 이쪽은 가로로 눕는다.
+      let out = blk(`M57 ${b} C55 132 56 124 58 118 L67 118 C69 124 70 132 68 ${b} Z`);
+      for (let i = 0; i < 5; i += 1) {
+        const t = (i - 2) / 2; // -1 ~ 1
+        const x = 62 + t * 36;
+        const y = 104 - Math.abs(t) * 6;
+        const rot = t * 34;
+        out += `<g transform="rotate(${rot.toFixed(1)} ${x} ${y})">`;
+        for (let k = 0; k < 4; k += 1) {
+          const ly = y - 12 - k * 15;
+          out += leafMass(x - 8, ly, 8.5, 4.6, VERM) + leafMass(x + 8, ly - 6, 8.5, 4.6, VERM);
+        }
+        out += `<rect x="${(x - 1.6).toFixed(1)}" y="${(y - 62).toFixed(1)}" width="3.2" height="62" fill="${shadeCard(VERM, -0.45)}"/></g>`;
+      }
+      return out;
+    }
     case 8: // 공산 — 낮고 넓은 둥근 산 (1월의 뾰족한 솔봉우리와 대비된다)
       return blk(`M${AX} ${b} C${AX + 6} ${b - 62} 36 ${b - 74} 60 ${b - 74} C84 ${b - 74} ${AX + AW - 6} ${b - 62} ${AX + AW} ${b} Z`);
     case 9: // 국준 — 주황 국화와 검은 잎
@@ -296,7 +316,9 @@ function monthArt(month: number): string {
         ${blk(`M${AX} ${b} Q20 100 ${AX + 6} 76 Q54 78 60 ${b} Z`)}
         ${blk(`M${AX + AW} ${b} Q100 100 ${AX + AW - 6} 76 Q66 78 60 ${b} Z`)}
         ${blk('M60 118 Q44 80 60 44 Q76 80 60 118 Z')}
-        ${[38, 60, 82].map((x) => flower(x, 32, 11, BLUE, CHROME)).join('')}`;
+        ${flower(60, 34, 16, BLUE, CHROME)}
+        ${flower(36, 46, 11, BLUE, CHROME)}
+        ${flower(86, 46, 11, BLUE, CHROME)}`;
     default: // 12월 비 — 검은 바탕에 버드나무
       return `
         <rect x="${AX}" y="${AY}" width="${AW}" height="${AH}" fill="${INK}"/>
@@ -539,8 +561,8 @@ export function cardSvg(
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${CW} ${CH}" width="${w}" height="${h}" role="img" aria-label="${card.name}">
   ${frame(card.month, sk, uid)}
   <g clip-path="url(#cl${uid})">${art}</g>
-  <text x="${CW / 2}" y="${CH - 4}" font-size="11" text-anchor="middle" fill="${WHITE}" font-family="sans-serif"
-        opacity="0.9">${foot}</text>
+  <text x="${CW / 2}" y="${CH - 3.5}" font-size="14" font-weight="700" text-anchor="middle" fill="${WHITE}"
+        font-family="sans-serif" opacity="0.95">${foot}</text>
   <rect x="${AX}" y="${AY}" width="${AW}" height="${AH}" filter="url(#gr${uid})" opacity="0.085"
         style="mix-blend-mode:multiply"/>
   <rect width="${CW}" height="${CH}" rx="9" filter="url(#gr${uid})" opacity="0.045" style="mix-blend-mode:multiply"/>

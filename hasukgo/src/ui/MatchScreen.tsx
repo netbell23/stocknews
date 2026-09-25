@@ -419,16 +419,62 @@ export default function MatchScreen({
     return () => window.clearTimeout(t);
   }, [taunt]);
 
-  /** 바닥패를 월별로 묶는다. 같은 월이 겹쳐 놓이는 게 실제 판 모양이다. */
-  const fieldGroups = useMemo(() => {
+  /*
+   * 바닥패는 한 번 놓인 자리에 그대로 있어야 한다.
+   *
+   * 월이 사라질 때마다 뒤엣것을 앞으로 당기면, 보고 있던 패가 매번 다른
+   * 자리로 옮겨 앉는다. 어디에 뭐가 있는지 외울 수가 없고, 내려는 순간에
+   * 판이 한 번 출렁여서 엉뚱한 패를 누르게 된다.
+   *
+   * 그래서 월마다 자리를 하나씩 쥐여주고, 그 월을 먹어 사라지면 자리를
+   * 비워 둔다. 새로 깔리는 월은 비어 있는 앞자리부터 차지한다 —
+   * 실제 판에서 빈 데에 놓는 것과 같다.
+   * 화투는 월이 열둘 + 보너스라 자리는 열넷이면 영원히 모자라지 않는다.
+   */
+  const SLOTS = 14;
+  const COLS = SLOTS / 2;
+  /*
+   * 자리를 채우는 순서. 각 줄의 가운데부터 바깥으로, 위아래를 번갈아 간다.
+   * 앞에서부터 채우면 패가 죄다 왼쪽에 몰려 판이 한쪽으로 기운다.
+   */
+  const SLOT_ORDER = useMemo(() => {
+    const mid = Math.floor(COLS / 2);
+    const centerOut: number[] = [];
+    for (let d = 0; d < COLS; d += 1) {
+      const right = mid + Math.ceil(d / 2) * (d % 2 === 0 ? 1 : 0);
+      const col = d === 0 ? mid : d % 2 === 1 ? mid - Math.ceil(d / 2) : right;
+      if (col >= 0 && col < COLS && !centerOut.includes(col)) centerOut.push(col);
+    }
+    for (let c = 0; c < COLS; c += 1) if (!centerOut.includes(c)) centerOut.push(c);
+    const out: number[] = [];
+    for (const c of centerOut) {
+      out.push(c);
+      out.push(COLS + c);
+    }
+    return out;
+  }, []);
+  const slotOf = useRef(new Map<number, number>());
+
+  const fieldSlots = useMemo(() => {
     const byMonth = new Map<number, Card[]>();
     for (const c of s.field) {
       const arr = byMonth.get(c.month);
       if (arr) arr.push(c);
       else byMonth.set(c.month, [c]);
     }
-    return [...byMonth.entries()].map(([month, cards]) => ({ month, cards }));
-  }, [s.field]);
+    const seat = slotOf.current;
+    for (const m of [...seat.keys()]) if (!byMonth.has(m)) seat.delete(m);
+    const used = new Set(seat.values());
+    for (const m of byMonth.keys()) {
+      if (seat.has(m)) continue;
+      const free = SLOT_ORDER.find((i) => !used.has(i)) ?? 0;
+      seat.set(m, free);
+      used.add(free);
+    }
+    const out: Array<{ month: number; cards: Card[] } | null> = Array.from({ length: SLOTS }, () => null);
+    for (const [m, cards] of byMonth) out[seat.get(m)!] = { month: m, cards };
+    return out;
+  }, [s.field, SLOT_ORDER]);
 
   /*
    * 바닥이 붐비면 카드를 줄인다.
@@ -438,9 +484,8 @@ export default function MatchScreen({
   const fieldScale =
     s.field.length <= 8 ? 1 : s.field.length <= 10 ? 0.86 : s.field.length <= 12 ? 0.74 : s.field.length <= 16 ? 0.62 : 0.52;
 
-  const half = Math.ceil(fieldGroups.length / 2);
-  const topRow = fieldGroups.slice(0, half);
-  const bottomRow = fieldGroups.slice(half);
+  const topRow = fieldSlots.slice(0, COLS);
+  const bottomRow = fieldSlots.slice(COLS);
 
   const winPay = view.myScore * tenant.rate;
   const losePay = Math.round(view.oppScore * tenant.rate * LOSS_FACTOR);
@@ -457,6 +502,10 @@ export default function MatchScreen({
       settlementTotal: s.settlement.total,
     };
   }, [s.settlement, me]);
+
+  /** 빈 자리는 칸만 지킨다 — 그래야 남은 패가 제자리에 머문다 */
+  const renderSlot = (g: { month: number; cards: Card[] } | null, i: number) =>
+    g ? renderStack(g) : <div className="fslot-empty" key={`empty-${i}`} />;
 
   const renderStack = (g: { month: number; cards: Card[] }) => {
     // 뻑 더미는 묶여 있는 한 덩어리다. 펼쳐 놓으면 같은 월이 여러 장인 것과 구분이 안 된다
@@ -550,7 +599,7 @@ export default function MatchScreen({
             className={`felt ${slam ? 'slam' : ''} ${mustChoose ? 'choosing' : ''}`}
             style={{ ['--field-scale' as string]: fieldScale }}
           >
-            <div className="field-row">{topRow.map(renderStack)}</div>
+            <div className="field-row">{topRow.map(renderSlot)}</div>
             <div className="field-mid">
               {pending && (
                 <div className="pending">
@@ -564,7 +613,7 @@ export default function MatchScreen({
               </div>
               <div className="deck-label">남은 패</div>
             </div>
-            <div className="field-row">{bottomRow.map(renderStack)}</div>
+            <div className="field-row">{bottomRow.map(renderSlot)}</div>
           </div>
           {mustChoose && (
             <div className="felt-notice">

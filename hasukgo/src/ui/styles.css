@@ -780,7 +780,11 @@ button {
    * 같은 월끼리 벌리는 간격. 겹쳐 쌓으면 뒤 패의 도안이 가려져 뭘 먹을지 안 보인다.
    * 실제 판처럼 나란히 펼쳐 놓는다.
    */
-  --stack-overlap: 4px;
+  /*
+   * 같은 월끼리 절반쯤 겹친다. 나란히 벌려 놓으면 두 장이 따로 놀아
+   * 맞아떨어진 건지 모르고, 완전히 포개면 뭘 먹는지 안 보인다.
+   */
+  --stack-overlap: calc(var(--card-h, 69px) * -0.33);
   /* 뻑 더미는 묶인 덩어리라 겹쳐 쌓는다 */
   --ppeok-overlap: calc(var(--card-h, 69px) * -0.44);
   /* 상대 손패(뒷면)는 장수만 알면 되므로 촘촘히 겹친다 */
@@ -1169,13 +1173,22 @@ button {
   align-content: center;
 }
 
+/*
+ * 자리를 격자로 고정한다. flex 로 두면 한 월이 빠질 때마다 뒤엣것이
+ * 앞으로 당겨져 판이 통째로 다시 줄을 선다.
+ */
 .field-row {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  justify-items: center;
   align-items: center;
-  gap: 5px;
+  gap: 4px;
   min-height: 0;
+}
+
+.fslot-empty {
+  width: 1px;
+  height: 1px;
 }
 
 .fstack {
