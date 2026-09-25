@@ -41,6 +41,13 @@ const STEAL_GAP = 300;
 
 /** 더미에서 뒤집히는 패: 천천히 들어올려 앞면을 보여준 뒤 내려놓는다 */
 const REVEAL_MS = 1200;
+/**
+ * 뒤집은 패가 바닥패를 먹는 경우: 들어올려 보여주고 → 그 패를 내리치고 → 같이 가져간다.
+ * 공중에서 바로 더미로 빨려들면 "무엇을 때려서 먹었는지" 가 빠진다.
+ */
+const REVEAL_HIT_MS = 2000;
+/** 그 안에서 내리치는 순간이 언제인지 (0~1) */
+const HIT_AT = 0.45;
 /** 뒤집기 연출이 있는 턴에는 먹는 연출이 그 뒤에 와야 한다 */
 const SWEEP_WAIT_AFTER_REVEAL = 1280;
 
@@ -92,6 +99,8 @@ export function useCardFlight(
   deps: React.DependencyList,
   enabled = true,
   onBusy?: (ms: number) => void,
+  /** 뒤집은 패가 바닥패를 내리치는 순간 — 충격 연출을 그 타이밍에 맞춘다 */
+  onImpact?: (at: DOMRect, delay: number) => void,
 ): CardFlight {
   const prev = useRef<Map<string, { rect: DOMRect; zone: CardZone }> | null>(null);
   const override = useRef(new Map<string, DOMRect>());
@@ -117,6 +126,27 @@ export function useCardFlight(
     const board = root.getBoundingClientRect();
     // 이번 갱신에 더미에서 뒤집힌 패가 있는가 (있으면 먹는 연출을 그 뒤로 미룬다)
     const hasReveal = [...now.keys()].some((k) => !override.current.has(k) && !before.has(k));
+
+    /*
+     * 뒤집은 패가 바닥패를 먹는 짝을 찾아둔다.
+     * 같은 월이면서, 직전엔 바닥에 있었고 지금은 같은 더미로 간 패가 그 짝이다.
+     */
+    const hitTargets = new Map<string, DOMRect>(); // 뒤집은 패 cid -> 내리칠 자리
+    const waitOverride = new Map<string, number>(); // 맞은 패 cid -> 쓸어담기 대기
+    for (const [cid, snap] of now) {
+      if (override.current.has(cid) || before.has(cid)) continue; // 갓 뒤집힌 패만
+      if (!isPile(snap.zone)) continue; // 바닥에 앉는 패는 제자리에 내려앉으면 된다
+      const month = snap.el.dataset.month;
+      for (const [other, s2] of now) {
+        if (other === cid || s2.zone !== snap.zone) continue;
+        if (s2.el.dataset.month !== month) continue;
+        const w2 = before.get(other);
+        if (!w2 || w2.zone !== 'field') continue;
+        hitTargets.set(cid, w2.rect);
+        waitOverride.set(other, REVEAL_HIT_MS * HIT_AT + 220);
+        break;
+      }
+    }
     let sweptCount = 0;
     let tail = 0;
     const mark = (delay: number, dur: number) => {
@@ -169,6 +199,34 @@ export function useCardFlight(
         const liftX = board.left + board.width / 2 - rect.width / 2 - rect.left;
         const liftY = board.top + board.height * 0.34 - rect.height / 2 - rect.top;
         const up = `translate(${liftX.toFixed(1)}px, ${liftY.toFixed(1)}px)`;
+        const hit = hitTargets.get(cid);
+
+        // 먹을 바닥패가 있으면: 들어올려 보여주고 → 내리치고 → 같이 간다
+        if (hit) {
+          const hx = hit.left + hit.width / 2 - rect.width / 2 - rect.left;
+          const hy = hit.top + hit.height / 2 - rect.height / 2 - rect.top;
+          const onto = `translate(${hx.toFixed(1)}px, ${hy.toFixed(1)}px)`;
+          const a = el.animate(
+            [
+              { transform: `${start} rotateY(90deg)`, offset: 0, easing: 'cubic-bezier(.25,.9,.3,1)' },
+              { transform: `${up} scale(2.05) rotateY(66deg)`, offset: 0.18 },
+              { transform: `${up} scale(2.2) rotateY(0deg)`, offset: 0.3, easing: 'linear' },
+              { transform: `${up} scale(2.15)`, offset: 0.36, easing: 'cubic-bezier(.75,0,.9,.55)' },
+              // 내리친다
+              { transform: `${onto} scale(1.1) rotate(3deg)`, offset: HIT_AT },
+              { transform: `${onto} scale(1) rotate(0deg)`, offset: HIT_AT + 0.06, easing: 'ease-out' },
+              // 붙어 있다가
+              { transform: `${onto} scale(1)`, offset: 0.66, easing: 'cubic-bezier(.45,0,.2,1)' },
+              { transform: 'none', offset: 1 },
+            ],
+            { duration: REVEAL_HIT_MS, fill: 'backwards' },
+          );
+          lift(el, a, 80);
+          onImpact?.(hit, REVEAL_HIT_MS * HIT_AT);
+          mark(0, REVEAL_HIT_MS);
+          continue;
+        }
+
         const anim = el.animate(
           [
             { transform: `${start} rotateY(90deg)`, offset: 0, easing: 'cubic-bezier(.25,.9,.3,1)' },
@@ -196,8 +254,10 @@ export function useCardFlight(
 
       if (isPile(zone)) {
         // 붙었다가 → 한 장씩 차례로 쑉
-        const wait = (hasReveal ? SWEEP_WAIT_AFTER_REVEAL : SWEEP_WAIT) + sweptCount * SWEEP_STAGGER;
-        sweptCount += 1;
+        const forcedWait = waitOverride.get(cid);
+        const wait =
+          forcedWait ?? (hasReveal ? SWEEP_WAIT_AFTER_REVEAL : SWEEP_WAIT) + sweptCount * SWEEP_STAGGER;
+        if (forcedWait === undefined) sweptCount += 1;
         const anim = el.animate(
           [
             { transform: start, offset: 0 },

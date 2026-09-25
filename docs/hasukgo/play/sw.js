@@ -10,7 +10,7 @@
  *
  * CACHE 이름의 숫자를 올리면 예전 캐시가 정리된다. 배포 스크립트가 자동으로 올린다.
  */
-const CACHE = 'hasukgo-202609250040';
+const CACHE = 'hasukgo-202609250215';
 
 self.addEventListener('install', (event) => {
   // 새 워커를 곧바로 활성화한다 (게임은 단일 페이지라 안전하다)

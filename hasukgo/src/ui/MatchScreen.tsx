@@ -84,6 +84,7 @@ function CapturedPiles({
                 className="pile-card"
                 data-cid={c.id}
                 data-zone={side === '내 것' ? 'pile-me' : 'pile-opp'}
+                data-month={c.month}
                 style={{ marginLeft: i === 0 ? 0 : 'var(--pile-overlap)' }}
                 src={cardSrcNow(c)}
                 alt={c.name}
@@ -159,6 +160,19 @@ export default function MatchScreen({
       setAnimBusy(true);
       window.clearTimeout(busyTimer.current);
       busyTimer.current = window.setTimeout(() => setAnimBusy(false), ms);
+    },
+    // 뒤집은 패가 바닥패를 내리치는 순간에 충격 연출을 맞춰 넣는다
+    (at, delay) => {
+      window.setTimeout(() => {
+        setImpact({
+          key: Date.now(),
+          x: at.left + at.width / 2,
+          y: at.top + at.height / 2,
+          w: at.width,
+          h: at.height,
+        });
+        setSlam((n) => n + 1);
+      }, delay);
     },
   );
   useEffect(() => () => window.clearTimeout(busyTimer.current), []);

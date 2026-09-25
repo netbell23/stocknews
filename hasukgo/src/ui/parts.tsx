@@ -88,6 +88,7 @@ export function CardView({
       className={cls}
       data-cid={card.id}
       data-zone={zone ?? 'field'}
+      data-month={card.month}
       style={hidden ? { visibility: 'hidden' } : undefined}
       src={cardDataUri(card, { skin: currentSkin })}
       alt={card.name}
