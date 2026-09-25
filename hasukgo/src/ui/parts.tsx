@@ -2,16 +2,13 @@
 import type React from 'react';
 import { backgroundDataUri } from '../art/background';
 import { cardBackDataUri, cardDataUri } from '../art/cards';
+import { charArtSrc, type Shot } from '../art/artFiles';
 import { portraitDataUri } from '../art/character';
 import type { Card } from '../engine/types';
 import type { Tenant } from '../data/types';
 import type { BackgroundId, Expression, TimeOfDay } from '../scenario/types';
 
-/**
- * 원화가 준비되면 true 로 바꾼다.
- * public/art/char/{id}_{outfit}_{expression}.png 가 있으면 그걸 쓰고, 없으면 SVG 로 되돌아간다.
- */
-const IMAGE_FIRST = false;
+
 
 /**
  * 지금 장착한 화패 스킨. 카드는 화면 곳곳에서 그려지는데 스킨은 전역 설정 하나뿐이라,
@@ -49,26 +46,34 @@ export function cardSrcNow(card: Card): string {
   return cardDataUri(card, { skin: currentSkin });
 }
 
+/**
+ * 하숙생 그림 한 장.
+ * 원화가 들어와 있으면 원화를, 아니면 코드가 그리는 SVG 를 쓴다.
+ * 원화 파일이 깨져 있어도 SVG 로 한 번 더 되돌아가므로 빈 칸이 남지 않는다.
+ */
 export function Portrait({
   tenant,
   expression = 'normal',
   outfit = 0,
+  shot = 'full',
   className,
   style,
 }: {
   tenant: Tenant;
   expression?: Expression;
   outfit?: 0 | 1 | 2;
+  /** 얼굴만 쓸 자리인지 (하숙생 줄의 동그란 칩·상대 자리) */
+  shot?: Shot;
   className?: string;
   style?: React.CSSProperties;
 }) {
   const svg = portraitDataUri({ tenant, expression, outfit });
-  const src = IMAGE_FIRST ? `art/char/${tenant.id}_${outfit}_${expression}.png` : svg;
+  const art = charArtSrc(tenant.id, shot, expression);
   return (
     <img
-      className={className}
+      className={`${className ?? ''} ${art ? 'is-photo' : 'is-drawn'}`.trim()}
       style={style}
-      src={src}
+      src={art ?? svg}
       alt={`${tenant.name} (${expression})`}
       onError={(e) => {
         const el = e.currentTarget;

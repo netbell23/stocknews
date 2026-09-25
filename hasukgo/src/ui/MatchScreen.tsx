@@ -495,6 +495,7 @@ export default function MatchScreen({
           <Portrait
             tenant={tenant}
             expression={startled ? 'surprise' : view.expression}
+            shot="face"
             outfit={stage >= 10 ? 2 : 0}
           />
           {startled > 0 && <span className="startle-mark">!</span>}

@@ -27,6 +27,8 @@ import GalleryScreen from './ui/GalleryScreen';
 import HomeScreen from './ui/HomeScreen';
 import MatchScreen, { type MatchOutcome } from './ui/MatchScreen';
 import NovelScreen, { type NovelResult } from './ui/NovelScreen';
+import { keyArtSrc } from './art/artFiles';
+import AgeGate, { isAdultConfirmed } from './ui/AgeGate';
 import { Background, GameLogo, Portrait, setCardSkin } from './ui/parts';
 import SettingsScreen from './ui/SettingsScreen';
 import ShopScreen from './ui/ShopScreen';
@@ -70,6 +72,7 @@ export default function App() {
    */
   const [hydrated, setHydrated] = useState(false);
   const [screen, setScreen] = useState<Screen>({ name: 'title' });
+  const [adult, setAdult] = useState(() => isAdultConfirmed());
   const [losingStreak, setLosingStreak] = useState<Record<string, number>>({});
   const [pendingEvent, setPendingEvent] = useState<{ tenant: Tenant; stage: number } | null>(null);
 
@@ -262,6 +265,16 @@ export default function App() {
   );
 
   // ── 렌더 ───────────────────────────────
+  // 등급이 청소년 이용불가라, 타이틀보다 먼저 성인 확인을 받는다
+  if (!adult) {
+    return (
+      <div className="app">
+        <AgeGate onEnter={() => setAdult(true)} />
+      </div>
+    );
+  }
+
+  const titleArt = keyArtSrc('title');
   if (screen.name === 'title') {
     return (
       <div className="app">
@@ -269,20 +282,30 @@ export default function App() {
           <Background bg="maru" time="night" />
           <div className="title-vignette" />
           <div className="layer title-layer">
-            <GameLogo className="title-logo" />
-            <div className="title-sub">밤마다 마루에서, 열 번의 승부</div>
+            {/*
+              키아트가 들어와 있으면 그 한 장이 로고와 인물을 다 안고 있다.
+              없으면 코드로 로고를 짜고 하숙생들을 세워 원래 타이틀을 만든다.
+            */}
+            {titleArt ? (
+              <img className="title-key" src={titleArt} alt="하숙생 맞고" draggable={false} />
+            ) : (
+              <>
+                <GameLogo className="title-logo" />
+                <div className="title-sub">밤마다 마루에서, 열 번의 승부</div>
 
-            <div className="title-cast">
-              {TENANTS.slice(0, 7).map((t, i) => (
-                <Portrait
-                  key={t.id}
-                  tenant={t}
-                  expression="smile"
-                  className="title-face"
-                  style={{ zIndex: i === 3 ? 9 : 8 - Math.abs(3 - i) }}
-                />
-              ))}
-            </div>
+                <div className="title-cast">
+                  {TENANTS.slice(0, 7).map((t, i) => (
+                    <Portrait
+                      key={t.id}
+                      tenant={t}
+                      expression="smile"
+                      className="title-face"
+                      style={{ zIndex: i === 3 ? 9 : 8 - Math.abs(3 - i) }}
+                    />
+                  ))}
+                </div>
+              </>
+            )}
 
             <div className="title-menu">
               <button className="btn primary wide gold" onClick={startFromTitle}>

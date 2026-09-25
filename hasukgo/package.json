@@ -5,8 +5,8 @@
   "description": "하숙생 맞고 - 2인 맞고 + 연애 비주얼노벨",
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "build": "tsc --noEmit && vite build",
+    "dev": "npm run art:scan && vite",
+    "build": "npm run art:scan && tsc --noEmit && vite build",
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",
@@ -18,7 +18,8 @@
     "icons": "node scripts/gen-icons.mjs",
     "dev:lan": "vite --host",
     "preview:lan": "vite preview --host --port 8796",
-    "preview:site": "node scripts/serve-site.mjs"
+    "preview:site": "node scripts/serve-site.mjs",
+    "art:scan": "node scripts/art-manifest.mjs"
   },
   "dependencies": {
     "react": "^18.3.1",

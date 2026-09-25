@@ -2156,3 +2156,149 @@ button {
   padding: 30px 12px;
   line-height: 1.6;
 }
+
+/* ── 원화(사진)가 들어온 자리 ─────────────────
+ *
+ * 코드로 그리는 SVG 는 배경이 뚫린 오려낸 그림이라 그림자를 달고 띄워 놨다.
+ * 원화는 제 배경을 달고 오는 네모난 사진이라, 같은 규칙을 그대로 쓰면
+ * 방 그림 위에 사진 액자가 떠 있는 꼴이 된다. 사진은 사진대로 깔아준다.
+ */
+
+/* 로비의 큰 그림: 화면을 채우고 아래쪽만 어둡게 깔아 명패 글씨를 살린다 */
+.stage-face.is-photo {
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  max-width: none;
+  object-fit: cover;
+  object-position: center 18%;
+  border-radius: 16px;
+  filter: none;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.55);
+  -webkit-mask-image: linear-gradient(180deg, #000 0%, #000 76%, transparent 100%);
+  mask-image: linear-gradient(180deg, #000 0%, #000 76%, transparent 100%);
+}
+
+.stage-face.is-photo.locked {
+  filter: grayscale(1) brightness(0.3);
+}
+
+/* 하숙생 줄의 동그란 칩. 얼굴 컷은 이미 얼굴에 맞춰 잘라 놨다 */
+.chip-face img.is-photo {
+  position: static;
+  left: auto;
+  top: auto;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* 승부 화면 상대 자리: 동그랗게 오려 앉힌다 */
+.board-opp > img.is-photo {
+  width: calc(var(--card-h, 69px) * 0.8);
+  height: calc(var(--card-h, 69px) * 0.8);
+  object-fit: cover;
+  object-position: center 20%;
+  border-radius: 50%;
+  border: 2px solid var(--lamp-dim);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.55);
+}
+
+/* 고/스톱 물어볼 때 크게 뜨는 그림 */
+.gostop-overlay img.is-photo {
+  max-height: 46%;
+  width: auto;
+  border-radius: 14px;
+  object-fit: cover;
+  filter: none;
+  box-shadow: 0 0 30px rgba(255, 217, 138, 0.3), 0 10px 26px rgba(0, 0, 0, 0.6);
+}
+
+/* 비주얼노벨에서 서 있는 그림 */
+.vn-portrait.is-photo {
+  max-height: 72%;
+  border-radius: 14px 14px 0 0;
+  filter: none;
+  -webkit-mask-image: linear-gradient(180deg, #000 0%, #000 88%, transparent 100%);
+  mask-image: linear-gradient(180deg, #000 0%, #000 88%, transparent 100%);
+}
+
+/* 결과 패널의 작은 그림 */
+.result img.is-photo {
+  border-radius: 10px;
+  object-fit: cover;
+  object-position: center 18%;
+}
+
+/* 타이틀 키아트 한 장 (로고까지 그려져 들어온다) */
+.title-key {
+  width: 100%;
+  max-width: 560px;
+  height: auto;
+  border-radius: 14px;
+  box-shadow: 0 12px 34px rgba(0, 0, 0, 0.6);
+  margin-bottom: 6px;
+}
+
+/* ── 성인 확인 ────────────────────────────── */
+.gate-layer {
+  justify-content: center;
+  align-items: center;
+  gap: 14px;
+  text-align: center;
+  padding: 24px 18px calc(24px + var(--safe-bottom));
+}
+
+.gate-logo {
+  font-size: clamp(26px, 8vw, 44px);
+}
+
+.gate-badge {
+  font-size: 13px;
+  font-weight: 900;
+  letter-spacing: 1px;
+  color: #fff2ec;
+  padding: 6px 16px;
+  border-radius: 999px;
+  background: linear-gradient(180deg, #d4553c, #9c2f1e);
+  border: 2px solid #4d1b0f;
+  box-shadow: 0 3px 0 #4d1b0f;
+}
+
+.gate-box {
+  max-width: 380px;
+  padding: 14px 16px;
+  border-radius: 14px;
+  text-align: left;
+  font-size: 12.5px;
+  line-height: 1.6;
+  color: var(--paper);
+  background: linear-gradient(180deg, rgba(58, 40, 28, 0.94), rgba(22, 14, 10, 0.94));
+  border: 2px solid #6b3410;
+  box-shadow: inset 0 1px 0 rgba(240, 185, 60, 0.3);
+}
+
+.gate-box p {
+  margin: 0 0 8px;
+  font-weight: 800;
+}
+
+.gate-box ul {
+  margin: 0;
+  padding-left: 16px;
+  color: var(--paper-dim);
+}
+
+.gate-box li + li {
+  margin-top: 5px;
+}
+
+.gate-layer .btn.gold {
+  max-width: 380px;
+}
+
+.gate-out {
+  font-size: 12px;
+  color: var(--paper-dim);
+  text-decoration: underline;
+}

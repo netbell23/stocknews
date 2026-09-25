@@ -164,7 +164,7 @@ export default function HomeScreen({
                 onClick={() => setPickedId(x.id)}
               >
                 <span className="chip-face">
-                  <Portrait tenant={x} expression="normal" outfit={xp.clearedStage >= 10 ? 2 : 0} />
+                  <Portrait tenant={x} expression="normal" shot="face" outfit={xp.clearedStage >= 10 ? 2 : 0} />
                   {!xopen && <i className="chip-lock">🔒</i>}
                 </span>
                 <b>{xopen ? x.name : '???'}</b>
