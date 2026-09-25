@@ -46,9 +46,12 @@ function focusOf(cards: { gwang: Card[]; yeol: Card[]; tti: Card[]; pi: Card[] }
 function CapturedPiles({
   captured,
   side,
+  flying,
 }: {
   captured: { gwang: Card[]; yeol: Card[]; tti: Card[]; pi: Card[] };
   side: '상대' | '내 것';
+  /** 패가 날아오는 중 — 이때는 더미 밖으로 나간 카드를 자르면 안 된다 */
+  flying: boolean;
 }) {
   const rows: Array<[string, Card[]]> = [
     ['광', captured.gwang],
@@ -66,7 +69,7 @@ function CapturedPiles({
   }, [total]);
 
   return (
-    <div className={`piles ${bump ? 'got' : ''}`}>
+    <div className={`piles ${bump ? 'got' : ''} ${flying ? 'flying' : ''}`}>
       <div className="piles-head">
         {side}
         <b key={bump}>{total}</b>
@@ -499,7 +502,7 @@ export default function MatchScreen({
 
         {/* ── 먹은 패 ── */}
         <div className="board-oppcap">
-          <CapturedPiles captured={opp.captured} side="상대" />
+          <CapturedPiles captured={opp.captured} side="상대" flying={animBusy} />
         </div>
 
         {/* ── 바닥 ── */}
@@ -548,7 +551,7 @@ export default function MatchScreen({
         </div>
 
         <div className="board-mycap">
-          <CapturedPiles captured={me.captured} side="내 것" />
+          <CapturedPiles captured={me.captured} side="내 것" flying={animBusy} />
         </div>
 
         {/* ── 점수판 ── */}

@@ -44,6 +44,21 @@ const REVEAL_MS = 1200;
 /** 뒤집기 연출이 있는 턴에는 먹는 연출이 그 뒤에 와야 한다 */
 const SWEEP_WAIT_AFTER_REVEAL = 1280;
 
+/**
+ * 연출 동안만 맨 위로 올린다.
+ * 바닥패는 .fslot 이 stacking context 를 만들어 카드에만 z-index 를 줘도 소용없다.
+ */
+function lift(el: HTMLElement, anim: Animation, z = 60): void {
+  const slot = el.closest<HTMLElement>('.fslot') ?? el;
+  const prevZ = slot.style.zIndex;
+  slot.style.zIndex = String(z);
+  const restore = () => {
+    slot.style.zIndex = prevZ;
+  };
+  anim.addEventListener('finish', restore);
+  anim.addEventListener('cancel', restore);
+}
+
 function measure(root: HTMLElement): Map<string, Snap> {
   const out = new Map<string, Snap>();
   root.querySelectorAll<HTMLElement>('[data-cid]').forEach((el) => {
@@ -153,17 +168,19 @@ export function useCardFlight(
       if (fresh) {
         const liftX = board.left + board.width / 2 - rect.width / 2 - rect.left;
         const liftY = board.top + board.height * 0.34 - rect.height / 2 - rect.top;
-        const lift = `translate(${liftX.toFixed(1)}px, ${liftY.toFixed(1)}px)`;
-        el.animate(
+        const up = `translate(${liftX.toFixed(1)}px, ${liftY.toFixed(1)}px)`;
+        const anim = el.animate(
           [
             { transform: `${start} rotateY(90deg)`, offset: 0, easing: 'cubic-bezier(.25,.9,.3,1)' },
-            { transform: `${lift} scale(2.05) rotateY(66deg)`, offset: 0.3 },
-            { transform: `${lift} scale(2.2) rotateY(0deg)`, offset: 0.5, easing: 'linear' },
-            { transform: `${lift} translateY(-5px) scale(2.15)`, offset: 0.7, easing: 'cubic-bezier(.6,0,.9,.5)' },
+            { transform: `${up} scale(2.05) rotateY(66deg)`, offset: 0.3 },
+            { transform: `${up} scale(2.2) rotateY(0deg)`, offset: 0.5, easing: 'linear' },
+            { transform: `${up} translateY(-5px) scale(2.15)`, offset: 0.7, easing: 'cubic-bezier(.6,0,.9,.5)' },
             { transform: 'none', offset: 1, easing: 'cubic-bezier(.3,1.35,.45,1)' },
           ],
           { duration: REVEAL_MS, fill: 'backwards' },
         );
+        // 들어올려 뒤집는 패는 무조건 제일 위에 있어야 한다
+        lift(el, anim, 80);
         mark(0, REVEAL_MS);
         continue;
       }
@@ -181,7 +198,7 @@ export function useCardFlight(
         // 붙었다가 → 한 장씩 차례로 쑉
         const wait = (hasReveal ? SWEEP_WAIT_AFTER_REVEAL : SWEEP_WAIT) + sweptCount * SWEEP_STAGGER;
         sweptCount += 1;
-        el.animate(
+        const anim = el.animate(
           [
             { transform: start, offset: 0 },
             { transform: `${start} scale(1.24)`, offset: 0.1, easing: 'ease-out' },
@@ -192,13 +209,14 @@ export function useCardFlight(
           ],
           { duration: SWEEP_MS, delay: wait, fill: 'backwards' },
         );
+        lift(el, anim, 55);
         mark(wait, SWEEP_MS);
         continue;
       }
 
       // 손에서 던지거나 더미에서 뒤집혀 바닥에 앉는 패
       const spin = fresh ? 0 : dx > 0 ? -14 : 14;
-      el.animate(
+      const anim = el.animate(
         [
           {
             transform: `${start} rotate(${spin}deg)${fresh ? ' rotateY(88deg)' : ''}`,
@@ -210,6 +228,7 @@ export function useCardFlight(
         ],
         { duration: fresh ? THROW_MS + 60 : THROW_MS, fill: 'backwards' },
       );
+      lift(el, anim, 45);
       mark(0, fresh ? THROW_MS + 60 : THROW_MS);
     }
 
@@ -218,7 +237,7 @@ export function useCardFlight(
       const wait = tail + STEAL_GAP;
       steals.forEach((st, i) => {
         const from = `translate(${st.dx.toFixed(1)}px, ${st.dy.toFixed(1)}px) scale(${st.sc.toFixed(3)})`;
-        st.el.animate(
+        const anim = st.el.animate(
           [
             { transform: from, offset: 0 },
             { transform: `${from} scale(1.9) rotate(-10deg)`, offset: 0.2, easing: 'cubic-bezier(.2,.9,.3,1)' },
@@ -232,6 +251,7 @@ export function useCardFlight(
           ],
           { duration: STEAL_MS, delay: wait + i * 180, fill: 'backwards' },
         );
+        lift(st.el, anim, 70);
         mark(wait + i * 180, STEAL_MS);
       });
     }

@@ -660,7 +660,17 @@ button {
   /* 장수가 패 바로 옆에 붙어야 어느 더미 수인지 읽힌다 */
   flex: 0 1 auto;
   min-width: 0;
+  /*
+   * 평소에는 줄이 길어져도 패널을 넘지 않게 자른다.
+   * 다만 패가 바닥에서 날아오는 동안 자르면 더미 안에 들어와서야 보인다 —
+   * "왼쪽 검은 데서 갑자기 생기는" 것처럼 보인다. 그동안만 자르지 않는다.
+   */
   overflow: hidden;
+}
+
+.piles.flying .pile-cards,
+.piles.flying {
+  overflow: visible;
 }
 
 .pile-card {
@@ -1032,13 +1042,16 @@ button {
   z-index: 30;
 }
 
-/* 뻑 더미는 한 덩어리로 묶여 보여야 한다 */
+/*
+ * 뻑 더미는 한 덩어리로 묶여 보여야 한다.
+ * padding 을 주면 그 줄의 너비가 바뀌어 바닥패 전체가 밀린다 — 뻑이 난 자리에
+ * 그대로 있어야 하므로 자리를 차지하지 않는 outline/그림자로만 표시한다.
+ */
 .fstack.ppeok {
-  padding: 5px 6px 3px;
   border-radius: 9px;
-  background: rgba(181, 73, 63, 0.22);
-  outline: 2px dashed rgba(255, 217, 138, 0.55);
-  outline-offset: -2px;
+  outline: 2px dashed rgba(255, 217, 138, 0.6);
+  outline-offset: 3px;
+  box-shadow: 0 0 0 7px rgba(181, 73, 63, 0.24);
 }
 
 .fstack.ppeok .card {
