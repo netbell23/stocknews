@@ -2640,3 +2640,22 @@ button {
   padding-left: 6px;
   border-left: 1px solid rgba(255, 255, 255, 0.18);
 }
+
+/* 바닥에 한 박자 세워 두는 보너스패 */
+.pending.bonus .card {
+  box-shadow: 0 0 0 2px var(--lamp), 0 8px 20px rgba(0, 0, 0, 0.6);
+  animation: bonusPop 260ms cubic-bezier(0.2, 1.5, 0.35, 1);
+}
+
+.pending.bonus .pending-tag {
+  background: var(--lamp);
+  color: var(--ink);
+  font-weight: 800;
+}
+
+@keyframes bonusPop {
+  from {
+    transform: scale(0.5) rotate(-12deg);
+    opacity: 0;
+  }
+}

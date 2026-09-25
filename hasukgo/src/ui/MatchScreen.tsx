@@ -6,7 +6,7 @@
  * 세로로 들면 위아래로 쌓이고, 눕히거나 넓은 화면이면 좌우로 펼쳐진다.
  * (배치는 styles.css 의 .board grid-template-areas 가 전부 결정한다)
  */
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { MONTH_NAMES } from '../engine/cards';
 import type { Card, PlayerId, RuleOptions, Settlement } from '../engine/types';
 import type { PlayerProfile } from '../ai/ai';
@@ -25,6 +25,14 @@ const HUMAN: PlayerId = 0;
  * (REVEAL_HIT_MS 2000ms × HIT_AT 0.45) 이 끝나는 지점에 맞춰 뻑을 묶는다.
  */
 export const PPEOK_BIND_MS = 980;
+
+/*
+ * 보너스패를 바닥에 내려놓고 보여주는 시간.
+ * 엔진에서는 뒤집자마자 먹은 패가 되는데, 그대로 두면 더미에서 내 자리로
+ * 순간이동한 것처럼 보여 무엇이 들어왔는지 읽히지 않는다.
+ * 한 박자 바닥에 놓았다가 가져간다.
+ */
+const BONUS_STAGE_MS = 900;
 
 /**
  * 뻑 묶음을 언제 화면에 반영할 것인가.
@@ -67,11 +75,14 @@ function CapturedPiles({
   captured,
   side,
   flying,
+  stagedId,
 }: {
   captured: { gwang: Card[]; yeol: Card[]; tti: Card[]; pi: Card[] };
   side: '상대' | '내 것';
   /** 패가 날아오는 중 — 이때는 더미 밖으로 나간 카드를 자르면 안 된다 */
   flying: boolean;
+  /** 아직 바닥에 내려놓고 보여주는 중인 패. 자리만 비워 두고 나중에 날아와 앉는다 */
+  stagedId?: string | null;
 }) {
   const rows: Array<[string, Card[]]> = [
     ['광', captured.gwang],
@@ -105,7 +116,11 @@ function CapturedPiles({
                 data-cid={c.id}
                 data-zone={side === '내 것' ? 'pile-me' : 'pile-opp'}
                 data-month={c.month}
-                style={{ marginLeft: i === 0 ? 0 : 'var(--pile-overlap)' }}
+                style={{
+                  marginLeft: i === 0 ? 0 : 'var(--pile-overlap)',
+                  // 아직 바닥에 세워 보여주는 중이면 자리만 지킨다
+                  visibility: c.id === stagedId ? 'hidden' : undefined,
+                }}
                 src={cardSrcNow(c)}
                 alt={c.name}
                 draggable={false}
@@ -541,6 +556,27 @@ export default function MatchScreen({
     [shownKey],
   );
 
+  /*
+   * 새로 들어온 보너스패를 한 박자 바닥에 세워 둔다.
+   * 더미에 앉은 카드는 그동안 자리만 지키고(보이지 않게), 시간이 지나면
+   * 바닥 → 더미로 날아가 앉는 것처럼 보인다.
+   */
+  const [staged, setStaged] = useState<Card | null>(null);
+  const bonusSeen = useRef<Set<string>>(new Set());
+  /*
+   * useEffect 로 미루면 더미에 한 프레임 보였다가 사라진다 — 깜빡인다.
+   * useLayoutEffect 는 화면에 그리기 전에 돌아서, 처음부터 자리만 지킨다.
+   */
+  useLayoutEffect(() => {
+    const all = [...me.captured.pi, ...opp.captured.pi].filter((c) => c.isBonus);
+    const fresh = all.find((c) => !bonusSeen.current.has(c.id));
+    if (!fresh) return;
+    bonusSeen.current.add(fresh.id);
+    setStaged(fresh);
+    const id = window.setTimeout(() => setStaged(null), BONUS_STAGE_MS);
+    return () => window.clearTimeout(id);
+  }, [me.captured.pi, opp.captured.pi]);
+
   /** 빈 자리는 칸만 지킨다 — 그래야 남은 패가 제자리에 머문다 */
   const renderSlot = (g: { month: number; cards: Card[] } | null, i: number) =>
     g ? renderStack(g) : <div className="fslot-empty" key={`empty-${i}`} />;
@@ -620,7 +656,7 @@ export default function MatchScreen({
 
         {/* ── 먹은 패 ── */}
         <div className="board-oppcap">
-          <CapturedPiles captured={opp.captured} side="상대" flying={animBusy} />
+          <CapturedPiles captured={opp.captured} side="상대" flying={animBusy} stagedId={staged?.id} />
         </div>
 
         {/* ── 바닥 ── */}
@@ -643,6 +679,12 @@ export default function MatchScreen({
                 <div className="pending">
                   <CardView card={pending.played} />
                   <span className="pending-tag">{pending.source === 'deck' ? '뒤집은 패' : '낸 패'}</span>
+                </div>
+              )}
+              {staged && (
+                <div className="pending bonus">
+                  <CardView card={staged} />
+                  <span className="pending-tag">보너스</span>
                 </div>
               )}
               <div className="deck" data-deck="">
@@ -669,7 +711,7 @@ export default function MatchScreen({
         </div>
 
         <div className="board-mycap">
-          <CapturedPiles captured={me.captured} side="내 것" flying={animBusy} />
+          <CapturedPiles captured={me.captured} side="내 것" flying={animBusy} stagedId={staged?.id} />
         </div>
 
         {/* ── 점수판 ── */}
