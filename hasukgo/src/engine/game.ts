@@ -258,6 +258,32 @@ export function playCard(s: GameState, cardId: string, bomb = false): GameState 
   }
 
   me.hand.splice(idx, 1);
+
+  /*
+   * 보너스패는 바닥에 깔리는 패가 아니다. 월이 없어서 아무것과도 맞지 않기 때문에
+   * 그냥 두면 바닥에 쌓여 영원히 남는다.
+   * 내는 즉시 내 먹은 패로 가고, 줄어든 손패를 덱에서 한 장 채운 뒤 같은 사람이 이어서 낸다.
+   */
+  if (card.isBonus) {
+    const taken: Card[] = [card];
+    let refill = n.deck.shift();
+    while (refill?.isBonus) {
+      taken.push(refill);
+      refill = n.deck.shift();
+    }
+    if (refill) me.hand.push(refill);
+    ctx.bonusFlips = taken;
+    n.events.push({ type: 'bonus', player: p, detail: `${taken.length}장` });
+    n.log.push(`P${p} 보너스패 ${taken.length}장`);
+    // 낼 패가 없거나 덱이 비면 평소대로 턴을 마무리한다 (나가리·고스톱 판정 포함)
+    if (me.hand.length === 0 || n.deck.length === 0) return finishTurn(n);
+    addCaptured(me, taken);
+    n.turnCtx = null;
+    n.phase = 'awaitPlay';
+    n.turn = p;
+    return n;
+  }
+
   const matches = fieldMatches(n, card.month);
 
   if (matches.length === 0) {

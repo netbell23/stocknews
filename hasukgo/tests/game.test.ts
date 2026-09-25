@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { baseDeck } from '../src/engine/cards';
+import { createRng } from '../src/engine/rng';
 import {
   chooseMatch,
   createGame,
@@ -364,5 +365,95 @@ describe('손패 수가 어긋나도 판이 멈추지 않는다', () => {
       s = playCard(s, hand[0].id);
     }
     expect(s.phase).toBe('ended');
+  });
+});
+
+describe('패는 사라지지도 복제되지도 않는다', () => {
+  /** 판 어딘가에 있는 카드 id 를 전부 모은다 */
+  function allCardIds(s: GameState): string[] {
+    const ids: string[] = [];
+    ids.push(...s.deck.map((c) => c.id));
+    ids.push(...s.field.map((c) => c.id));
+    for (const p of s.players) {
+      ids.push(...p.hand.map((c) => c.id));
+      ids.push(...p.captured.gwang.map((c) => c.id));
+      ids.push(...p.captured.yeol.map((c) => c.id));
+      ids.push(...p.captured.tti.map((c) => c.id));
+      ids.push(...p.captured.pi.map((c) => c.id));
+    }
+    if (s.pendingChoice) ids.push(s.pendingChoice.played.id);
+    // 턴 중간에는 먹은 패가 아직 더미로 안 가고 turnCtx 에 들려 있다.
+    // stage 가 done 이면 이미 더미로 옮겨진 뒤라 세면 중복이 된다.
+    if (s.turnCtx && s.turnCtx.stage !== 'done') {
+      ids.push(...s.turnCtx.fromHandCapture.map((c) => c.id));
+      ids.push(...s.turnCtx.fromFlipCapture.map((c) => c.id));
+      ids.push(...s.turnCtx.bonusFlips.map((c) => c.id));
+    }
+    return ids;
+  }
+
+  it('무작위 200판을 끝까지 둬도 카드 총수와 소유가 어긋나지 않는다', () => {
+    for (let seed = 1; seed <= 200; seed += 1) {
+      const rng = createRng(seed * 7919);
+      let s = createGame({ seed });
+      const total = allCardIds(s).length;
+
+      for (let step = 0; step < 400 && s.phase !== 'ended'; step += 1) {
+        if (s.phase === 'awaitPlay') {
+          const hand = s.players[s.turn].hand;
+          if (hand.length === 0) break;
+          s = playCard(s, hand[Math.floor(rng.next() * hand.length)].id);
+        } else if (s.phase === 'awaitChoice') {
+          const cands = s.pendingChoice!.candidates;
+          s = chooseMatch(s, cands[Math.floor(rng.next() * cands.length)].id);
+        } else if (s.phase === 'awaitGoStop') {
+          s = rng.next() < 0.5 ? declareGo(s) : declareStop(s);
+        } else {
+          break;
+        }
+
+        const ids = allCardIds(s);
+        const dup = ids.filter((id, i) => ids.indexOf(id) !== i);
+        expect(dup, `seed ${seed} step ${step}: 중복 ${dup.join(',')}`).toEqual([]);
+        expect(ids.length, `seed ${seed} step ${step}: 카드 수`).toBe(total);
+      }
+    }
+  });
+
+  it('보너스패는 바닥에 깔리지 않고 낸 사람이 가져간다', () => {
+    let found = 0;
+    for (let seed = 1; seed <= 300 && found < 12; seed += 1) {
+      const rng = createRng(seed * 104729);
+      let s = createGame({ seed });
+      for (let step = 0; step < 400 && s.phase !== 'ended'; step += 1) {
+        if (s.phase === 'awaitPlay') {
+          const me = s.turn;
+          const hand = s.players[me].hand;
+          if (hand.length === 0) break;
+          const bonus = hand.find((c) => c.isBonus);
+          const before = s.players[me].captured.pi.length;
+          if (bonus) {
+            const handBefore = hand.length;
+            s = playCard(s, bonus.id);
+            found += 1;
+            expect(s.field.some((c) => c.isBonus), '보너스패가 바닥에 남았다').toBe(false);
+            expect(s.players[me].captured.pi.length, '낸 사람이 가져가야 한다').toBeGreaterThan(before);
+            // 덱이 남아 있으면 손패를 한 장 채워 같은 사람이 이어서 낸다
+            if (s.phase === 'awaitPlay' && s.deck.length > 0) {
+              expect(s.turn, '보너스를 내면 턴이 이어진다').toBe(me);
+              expect(s.players[me].hand.length).toBe(handBefore);
+            }
+            continue;
+          }
+          s = playCard(s, hand[Math.floor(rng.next() * hand.length)].id);
+        } else if (s.phase === 'awaitChoice') {
+          const c = s.pendingChoice!.candidates;
+          s = chooseMatch(s, c[0].id);
+        } else if (s.phase === 'awaitGoStop') {
+          s = declareStop(s);
+        } else break;
+      }
+    }
+    expect(found, '보너스패를 내는 경우가 한 번도 안 나왔다').toBeGreaterThan(0);
   });
 });

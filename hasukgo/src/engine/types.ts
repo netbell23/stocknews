@@ -167,6 +167,7 @@ export type GameEventType =
   | 'chongtong'
   | 'go'
   | 'stop'
+  | 'bonus' // 보너스패 획득
   | 'steal' // 피 1장 상납
   | 'nagari';
 

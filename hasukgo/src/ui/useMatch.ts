@@ -2,6 +2,7 @@
  * 대전 진행 컨트롤러.
  * 규칙 엔진은 동기 순수 함수이므로, 여기서 "연출을 위한 지연"만 얹는다.
  */
+import type React from 'react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { chooseCapture, chooseCard, decideGoStop, decideGukjin, EMPTY_PROFILE, type PlayerProfile } from '../ai/ai';
 import {
@@ -35,6 +36,12 @@ export interface MatchOptions {
   /** 3연패 중이면 힌트 대사를 띄운다 */
   losingStreak: number;
   seed?: number;
+  /**
+   * 화면 연출이 끝나는 시각(performance.now 기준)을 담은 ref.
+   * 하숙생은 이 시각 뒤에 움직인다 — 내가 먹는 중에 상대가 내려치면
+   * 무슨 일이 일어났는지 읽을 수가 없다.
+   */
+  busyUntil?: React.MutableRefObject<number>;
 }
 
 export interface Shout {
@@ -76,6 +83,9 @@ export interface MatchView {
  * 상대가 뭘 내는지 눈으로 따라갈 수 있어야 해서 넉넉히 잡았다.
  */
 export const AI_THROW_MS = 1150;
+
+/** 하숙생이 패를 고르는 데 쓰는 최소한의 뜸 */
+const AI_THINK_MS = 420;
 
 const EVENT_SHOUT: Partial<Record<GameEvent['type'], string>> = {
   jjok: '쪽!',
@@ -168,6 +178,15 @@ export function useMatch(opts: MatchOptions) {
     [fireShout, rnd, tenant, tone],
   );
 
+  /** 화면 연출이 끝날 때까지 기다렸다가 움직인다 */
+  const pacedDelay = useCallback(
+    (base: number) => {
+      const until = opts.busyUntil?.current ?? 0;
+      return Math.max(base, until - performance.now() + base * 0.35);
+    },
+    [opts.busyUntil],
+  );
+
   /** AI 턴 자동 진행 */
   useEffect(() => {
     if (state.phase === 'ended') return;
@@ -204,7 +223,7 @@ export function useMatch(opts: MatchOptions) {
           setAiThrow(null);
           setState(next);
         }, AI_THROW_MS);
-      }, 420);
+      }, pacedDelay(AI_THINK_MS));
       return;
     }
 
@@ -213,7 +232,7 @@ export function useMatch(opts: MatchOptions) {
         const next = chooseMatch(state, chooseCapture(state, params, rngRef.current));
         reactTo(next);
         setState(next);
-      }, 420);
+      }, pacedDelay(AI_THINK_MS));
       return;
     }
 
@@ -230,9 +249,9 @@ export function useMatch(opts: MatchOptions) {
           fireShout(d.action === 'go' ? '고!' : '스톱!', AI);
           setState(next);
         }, 1600);
-      }, 500);
+      }, pacedDelay(500));
     }
-  }, [state, params, profile, tenant, tone, later, reactTo, fireShout, rnd]);
+  }, [state, params, profile, tenant, tone, later, reactTo, fireShout, rnd, pacedDelay]);
 
   /** 판이 끝나면 승패 대사 */
   useEffect(() => {

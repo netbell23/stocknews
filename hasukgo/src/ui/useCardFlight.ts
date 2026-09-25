@@ -36,7 +36,7 @@ const SWEEP_STAGGER = 150;
 /** 더미에서 뒤집히는 패: 천천히 들어올려 앞면을 보여준 뒤 내려놓는다 */
 const REVEAL_MS = 900;
 /** 뒤집기 연출이 있는 턴에는 먹는 연출이 그 뒤에 와야 한다 */
-const SWEEP_WAIT_AFTER_REVEAL = 620;
+const SWEEP_WAIT_AFTER_REVEAL = 980;
 
 function measure(root: HTMLElement): Map<string, Snap> {
   const out = new Map<string, Snap>();
@@ -49,7 +49,15 @@ function measure(root: HTMLElement): Map<string, Snap> {
   return out;
 }
 
+/** 연출이 끝난 뒤 다음 동작까지 두는 틈 */
+const BEAT_GAP = 220;
+
 export interface CardFlight {
+  /**
+   * 지금 걸린 연출이 전부 끝나는 시각(performance.now 기준).
+   * 상대 차례를 이 뒤로 미뤄야 "내가 먹는 중인데 상대가 내려치는" 겹침이 사라진다.
+   */
+  busyUntil: React.MutableRefObject<number>;
   /**
    * 이 카드는 "직전에 여기 있었던 걸로 쳐라".
    * 손패를 크게 띄웠다가 바닥에 꽂는 연출은 별도로 돌아가므로, FLIP 이 그걸 한 번 더
@@ -62,9 +70,11 @@ export function useCardFlight(
   boardRef: React.RefObject<HTMLElement | null>,
   deps: React.DependencyList,
   enabled = true,
+  onBusy?: (ms: number) => void,
 ): CardFlight {
   const prev = useRef<Map<string, { rect: DOMRect; zone: CardZone }> | null>(null);
   const override = useRef(new Map<string, DOMRect>());
+  const busyUntil = useRef(0);
 
   const setOrigin = useCallback((cardId: string, rect: DOMRect) => {
     override.current.set(cardId, rect);
@@ -87,6 +97,10 @@ export function useCardFlight(
     // 이번 갱신에 더미에서 뒤집힌 패가 있는가 (있으면 먹는 연출을 그 뒤로 미룬다)
     const hasReveal = [...now.keys()].some((k) => !override.current.has(k) && !before.has(k));
     let sweptCount = 0;
+    let tail = 0;
+    const mark = (delay: number, dur: number) => {
+      tail = Math.max(tail, delay + dur);
+    };
 
     for (const [cid, { rect, el, zone }] of now) {
       const forced = override.current.get(cid);
@@ -116,6 +130,7 @@ export function useCardFlight(
           ],
           { duration: 200, easing: 'cubic-bezier(.3,0,.2,1)', fill: 'backwards' },
         );
+        mark(0, 200);
         continue;
       }
 
@@ -141,6 +156,7 @@ export function useCardFlight(
           ],
           { duration: REVEAL_MS, fill: 'backwards' },
         );
+        mark(0, REVEAL_MS);
         continue;
       }
 
@@ -159,6 +175,7 @@ export function useCardFlight(
           ],
           { duration: SWEEP_MS, delay: wait, fill: 'backwards' },
         );
+        mark(wait, SWEEP_MS);
         continue;
       }
 
@@ -176,8 +193,16 @@ export function useCardFlight(
         ],
         { duration: fresh ? THROW_MS + 60 : THROW_MS, fill: 'backwards' },
       );
+      mark(0, fresh ? THROW_MS + 60 : THROW_MS);
     }
+
+    if (tail > 0) {
+      const total = tail + BEAT_GAP;
+      busyUntil.current = performance.now() + total;
+      onBusy?.(total);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, deps);
 
-  return { setOrigin };
+  return { setOrigin, busyUntil };
 }

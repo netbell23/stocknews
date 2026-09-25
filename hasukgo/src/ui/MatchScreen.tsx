@@ -117,6 +117,11 @@ export default function MatchScreen({
   onFinish: (o: MatchOutcome) => void;
   onQuit: () => void;
 }) {
+  /** 연출이 도는 동안은 내 입력도 막는다. 안 그러면 순서가 또 겹친다. */
+  const [animBusy, setAnimBusy] = useState(false);
+  const busyTimer = useRef(0);
+  const busyUntilRef = useRef(0);
+
   const { view, play, choose, goStop, shake, shakeable, bombable } = useMatch({
     tenant,
     stage,
@@ -124,6 +129,7 @@ export default function MatchScreen({
     rules,
     profile,
     losingStreak,
+    busyUntil: busyUntilRef,
   });
   const s = view.state;
   const me = s.players[HUMAN];
@@ -141,7 +147,18 @@ export default function MatchScreen({
    * 카드가 손 → 바닥 → 먹은 패로 실제로 날아가게 한다.
    * 결과창이 뜬 뒤에는 끈다 (뒤에서 카드가 혼자 움직이면 산만하다).
    */
-  const flight = useCardFlight(boardRef, [s.field, s.players, s.deck.length], s.phase !== 'ended');
+  const flight = useCardFlight(
+    boardRef,
+    [s.field, s.players, s.deck.length],
+    s.phase !== 'ended',
+    (ms) => {
+      busyUntilRef.current = performance.now() + ms;
+      setAnimBusy(true);
+      window.clearTimeout(busyTimer.current);
+      busyTimer.current = window.setTimeout(() => setAnimBusy(false), ms);
+    },
+  );
+  useEffect(() => () => window.clearTimeout(busyTimer.current), []);
 
   /**
    * 낸 패를 화면 가운데로 크게 띄웠다가 바닥의 맞는 패로 내리꽂는 연출.
@@ -177,7 +194,7 @@ export default function MatchScreen({
   }, [slam]);
 
   const myTurn = s.turn === HUMAN && !view.busy;
-  const canPlay = myTurn && s.phase === 'awaitPlay';
+  const canPlay = myTurn && s.phase === 'awaitPlay' && !animBusy && !hero;
   const mustChoose = s.turn === HUMAN && s.phase === 'awaitChoice';
   /** 고르는 중이면 "무엇을 맞출 패인지"를 같이 보여줘야 한다 */
   const pending = mustChoose ? s.pendingChoice : null;
@@ -366,6 +383,14 @@ export default function MatchScreen({
     return [...byMonth.entries()].map(([month, cards]) => ({ month, cards }));
   }, [s.field]);
 
+  /*
+   * 바닥이 붐비면 카드를 줄인다.
+   * 융은 높이가 정해져 있고 넘친 줄은 잘려 나가므로, 크기를 그대로 두면
+   * 패가 화면 밖으로 사라진다 — 고를 패가 안 보여 판이 멈춘 것처럼 된다.
+   */
+  const fieldScale =
+    s.field.length <= 8 ? 1 : s.field.length <= 10 ? 0.86 : s.field.length <= 12 ? 0.74 : s.field.length <= 16 ? 0.62 : 0.52;
+
   const half = Math.ceil(fieldGroups.length / 2);
   const topRow = fieldGroups.slice(0, half);
   const bottomRow = fieldGroups.slice(half);
@@ -452,7 +477,10 @@ export default function MatchScreen({
             ))}
             <span className="ohand-n">{opp.hand.length}</span>
           </div>
-          <div className={`felt ${slam ? 'slam' : ''} ${mustChoose ? 'choosing' : ''}`}>
+          <div
+            className={`felt ${slam ? 'slam' : ''} ${mustChoose ? 'choosing' : ''}`}
+            style={{ ['--field-scale' as string]: fieldScale }}
+          >
             <div className="field-row">{topRow.map(renderStack)}</div>
             <div className="field-mid">
               {pending && (
@@ -509,6 +537,8 @@ export default function MatchScreen({
           <div className="turnline">
             {selected && bombable.includes(me.hand.find((c) => c.id === selected)?.month ?? 0)
               ? '한 번 더 누르면 폭탄'
+              : animBusy || hero
+              ? ''
               : canPlay
                 ? '낼 패를 고르세요'
                 : view.busy
