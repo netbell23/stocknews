@@ -880,14 +880,36 @@
       <stop offset="100%" stop-color="#a83225"/>
     </linearGradient>
   </defs>
+  <defs>
+    <linearGradient id="ikm1-0-classic" x1="0" y1="0" x2="0.25" y2="1">
+      <stop offset="0%" stop-color="#41403e"/>
+      <stop offset="45%" stop-color="#12100e"/>
+      <stop offset="100%" stop-color="#0c0a09"/>
+    </linearGradient>
+    <radialGradient id="vgm1-0-classic" cx="0.5" cy="0.42" r="0.78">
+      <stop offset="55%" stop-color="#000000" stop-opacity="0"/>
+      <stop offset="100%" stop-color="#4a2a10" stop-opacity="0.2"/>
+    </radialGradient>
+    <linearGradient id="glm1-0-classic" x1="0" y1="0" x2="0.55" y2="1">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.3"/>
+      <stop offset="34%" stop-color="#ffffff" stop-opacity="0.06"/>
+      <stop offset="62%" stop-color="#000000" stop-opacity="0"/>
+      <stop offset="100%" stop-color="#2a1608" stop-opacity="0.16"/>
+    </linearGradient>
+  </defs>
   <rect width="120" height="180" rx="9" fill="url(#bdm1-0-classic)"/>
   <rect x="2" y="2" width="116" height="176" rx="7.5" fill="none"
         stroke="#ffffff" stroke-width="1.2" opacity="0.22"/>
-  <rect x="10" y="10" width="100" height="156" fill="#12100e" opacity="0.55"/>
+  <!-- 종이가 테두리보다 살짝 눌려 들어간 느낌 -->
+  <rect x="9.5" y="9.5" width="101" height="157" rx="1.5"
+        fill="#12100e" opacity="0.55"/>
+  <rect x="11" y="11" width="98" height="154" rx="1"
+        fill="none" stroke="#ffffff" stroke-width="0.9" opacity="0.18"/>
   <rect x="12" y="12" width="96" height="152" fill="#faf3e2"/>
+  <rect x="12" y="12" width="96" height="152" fill="url(#vgm1-0-classic)"/>
   <rect x="12" y="12" width="96" height="152" fill="none" stroke="#12100e"
         stroke-width="1.1" opacity="0.35"/>
-  <g clip-path="url(#clm1-0-classic)"><path d="M11 164 L32.6 40 L38 34 L43.4 40 L65 164 Z" fill="#12100e"/><path d="M11 164 L32.6 40 L38 34 L43.4 40 L65 164 Z" fill="#ffffff" opacity="0.07" transform="translate(0 -1.6)"/><path d="M38 22 l18.360000000000003 16.2 l-18.360000000000003 8.64 l-18.360000000000003 -8.64 Z" fill="#e8b53c"/><path d="M38 22 l18.360000000000003 16.2 l-18.360000000000003 8.64 l-18.360000000000003 -8.64 Z" fill="#ffffff" opacity="0.07" transform="translate(0 -1.6)"/><path d="M61 164 L79.4 64 L84 58 L88.6 64 L107 164 Z" fill="#12100e"/><path d="M61 164 L79.4 64 L84 58 L88.6 64 L107 164 Z" fill="#ffffff" opacity="0.07" transform="translate(0 -1.6)"/><path d="M84 46 l15.64 13.799999999999999 l-15.64 7.36 l-15.64 -7.36 Z" fill="#e8b53c"/><path d="M84 46 l15.64 13.799999999999999 l-15.64 7.36 l-15.64 -7.36 Z" fill="#ffffff" opacity="0.07" transform="translate(0 -1.6)"/>
+  <g clip-path="url(#clm1-0-classic)"><path d="M11 164 L32.6 40 L38 34 L43.4 40 L65 164 Z" fill="url(#ikm1-0-classic)"/><path d="M11 164 L32.6 40 L38 34 L43.4 40 L65 164 Z" fill="#ffffff" opacity="0.07" transform="translate(0 -1.6)"/><path d="M38 22 l18.360000000000003 16.2 l-18.360000000000003 8.64 l-18.360000000000003 -8.64 Z" fill="#e8b53c"/><path d="M38 22 l18.360000000000003 16.2 l-18.360000000000003 8.64 l-18.360000000000003 -8.64 Z" fill="#ffffff" opacity="0.07" transform="translate(0 -1.6)"/><path d="M61 164 L79.4 64 L84 58 L88.6 64 L107 164 Z" fill="url(#ikm1-0-classic)"/><path d="M61 164 L79.4 64 L84 58 L88.6 64 L107 164 Z" fill="#ffffff" opacity="0.07" transform="translate(0 -1.6)"/><path d="M84 46 l15.64 13.799999999999999 l-15.64 7.36 l-15.64 -7.36 Z" fill="#e8b53c"/><path d="M84 46 l15.64 13.799999999999999 l-15.64 7.36 l-15.64 -7.36 Z" fill="#ffffff" opacity="0.07" transform="translate(0 -1.6)"/>
         <circle cx="88" cy="38" r="23" fill="#d8402f"/>
         <g stroke="#12100e" stroke-width="2.4" stroke-linejoin="round">
           <path d="M22 132 Q38 84 72 90 Q88 94 84 110 Q60 130 26 128 Z" fill="#f4ece0"/>
@@ -905,6 +927,7 @@
   <rect x="12" y="12" width="96" height="152" filter="url(#grm1-0-classic)" opacity="0.085"
         style="mix-blend-mode:multiply"/>
   <rect width="120" height="180" rx="9" filter="url(#grm1-0-classic)" opacity="0.045" style="mix-blend-mode:multiply"/>
+  <rect width="120" height="180" rx="9" fill="url(#glm1-0-classic)" style="pointer-events:none"/>
   <rect x="0.75" y="0.75" width="118.5" height="178.5" rx="9" fill="none" stroke="#12100e"
         stroke-width="1.5" opacity="0.45"/>
 </svg>
@@ -924,16 +947,38 @@
       <stop offset="100%" stop-color="#a83225"/>
     </linearGradient>
   </defs>
+  <defs>
+    <linearGradient id="ikm2-1-classic" x1="0" y1="0" x2="0.25" y2="1">
+      <stop offset="0%" stop-color="#41403e"/>
+      <stop offset="45%" stop-color="#12100e"/>
+      <stop offset="100%" stop-color="#0c0a09"/>
+    </linearGradient>
+    <radialGradient id="vgm2-1-classic" cx="0.5" cy="0.42" r="0.78">
+      <stop offset="55%" stop-color="#000000" stop-opacity="0"/>
+      <stop offset="100%" stop-color="#4a2a10" stop-opacity="0.2"/>
+    </radialGradient>
+    <linearGradient id="glm2-1-classic" x1="0" y1="0" x2="0.55" y2="1">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.3"/>
+      <stop offset="34%" stop-color="#ffffff" stop-opacity="0.06"/>
+      <stop offset="62%" stop-color="#000000" stop-opacity="0"/>
+      <stop offset="100%" stop-color="#2a1608" stop-opacity="0.16"/>
+    </linearGradient>
+  </defs>
   <rect width="120" height="180" rx="9" fill="url(#bdm2-1-classic)"/>
   <rect x="2" y="2" width="116" height="176" rx="7.5" fill="none"
         stroke="#ffffff" stroke-width="1.2" opacity="0.22"/>
-  <rect x="10" y="10" width="100" height="156" fill="#12100e" opacity="0.55"/>
+  <!-- 종이가 테두리보다 살짝 눌려 들어간 느낌 -->
+  <rect x="9.5" y="9.5" width="101" height="157" rx="1.5"
+        fill="#12100e" opacity="0.55"/>
+  <rect x="11" y="11" width="98" height="154" rx="1"
+        fill="none" stroke="#ffffff" stroke-width="0.9" opacity="0.18"/>
   <rect x="12" y="12" width="96" height="152" fill="#f9efe4"/>
+  <rect x="12" y="12" width="96" height="152" fill="url(#vgm2-1-classic)"/>
   <rect x="12" y="12" width="96" height="152" fill="none" stroke="#12100e"
         stroke-width="1.1" opacity="0.35"/>
   <g clip-path="url(#clm2-1-classic)">
-        <path d="M12 164 Q44 96 40 28 L52 28 Q56 96 34 164 Z" fill="#12100e"/><path d="M12 164 Q44 96 40 28 L52 28 Q56 96 34 164 Z" fill="#ffffff" opacity="0.07" transform="translate(0 -1.6)"/>
-        <path d="M44 74 Q68 66 92 44 L96 54 Q72 76 48 84 Z" fill="#12100e"/><path d="M44 74 Q68 66 92 44 L96 54 Q72 76 48 84 Z" fill="#ffffff" opacity="0.07" transform="translate(0 -1.6)"/>
+        <path d="M12 164 Q44 96 40 28 L52 28 Q56 96 34 164 Z" fill="url(#ikm2-1-classic)"/><path d="M12 164 Q44 96 40 28 L52 28 Q56 96 34 164 Z" fill="#ffffff" opacity="0.07" transform="translate(0 -1.6)"/>
+        <path d="M44 74 Q68 66 92 44 L96 54 Q72 76 48 84 Z" fill="url(#ikm2-1-classic)"/><path d="M44 74 Q68 66 92 44 L96 54 Q72 76 48 84 Z" fill="#ffffff" opacity="0.07" transform="translate(0 -1.6)"/>
         <circle cx="88.0" cy="26.5" r="6.5" fill="#d8402f"/><path d="M88.0 34.0 L88.0 26.5" stroke="#972d21" stroke-width="1.30" opacity="0.55"/><circle cx="95.2" cy="31.7" r="6.5" fill="#d8402f"/><path d="M88.0 34.0 L95.2 31.7" stroke="#972d21" stroke-width="1.30" opacity="0.55"/><circle cx="92.4" cy="40.1" r="6.5" fill="#d8402f"/><path d="M88.0 34.0 L92.4 40.1" stroke="#972d21" stroke-width="1.30" opacity="0.55"/><circle cx="83.6" cy="40.1" r="6.5" fill="#d8402f"/><path d="M88.0 34.0 L83.6 40.1" stroke="#972d21" stroke-width="1.30" opacity="0.55"/><circle cx="80.8" cy="31.7" r="6.5" fill="#d8402f"/><path d="M88.0 34.0 L80.8 31.7" stroke="#972d21" stroke-width="1.30" opacity="0.55"/><circle cx="88" cy="34" r="3.9" fill="#ba9130"/><circle cx="88" cy="34" r="2.7" fill="#e8b53c"/><circle cx="90.6" cy="34.0" r="0.71" fill="#12100e" opacity="0.6"/><circle cx="88.8" cy="36.5" r="0.71" fill="#12100e" opacity="0.6"/><circle cx="85.9" cy="35.5" r="0.71" fill="#12100e" opacity="0.6"/><circle cx="85.9" cy="32.5" r="0.71" fill="#12100e" opacity="0.6"/><circle cx="88.8" cy="31.5" r="0.71" fill="#12100e" opacity="0.6"/>
         <circle cx="62.0" cy="53.6" r="5.5" fill="#d8402f"/><path d="M62.0 60.0 L62.0 53.6" stroke="#972d21" stroke-width="1.10" opacity="0.55"/><circle cx="68.1" cy="58.0" r="5.5" fill="#d8402f"/><path d="M62.0 60.0 L68.1 58.0" stroke="#972d21" stroke-width="1.10" opacity="0.55"/><circle cx="65.8" cy="65.2" r="5.5" fill="#d8402f"/><path d="M62.0 60.0 L65.8 65.2" stroke="#972d21" stroke-width="1.10" opacity="0.55"/><circle cx="58.2" cy="65.2" r="5.5" fill="#d8402f"/><path d="M62.0 60.0 L58.2 65.2" stroke="#972d21" stroke-width="1.10" opacity="0.55"/><circle cx="55.9" cy="58.0" r="5.5" fill="#d8402f"/><path d="M62.0 60.0 L55.9 58.0" stroke="#972d21" stroke-width="1.10" opacity="0.55"/><circle cx="62" cy="60" r="3.3" fill="#ba9130"/><circle cx="62" cy="60" r="2.3" fill="#e8b53c"/><circle cx="64.2" cy="60.0" r="0.60" fill="#12100e" opacity="0.6"/><circle cx="62.7" cy="62.1" r="0.60" fill="#12100e" opacity="0.6"/><circle cx="60.2" cy="61.3" r="0.60" fill="#12100e" opacity="0.6"/><circle cx="60.2" cy="58.7" r="0.60" fill="#12100e" opacity="0.6"/><circle cx="62.7" cy="57.9" r="0.60" fill="#12100e" opacity="0.6"/>
         <circle cx="96.0" cy="68.2" r="5.0" fill="#d8402f"/><path d="M96.0 74.0 L96.0 68.2" stroke="#972d21" stroke-width="1.00" opacity="0.55"/><circle cx="101.5" cy="72.2" r="5.0" fill="#d8402f"/><path d="M96.0 74.0 L101.5 72.2" stroke="#972d21" stroke-width="1.00" opacity="0.55"/><circle cx="99.4" cy="78.7" r="5.0" fill="#d8402f"/><path d="M96.0 74.0 L99.4 78.7" stroke="#972d21" stroke-width="1.00" opacity="0.55"/><circle cx="92.6" cy="78.7" r="5.0" fill="#d8402f"/><path d="M96.0 74.0 L92.6 78.7" stroke="#972d21" stroke-width="1.00" opacity="0.55"/><circle cx="90.5" cy="72.2" r="5.0" fill="#d8402f"/><path d="M96.0 74.0 L90.5 72.2" stroke="#972d21" stroke-width="1.00" opacity="0.55"/><circle cx="96" cy="74" r="3.0" fill="#ba9130"/><circle cx="96" cy="74" r="2.1" fill="#e8b53c"/><circle cx="98.0" cy="74.0" r="0.55" fill="#12100e" opacity="0.6"/><circle cx="96.6" cy="75.9" r="0.55" fill="#12100e" opacity="0.6"/><circle cx="94.4" cy="75.2" r="0.55" fill="#12100e" opacity="0.6"/><circle cx="94.4" cy="72.8" r="0.55" fill="#12100e" opacity="0.6"/><circle cx="96.6" cy="72.1" r="0.55" fill="#12100e" opacity="0.6"/>
@@ -948,6 +993,7 @@
   <rect x="12" y="12" width="96" height="152" filter="url(#grm2-1-classic)" opacity="0.085"
         style="mix-blend-mode:multiply"/>
   <rect width="120" height="180" rx="9" filter="url(#grm2-1-classic)" opacity="0.045" style="mix-blend-mode:multiply"/>
+  <rect width="120" height="180" rx="9" fill="url(#glm2-1-classic)" style="pointer-events:none"/>
   <rect x="0.75" y="0.75" width="118.5" height="178.5" rx="9" fill="none" stroke="#12100e"
         stroke-width="1.5" opacity="0.45"/>
 </svg>
@@ -967,14 +1013,36 @@
       <stop offset="100%" stop-color="#a83225"/>
     </linearGradient>
   </defs>
+  <defs>
+    <linearGradient id="ikm8-0-classic" x1="0" y1="0" x2="0.25" y2="1">
+      <stop offset="0%" stop-color="#41403e"/>
+      <stop offset="45%" stop-color="#12100e"/>
+      <stop offset="100%" stop-color="#0c0a09"/>
+    </linearGradient>
+    <radialGradient id="vgm8-0-classic" cx="0.5" cy="0.42" r="0.78">
+      <stop offset="55%" stop-color="#000000" stop-opacity="0"/>
+      <stop offset="100%" stop-color="#4a2a10" stop-opacity="0.2"/>
+    </radialGradient>
+    <linearGradient id="glm8-0-classic" x1="0" y1="0" x2="0.55" y2="1">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.3"/>
+      <stop offset="34%" stop-color="#ffffff" stop-opacity="0.06"/>
+      <stop offset="62%" stop-color="#000000" stop-opacity="0"/>
+      <stop offset="100%" stop-color="#2a1608" stop-opacity="0.16"/>
+    </linearGradient>
+  </defs>
   <rect width="120" height="180" rx="9" fill="url(#bdm8-0-classic)"/>
   <rect x="2" y="2" width="116" height="176" rx="7.5" fill="none"
         stroke="#ffffff" stroke-width="1.2" opacity="0.22"/>
-  <rect x="10" y="10" width="100" height="156" fill="#12100e" opacity="0.55"/>
+  <!-- 종이가 테두리보다 살짝 눌려 들어간 느낌 -->
+  <rect x="9.5" y="9.5" width="101" height="157" rx="1.5"
+        fill="#12100e" opacity="0.55"/>
+  <rect x="11" y="11" width="98" height="154" rx="1"
+        fill="none" stroke="#ffffff" stroke-width="0.9" opacity="0.18"/>
   <rect x="12" y="12" width="96" height="152" fill="#f5f0e6"/>
+  <rect x="12" y="12" width="96" height="152" fill="url(#vgm8-0-classic)"/>
   <rect x="12" y="12" width="96" height="152" fill="none" stroke="#12100e"
         stroke-width="1.1" opacity="0.35"/>
-  <g clip-path="url(#clm8-0-classic)"><path d="M12 164 C18 102 36 90 60 90 C84 90 102 102 108 164 Z" fill="#12100e"/><path d="M12 164 C18 102 36 90 60 90 C84 90 102 102 108 164 Z" fill="#ffffff" opacity="0.07" transform="translate(0 -1.6)"/><circle cx="60" cy="54" r="27" fill="#f4ece0" stroke="#12100e" stroke-width="2"/>
+  <g clip-path="url(#clm8-0-classic)"><path d="M12 164 C18 102 36 90 60 90 C84 90 102 102 108 164 Z" fill="url(#ikm8-0-classic)"/><path d="M12 164 C18 102 36 90 60 90 C84 90 102 102 108 164 Z" fill="#ffffff" opacity="0.07" transform="translate(0 -1.6)"/><circle cx="60" cy="54" r="27" fill="#f4ece0" stroke="#12100e" stroke-width="2"/>
     <rect x="78" y="130" width="28" height="32" rx="3" fill="#d8402f"/>
     <text x="92" y="153" font-size="21" text-anchor="middle" fill="#f4ece0" font-family="serif" font-weight="bold">光</text></g>
   <text x="60" y="176" font-size="11" text-anchor="middle" fill="#f4ece0" font-family="sans-serif"
@@ -982,6 +1050,7 @@
   <rect x="12" y="12" width="96" height="152" filter="url(#grm8-0-classic)" opacity="0.085"
         style="mix-blend-mode:multiply"/>
   <rect width="120" height="180" rx="9" filter="url(#grm8-0-classic)" opacity="0.045" style="mix-blend-mode:multiply"/>
+  <rect width="120" height="180" rx="9" fill="url(#glm8-0-classic)" style="pointer-events:none"/>
   <rect x="0.75" y="0.75" width="118.5" height="178.5" rx="9" fill="none" stroke="#12100e"
         stroke-width="1.5" opacity="0.45"/>
 </svg>
@@ -1001,11 +1070,33 @@
       <stop offset="100%" stop-color="#a83225"/>
     </linearGradient>
   </defs>
+  <defs>
+    <linearGradient id="ikm9-1-classic" x1="0" y1="0" x2="0.25" y2="1">
+      <stop offset="0%" stop-color="#41403e"/>
+      <stop offset="45%" stop-color="#12100e"/>
+      <stop offset="100%" stop-color="#0c0a09"/>
+    </linearGradient>
+    <radialGradient id="vgm9-1-classic" cx="0.5" cy="0.42" r="0.78">
+      <stop offset="55%" stop-color="#000000" stop-opacity="0"/>
+      <stop offset="100%" stop-color="#4a2a10" stop-opacity="0.2"/>
+    </radialGradient>
+    <linearGradient id="glm9-1-classic" x1="0" y1="0" x2="0.55" y2="1">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.3"/>
+      <stop offset="34%" stop-color="#ffffff" stop-opacity="0.06"/>
+      <stop offset="62%" stop-color="#000000" stop-opacity="0"/>
+      <stop offset="100%" stop-color="#2a1608" stop-opacity="0.16"/>
+    </linearGradient>
+  </defs>
   <rect width="120" height="180" rx="9" fill="url(#bdm9-1-classic)"/>
   <rect x="2" y="2" width="116" height="176" rx="7.5" fill="none"
         stroke="#ffffff" stroke-width="1.2" opacity="0.22"/>
-  <rect x="10" y="10" width="100" height="156" fill="#12100e" opacity="0.55"/>
+  <!-- 종이가 테두리보다 살짝 눌려 들어간 느낌 -->
+  <rect x="9.5" y="9.5" width="101" height="157" rx="1.5"
+        fill="#12100e" opacity="0.55"/>
+  <rect x="11" y="11" width="98" height="154" rx="1"
+        fill="none" stroke="#ffffff" stroke-width="0.9" opacity="0.18"/>
   <rect x="12" y="12" width="96" height="152" fill="#faf2e1"/>
+  <rect x="12" y="12" width="96" height="152" fill="url(#vgm9-1-classic)"/>
   <rect x="12" y="12" width="96" height="152" fill="none" stroke="#12100e"
         stroke-width="1.1" opacity="0.35"/>
   <g clip-path="url(#clm9-1-classic)">
@@ -1025,6 +1116,7 @@
   <rect x="12" y="12" width="96" height="152" filter="url(#grm9-1-classic)" opacity="0.085"
         style="mix-blend-mode:multiply"/>
   <rect width="120" height="180" rx="9" filter="url(#grm9-1-classic)" opacity="0.045" style="mix-blend-mode:multiply"/>
+  <rect width="120" height="180" rx="9" fill="url(#glm9-1-classic)" style="pointer-events:none"/>
   <rect x="0.75" y="0.75" width="118.5" height="178.5" rx="9" fill="none" stroke="#12100e"
         stroke-width="1.5" opacity="0.45"/>
 </svg>
@@ -1044,11 +1136,33 @@
       <stop offset="100%" stop-color="#a83225"/>
     </linearGradient>
   </defs>
+  <defs>
+    <linearGradient id="ikm12-0-classic" x1="0" y1="0" x2="0.25" y2="1">
+      <stop offset="0%" stop-color="#41403e"/>
+      <stop offset="45%" stop-color="#12100e"/>
+      <stop offset="100%" stop-color="#0c0a09"/>
+    </linearGradient>
+    <radialGradient id="vgm12-0-classic" cx="0.5" cy="0.42" r="0.78">
+      <stop offset="55%" stop-color="#000000" stop-opacity="0"/>
+      <stop offset="100%" stop-color="#4a2a10" stop-opacity="0.2"/>
+    </radialGradient>
+    <linearGradient id="glm12-0-classic" x1="0" y1="0" x2="0.55" y2="1">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.3"/>
+      <stop offset="34%" stop-color="#ffffff" stop-opacity="0.06"/>
+      <stop offset="62%" stop-color="#000000" stop-opacity="0"/>
+      <stop offset="100%" stop-color="#2a1608" stop-opacity="0.16"/>
+    </linearGradient>
+  </defs>
   <rect width="120" height="180" rx="9" fill="url(#bdm12-0-classic)"/>
   <rect x="2" y="2" width="116" height="176" rx="7.5" fill="none"
         stroke="#ffffff" stroke-width="1.2" opacity="0.22"/>
-  <rect x="10" y="10" width="100" height="156" fill="#12100e" opacity="0.55"/>
+  <!-- 종이가 테두리보다 살짝 눌려 들어간 느낌 -->
+  <rect x="9.5" y="9.5" width="101" height="157" rx="1.5"
+        fill="#12100e" opacity="0.55"/>
+  <rect x="11" y="11" width="98" height="154" rx="1"
+        fill="none" stroke="#ffffff" stroke-width="0.9" opacity="0.18"/>
   <rect x="12" y="12" width="96" height="152" fill="#f6f0e4"/>
+  <rect x="12" y="12" width="96" height="152" fill="url(#vgm12-0-classic)"/>
   <rect x="12" y="12" width="96" height="152" fill="none" stroke="#12100e"
         stroke-width="1.1" opacity="0.35"/>
   <g clip-path="url(#clm12-0-classic)">
@@ -1059,7 +1173,7 @@
         <rect x="57" y="62" width="5" height="28" fill="#f4ece0"/>
         <path d="M44 92 Q60 82 76 92 L82 146 L38 146 Z" fill="#f4ece0"/><path d="M44 92 Q60 82 76 92 L82 146 L38 146 Z" fill="#ffffff" opacity="0.07" transform="translate(0 -1.6)"/>
         <circle cx="60" cy="82" r="11" fill="#f4ece0"/>
-        <path d="M50 76 Q60 66 70 76 Q60 72 50 76 Z" fill="#12100e"/><path d="M50 76 Q60 66 70 76 Q60 72 50 76 Z" fill="#ffffff" opacity="0.07" transform="translate(0 -1.6)"/>
+        <path d="M50 76 Q60 66 70 76 Q60 72 50 76 Z" fill="url(#ikm12-0-classic)"/><path d="M50 76 Q60 66 70 76 Q60 72 50 76 Z" fill="#ffffff" opacity="0.07" transform="translate(0 -1.6)"/>
     <rect x="78" y="130" width="28" height="32" rx="3" fill="#d8402f"/>
     <text x="92" y="153" font-size="21" text-anchor="middle" fill="#f4ece0" font-family="serif" font-weight="bold">光</text></g>
   <text x="60" y="176" font-size="11" text-anchor="middle" fill="#f4ece0" font-family="sans-serif"
@@ -1067,6 +1181,7 @@
   <rect x="12" y="12" width="96" height="152" filter="url(#grm12-0-classic)" opacity="0.085"
         style="mix-blend-mode:multiply"/>
   <rect width="120" height="180" rx="9" filter="url(#grm12-0-classic)" opacity="0.045" style="mix-blend-mode:multiply"/>
+  <rect width="120" height="180" rx="9" fill="url(#glm12-0-classic)" style="pointer-events:none"/>
   <rect x="0.75" y="0.75" width="118.5" height="178.5" rx="9" fill="none" stroke="#12100e"
         stroke-width="1.5" opacity="0.45"/>
 </svg>
@@ -1086,17 +1201,39 @@
       <stop offset="100%" stop-color="#a83225"/>
     </linearGradient>
   </defs>
+  <defs>
+    <linearGradient id="ikm11-0-classic" x1="0" y1="0" x2="0.25" y2="1">
+      <stop offset="0%" stop-color="#41403e"/>
+      <stop offset="45%" stop-color="#12100e"/>
+      <stop offset="100%" stop-color="#0c0a09"/>
+    </linearGradient>
+    <radialGradient id="vgm11-0-classic" cx="0.5" cy="0.42" r="0.78">
+      <stop offset="55%" stop-color="#000000" stop-opacity="0"/>
+      <stop offset="100%" stop-color="#4a2a10" stop-opacity="0.2"/>
+    </radialGradient>
+    <linearGradient id="glm11-0-classic" x1="0" y1="0" x2="0.55" y2="1">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.3"/>
+      <stop offset="34%" stop-color="#ffffff" stop-opacity="0.06"/>
+      <stop offset="62%" stop-color="#000000" stop-opacity="0"/>
+      <stop offset="100%" stop-color="#2a1608" stop-opacity="0.16"/>
+    </linearGradient>
+  </defs>
   <rect width="120" height="180" rx="9" fill="url(#bdm11-0-classic)"/>
   <rect x="2" y="2" width="116" height="176" rx="7.5" fill="none"
         stroke="#ffffff" stroke-width="1.2" opacity="0.22"/>
-  <rect x="10" y="10" width="100" height="156" fill="#12100e" opacity="0.55"/>
+  <!-- 종이가 테두리보다 살짝 눌려 들어간 느낌 -->
+  <rect x="9.5" y="9.5" width="101" height="157" rx="1.5"
+        fill="#12100e" opacity="0.55"/>
+  <rect x="11" y="11" width="98" height="154" rx="1"
+        fill="none" stroke="#ffffff" stroke-width="0.9" opacity="0.18"/>
   <rect x="12" y="12" width="96" height="152" fill="#f7f0e6"/>
+  <rect x="12" y="12" width="96" height="152" fill="url(#vgm11-0-classic)"/>
   <rect x="12" y="12" width="96" height="152" fill="none" stroke="#12100e"
         stroke-width="1.1" opacity="0.35"/>
   <g clip-path="url(#clm11-0-classic)">
-        <path d="M12 164 Q20 100 18 76 Q54 78 60 164 Z" fill="#12100e"/><path d="M12 164 Q20 100 18 76 Q54 78 60 164 Z" fill="#ffffff" opacity="0.07" transform="translate(0 -1.6)"/>
-        <path d="M108 164 Q100 100 102 76 Q66 78 60 164 Z" fill="#12100e"/><path d="M108 164 Q100 100 102 76 Q66 78 60 164 Z" fill="#ffffff" opacity="0.07" transform="translate(0 -1.6)"/>
-        <path d="M60 118 Q44 80 60 44 Q76 80 60 118 Z" fill="#12100e"/><path d="M60 118 Q44 80 60 44 Q76 80 60 118 Z" fill="#ffffff" opacity="0.07" transform="translate(0 -1.6)"/>
+        <path d="M12 164 Q20 100 18 76 Q54 78 60 164 Z" fill="url(#ikm11-0-classic)"/><path d="M12 164 Q20 100 18 76 Q54 78 60 164 Z" fill="#ffffff" opacity="0.07" transform="translate(0 -1.6)"/>
+        <path d="M108 164 Q100 100 102 76 Q66 78 60 164 Z" fill="url(#ikm11-0-classic)"/><path d="M108 164 Q100 100 102 76 Q66 78 60 164 Z" fill="#ffffff" opacity="0.07" transform="translate(0 -1.6)"/>
+        <path d="M60 118 Q44 80 60 44 Q76 80 60 118 Z" fill="url(#ikm11-0-classic)"/><path d="M60 118 Q44 80 60 44 Q76 80 60 118 Z" fill="#ffffff" opacity="0.07" transform="translate(0 -1.6)"/>
         <circle cx="38.0" cy="25.6" r="5.5" fill="#1766c8"/><path d="M38.0 32.0 L38.0 25.6" stroke="#10478c" stroke-width="1.10" opacity="0.55"/><circle cx="44.1" cy="30.0" r="5.5" fill="#1766c8"/><path d="M38.0 32.0 L44.1 30.0" stroke="#10478c" stroke-width="1.10" opacity="0.55"/><circle cx="41.8" cy="37.2" r="5.5" fill="#1766c8"/><path d="M38.0 32.0 L41.8 37.2" stroke="#10478c" stroke-width="1.10" opacity="0.55"/><circle cx="34.2" cy="37.2" r="5.5" fill="#1766c8"/><path d="M38.0 32.0 L34.2 37.2" stroke="#10478c" stroke-width="1.10" opacity="0.55"/><circle cx="31.9" cy="30.0" r="5.5" fill="#1766c8"/><path d="M38.0 32.0 L31.9 30.0" stroke="#10478c" stroke-width="1.10" opacity="0.55"/><circle cx="38" cy="32" r="3.3" fill="#ba9130"/><circle cx="38" cy="32" r="2.3" fill="#e8b53c"/><circle cx="40.2" cy="32.0" r="0.60" fill="#12100e" opacity="0.6"/><circle cx="38.7" cy="34.1" r="0.60" fill="#12100e" opacity="0.6"/><circle cx="36.2" cy="33.3" r="0.60" fill="#12100e" opacity="0.6"/><circle cx="36.2" cy="30.7" r="0.60" fill="#12100e" opacity="0.6"/><circle cx="38.7" cy="29.9" r="0.60" fill="#12100e" opacity="0.6"/><circle cx="60.0" cy="25.6" r="5.5" fill="#1766c8"/><path d="M60.0 32.0 L60.0 25.6" stroke="#10478c" stroke-width="1.10" opacity="0.55"/><circle cx="66.1" cy="30.0" r="5.5" fill="#1766c8"/><path d="M60.0 32.0 L66.1 30.0" stroke="#10478c" stroke-width="1.10" opacity="0.55"/><circle cx="63.8" cy="37.2" r="5.5" fill="#1766c8"/><path d="M60.0 32.0 L63.8 37.2" stroke="#10478c" stroke-width="1.10" opacity="0.55"/><circle cx="56.2" cy="37.2" r="5.5" fill="#1766c8"/><path d="M60.0 32.0 L56.2 37.2" stroke="#10478c" stroke-width="1.10" opacity="0.55"/><circle cx="53.9" cy="30.0" r="5.5" fill="#1766c8"/><path d="M60.0 32.0 L53.9 30.0" stroke="#10478c" stroke-width="1.10" opacity="0.55"/><circle cx="60" cy="32" r="3.3" fill="#ba9130"/><circle cx="60" cy="32" r="2.3" fill="#e8b53c"/><circle cx="62.2" cy="32.0" r="0.60" fill="#12100e" opacity="0.6"/><circle cx="60.7" cy="34.1" r="0.60" fill="#12100e" opacity="0.6"/><circle cx="58.2" cy="33.3" r="0.60" fill="#12100e" opacity="0.6"/><circle cx="58.2" cy="30.7" r="0.60" fill="#12100e" opacity="0.6"/><circle cx="60.7" cy="29.9" r="0.60" fill="#12100e" opacity="0.6"/><circle cx="82.0" cy="25.6" r="5.5" fill="#1766c8"/><path d="M82.0 32.0 L82.0 25.6" stroke="#10478c" stroke-width="1.10" opacity="0.55"/><circle cx="88.1" cy="30.0" r="5.5" fill="#1766c8"/><path d="M82.0 32.0 L88.1 30.0" stroke="#10478c" stroke-width="1.10" opacity="0.55"/><circle cx="85.8" cy="37.2" r="5.5" fill="#1766c8"/><path d="M82.0 32.0 L85.8 37.2" stroke="#10478c" stroke-width="1.10" opacity="0.55"/><circle cx="78.2" cy="37.2" r="5.5" fill="#1766c8"/><path d="M82.0 32.0 L78.2 37.2" stroke="#10478c" stroke-width="1.10" opacity="0.55"/><circle cx="75.9" cy="30.0" r="5.5" fill="#1766c8"/><path d="M82.0 32.0 L75.9 30.0" stroke="#10478c" stroke-width="1.10" opacity="0.55"/><circle cx="82" cy="32" r="3.3" fill="#ba9130"/><circle cx="82" cy="32" r="2.3" fill="#e8b53c"/><circle cx="84.2" cy="32.0" r="0.60" fill="#12100e" opacity="0.6"/><circle cx="82.7" cy="34.1" r="0.60" fill="#12100e" opacity="0.6"/><circle cx="80.2" cy="33.3" r="0.60" fill="#12100e" opacity="0.6"/><circle cx="80.2" cy="30.7" r="0.60" fill="#12100e" opacity="0.6"/><circle cx="82.7" cy="29.9" r="0.60" fill="#12100e" opacity="0.6"/>
         <path d="M30 124 Q46 82 80 88 Q96 92 90 108 Q66 126 32 122 Z" fill="#d8402f"/><path d="M30 124 Q46 82 80 88 Q96 92 90 108 Q66 126 32 122 Z" fill="#ffffff" opacity="0.07" transform="translate(0 -1.6)"/>
         <path d="M80 88 Q76 62 94 54 Q104 52 104 62 Q98 78 90 90 Z" fill="#d8402f"/><path d="M80 88 Q76 62 94 54 Q104 52 104 62 Q98 78 90 90 Z" fill="#ffffff" opacity="0.07" transform="translate(0 -1.6)"/>
@@ -1110,6 +1247,7 @@
   <rect x="12" y="12" width="96" height="152" filter="url(#grm11-0-classic)" opacity="0.085"
         style="mix-blend-mode:multiply"/>
   <rect width="120" height="180" rx="9" filter="url(#grm11-0-classic)" opacity="0.045" style="mix-blend-mode:multiply"/>
+  <rect width="120" height="180" rx="9" fill="url(#glm11-0-classic)" style="pointer-events:none"/>
   <rect x="0.75" y="0.75" width="118.5" height="178.5" rx="9" fill="none" stroke="#12100e"
         stroke-width="1.5" opacity="0.45"/>
 </svg></div>

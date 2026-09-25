@@ -19,6 +19,32 @@ export type CardZone = 'hand' | 'field' | 'pile-me' | 'pile-opp';
 
 const isPile = (z: CardZone) => z === 'pile-me' || z === 'pile-opp';
 
+/** 더미로 빨려들 패 한 장의 연출 정보 */
+export interface Sweep<T> {
+  /** 내리쳐 먹은 패처럼 시각이 이미 정해진 경우 */
+  forcedWait: number | undefined;
+  /** 바닥에 있던 자리의 왼쪽 좌표 */
+  fromX: number;
+  card: T;
+}
+
+/**
+ * 먹은 패가 더미로 날아가는 순서.
+ *
+ * 그냥 두면 더미 안의 줄 순서(광·띠·열·피)대로 날아간다. 그러면 나중에
+ * 먹은 광이 먼저 먹은 피를 앞질러서, 보는 사람은 무엇을 어떤 차례로
+ * 가져갔는지 읽을 수 없다. 시각이 정해진 패를 앞에 놓고, 나머지는
+ * 바닥에서 왼쪽에 있던 것부터 — 눈이 훑는 순서대로 — 잇는다.
+ */
+export function orderSweeps<T>(list: Array<Sweep<T>>): Array<Sweep<T>> {
+  return [...list].sort((a, b) => {
+    const aw = a.forcedWait ?? Infinity;
+    const bw = b.forcedWait ?? Infinity;
+    if (aw !== bw) return aw - bw;
+    return a.fromX - b.fromX;
+  });
+}
+
 interface Snap {
   rect: DOMRect;
   el: HTMLElement;
@@ -31,9 +57,13 @@ const THROW_MS = 300;
  * 빠르면 뭐가 사라졌는지 모른 채 숫자만 올라간다.
  * 여러 장이 한꺼번에 날면 겹쳐서 또 안 보이므로 한 장씩 시차를 둔다.
  */
-const SWEEP_MS = 1000;
-const SWEEP_WAIT = 440;
-const SWEEP_STAGGER = 220;
+const SWEEP_MS = 940;
+const SWEEP_WAIT = 420;
+/*
+ * 한 장이 다 날아간 뒤에 다음 장이 뜨면 뚝뚝 끊겨 보인다.
+ * 비행시간보다 훨씬 짧게 띄워서 줄줄이 이어지는 한 줄기로 만든다.
+ */
+const SWEEP_STAGGER = 165;
 
 /** 상납(쪽·따닥·쓸): 먹는 게 다 끝난 뒤에 상대 더미에서 한 장을 뺏어온다 */
 const STEAL_MS = 900;
@@ -154,6 +184,21 @@ export function useCardFlight(
     };
     /** 상대 더미 → 내 더미(또는 그 반대)로 옮겨간 패. 먹기가 끝난 뒤에 따로 날린다 */
     const steals: Array<{ el: HTMLElement; dx: number; dy: number; sc: number }> = [];
+    /*
+     * 더미로 빨려들 패들. 곧바로 날리지 않고 일단 모은다.
+     * Map 을 도는 순서는 더미 안의 줄 순서(광·띠·열·피)라서, 그대로 쓰면
+     * 나중에 먹은 광이 먼저 먹은 피보다 앞서 날아간다 — 먹은 순서와 어긋난다.
+     * 모아서 "바닥에 있던 자리" 기준으로 왼쪽부터 정렬한 뒤 차례로 띄운다.
+     */
+    const sweeps: Array<{
+      el: HTMLElement;
+      start: string;
+      dx: number;
+      dy: number;
+      sc: number;
+      fromX: number;
+      forcedWait: number | undefined;
+    }> = [];
 
     for (const [cid, { rect, el, zone }] of now) {
       const forced = override.current.get(cid);
@@ -253,24 +298,7 @@ export function useCardFlight(
       }
 
       if (isPile(zone)) {
-        // 붙었다가 → 한 장씩 차례로 쑉
-        const forcedWait = waitOverride.get(cid);
-        const wait =
-          forcedWait ?? (hasReveal ? SWEEP_WAIT_AFTER_REVEAL : SWEEP_WAIT) + sweptCount * SWEEP_STAGGER;
-        if (forcedWait === undefined) sweptCount += 1;
-        const anim = el.animate(
-          [
-            { transform: start, offset: 0 },
-            { transform: `${start} scale(1.24)`, offset: 0.1, easing: 'ease-out' },
-            { transform: `${start} scale(1.12)`, offset: 0.22, easing: 'cubic-bezier(.5,0,.5,1)' },
-            // 더미에 닿기 직전에 한 번 더 또렷하게 보여준다
-            { transform: `translate(${(dx * 0.22).toFixed(1)}px, ${(dy * 0.22).toFixed(1)}px) scale(${(sc * 0.55 + 0.45).toFixed(3)})`, offset: 0.62, easing: 'cubic-bezier(.4,0,.5,1)' },
-            { transform: 'none', offset: 1, easing: 'cubic-bezier(.45,0,.2,1)' },
-          ],
-          { duration: SWEEP_MS, delay: wait, fill: 'backwards' },
-        );
-        lift(el, anim, 55);
-        mark(wait, SWEEP_MS);
+        sweeps.push({ el, start, dx, dy, sc, fromX: from.left, forcedWait: waitOverride.get(cid) });
         continue;
       }
 
@@ -291,6 +319,38 @@ export function useCardFlight(
       lift(el, anim, 45);
       mark(0, fresh ? THROW_MS + 60 : THROW_MS);
     }
+
+    /*
+     * 먹은 패를 차례로 띄운다.
+     * 내리쳐서 먹은 패(forcedWait)는 제 시각이 정해져 있으므로 먼저 놓고,
+     * 나머지를 바닥에서 왼쪽에 있던 순서로 뒤에 잇는다.
+     */
+    const ordered = orderSweeps(sweeps.map((sw) => ({ forcedWait: sw.forcedWait, fromX: sw.fromX, card: sw })));
+    const base = hasReveal ? SWEEP_WAIT_AFTER_REVEAL : SWEEP_WAIT;
+    ordered.forEach(({ card: sw }, i) => {
+      // 시각이 정해진 패도 줄에서 제 몫의 자리를 차지한다 — 안 그러면 뒤엣것과 겹친다
+      const wait = sw.forcedWait ?? base + sweptCount * SWEEP_STAGGER;
+      if (sw.forcedWait === undefined) sweptCount += 1;
+      else sweptCount = Math.max(sweptCount, i + 1);
+      const { start, dx, dy, sc, el } = sw;
+      const anim = el.animate(
+        [
+          { transform: start, offset: 0 },
+          { transform: `${start} scale(1.24)`, offset: 0.1, easing: 'ease-out' },
+          { transform: `${start} scale(1.12)`, offset: 0.22, easing: 'cubic-bezier(.5,0,.5,1)' },
+          // 더미에 닿기 직전에 한 번 더 또렷하게 보여준다
+          {
+            transform: `translate(${(dx * 0.22).toFixed(1)}px, ${(dy * 0.22).toFixed(1)}px) scale(${(sc * 0.55 + 0.45).toFixed(3)})`,
+            offset: 0.62,
+            easing: 'cubic-bezier(.4,0,.5,1)',
+          },
+          { transform: 'none', offset: 1, easing: 'cubic-bezier(.45,0,.2,1)' },
+        ],
+        { duration: SWEEP_MS, delay: wait, fill: 'backwards' },
+      );
+      lift(el, anim, 55);
+      mark(wait, SWEEP_MS);
+    });
 
     // 먹는 연출이 전부 끝난 뒤에 상납을 보여준다
     if (steals.length) {

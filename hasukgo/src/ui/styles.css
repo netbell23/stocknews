@@ -789,7 +789,7 @@ button {
    * 화패 크기를 화면 높이에 매단다. 바닥에는 두 줄 + 더미가 들어가야 하는데
    * 크기를 고정하면 640px 짜리 작은 폰에서 위아래가 잘린다.
    */
-  --card-h: clamp(46px, 10vh, 86px);
+  --card-h: clamp(52px, 11.6vh, 104px);
 }
 
 .board-opp {
@@ -1621,7 +1621,7 @@ button {
   }
 
   .board {
-    --card-h: clamp(46px, 13.5vh, 86px);
+    --card-h: clamp(54px, 15.5vh, 116px);
     grid-template-areas:
       'oppcap field opp'
       'mycap  field side'
@@ -2455,4 +2455,54 @@ button {
   background: linear-gradient(180deg, #e06a8c, #c23f63);
   border: 1.5px solid #6b3410;
   white-space: nowrap;
+}
+
+/* ── 원화에서 뽑아낸 배경 ─────────────────── */
+.photo-bed {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background-size: cover;
+  background-position: center 22%;
+  filter: blur(34px) saturate(0.9);
+  transform: scale(1.18);
+}
+
+/* 위아래를 눌러 글씨가 뜨게 한다. --bed-dim 이 클수록 어둡다 */
+.photo-bed::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse at 50% 34%, rgba(0, 0, 0, 0) 0%, rgba(12, 7, 4, 0.55) 78%),
+    linear-gradient(180deg, rgba(12, 7, 4, 0.5) 0%, rgba(12, 7, 4, 0.18) 34%, rgba(12, 7, 4, 0.72) 100%);
+  opacity: calc(0.55 + var(--bed-dim, 0.55) * 0.6);
+}
+
+/* ── 판 둘레 장식 ──────────────────────────
+ * 참고 이미지처럼 융 모서리에 꽃그늘을 옅게 앉힌다.
+ * 그림 파일을 더 쓰지 않으려고 방사 그라디언트 네 개로만 만든다.
+ */
+.felt::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  border-radius: 10px;
+  background:
+    radial-gradient(circle at 4% 5%, rgba(255, 190, 205, 0.16), transparent 22%),
+    radial-gradient(circle at 96% 6%, rgba(255, 190, 205, 0.13), transparent 20%),
+    radial-gradient(circle at 5% 95%, rgba(255, 190, 205, 0.12), transparent 20%),
+    radial-gradient(circle at 95% 96%, rgba(255, 190, 205, 0.15), transparent 22%);
+}
+
+.felt {
+  position: relative;
+}
+
+/* 판 위의 것들은 장식보다 앞에 */
+.felt > * {
+  position: relative;
+  z-index: 1;
 }

@@ -148,6 +148,9 @@ const MONTH_TINT: Record<number, string> = {
 };
 
 /** 그림이 놓이는 자리 (주홍 테두리 안쪽) */
+/** 지금 그리는 카드의 id. 그라디언트 참조에 쓴다 (INK/VERM 과 같은 방식) */
+let UID = '';
+
 const AX = 12;
 const AY = 12;
 const AW = 96;
@@ -159,7 +162,12 @@ const AH = 152;
  */
 function blk(d: string, fill?: string): string {
   const f = fill ?? INK;
-  return `<path d="${d}" fill="${f}"/><path d="${d}" fill="#ffffff" opacity="0.07" transform="translate(0 -1.6)"/>`;
+  // 기본 먹은 그라디언트로, 색을 지정한 면(솔잎·꽃 등)은 단색 그대로 둔다
+  const paint = fill ? f : `url(#ik${UID})`;
+  return (
+    `<path d="${d}" fill="${paint}"/>` +
+    `<path d="${d}" fill="#ffffff" opacity="0.07" transform="translate(0 -1.6)"/>`
+  );
 }
 
 /**
@@ -469,11 +477,33 @@ function frame(month: number, sk: CardSkin, uid: string): string {
       <stop offset="100%" stop-color="${shadeCard(border, -0.22)}"/>
     </linearGradient>
   </defs>
+  <defs>
+    <linearGradient id="ik${uid}" x1="0" y1="0" x2="0.25" y2="1">
+      <stop offset="0%" stop-color="${shadeCard(sk.ink, 0.2)}"/>
+      <stop offset="45%" stop-color="${sk.ink}"/>
+      <stop offset="100%" stop-color="${shadeCard(sk.ink, -0.35)}"/>
+    </linearGradient>
+    <radialGradient id="vg${uid}" cx="0.5" cy="0.42" r="0.78">
+      <stop offset="55%" stop-color="#000000" stop-opacity="0"/>
+      <stop offset="100%" stop-color="#4a2a10" stop-opacity="0.2"/>
+    </radialGradient>
+    <linearGradient id="gl${uid}" x1="0" y1="0" x2="0.55" y2="1">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.3"/>
+      <stop offset="34%" stop-color="#ffffff" stop-opacity="0.06"/>
+      <stop offset="62%" stop-color="#000000" stop-opacity="0"/>
+      <stop offset="100%" stop-color="#2a1608" stop-opacity="0.16"/>
+    </linearGradient>
+  </defs>
   <rect width="${CW}" height="${CH}" rx="9" fill="url(#bd${uid})"/>
   <rect x="2" y="2" width="${CW - 4}" height="${CH - 4}" rx="7.5" fill="none"
         stroke="#ffffff" stroke-width="1.2" opacity="0.22"/>
-  <rect x="${AX - 2}" y="${AY - 2}" width="${AW + 4}" height="${AH + 4}" fill="${sk.ink}" opacity="0.55"/>
+  <!-- 종이가 테두리보다 살짝 눌려 들어간 느낌 -->
+  <rect x="${AX - 2.5}" y="${AY - 2.5}" width="${AW + 5}" height="${AH + 5}" rx="1.5"
+        fill="${sk.ink}" opacity="0.55"/>
+  <rect x="${AX - 1}" y="${AY - 1}" width="${AW + 2}" height="${AH + 2}" rx="1"
+        fill="none" stroke="#ffffff" stroke-width="0.9" opacity="0.18"/>
   <rect x="${AX}" y="${AY}" width="${AW}" height="${AH}" fill="${paper}"/>
+  <rect x="${AX}" y="${AY}" width="${AW}" height="${AH}" fill="url(#vg${uid})"/>
   <rect x="${AX}" y="${AY}" width="${AW}" height="${AH}" fill="none" stroke="${sk.ink}"
         stroke-width="1.1" opacity="0.35"/>`;
 }
@@ -491,6 +521,7 @@ export function cardSvg(
   CHROME = sk.gold;
   // 한 화면에 여러 장이 뜨므로 그라디언트 id 가 겹치면 안 된다
   const uid = `${card.id}-${sk.id}`.replace(/[^a-zA-Z0-9-]/g, '');
+  UID = uid;
   // 아래 주홍 띠에 월 숫자만 넣는다. 실제 화투에는 글씨가 없고, 46px 에서는 읽히지도 않는다
   const foot = card.month === 0 ? '보너스' : `${card.month}`;
 
@@ -513,6 +544,7 @@ export function cardSvg(
   <rect x="${AX}" y="${AY}" width="${AW}" height="${AH}" filter="url(#gr${uid})" opacity="0.085"
         style="mix-blend-mode:multiply"/>
   <rect width="${CW}" height="${CH}" rx="9" filter="url(#gr${uid})" opacity="0.045" style="mix-blend-mode:multiply"/>
+  <rect width="${CW}" height="${CH}" rx="9" fill="url(#gl${uid})" style="pointer-events:none"/>
   <rect x="0.75" y="0.75" width="${CW - 1.5}" height="${CH - 1.5}" rx="9" fill="none" stroke="${sk.ink}"
         stroke-width="1.5" opacity="0.45"/>
 </svg>`;

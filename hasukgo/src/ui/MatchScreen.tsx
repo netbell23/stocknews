@@ -12,8 +12,8 @@ import type { Card, PlayerId, RuleOptions, Settlement } from '../engine/types';
 import type { PlayerProfile } from '../ai/ai';
 import type { Tenant } from '../data/types';
 import { LOSS_FACTOR } from '../save/storage';
-import { hasCharArt } from '../art/artFiles';
-import { Background, CardBack, CardView, cardSrcNow, Portrait } from './parts';
+import { charArtSrc, hasCharArt } from '../art/artFiles';
+import { Background, CardBack, CardView, cardSrcNow, PhotoBackdrop, Portrait } from './parts';
 import { useCardFlight } from './useCardFlight';
 import { AI_THROW_MS, useMatch } from './useMatch';
 
@@ -487,9 +487,11 @@ export default function MatchScreen({
     );
   };
 
+  const oppArt = charArtSrc(tenant.id, 'full');
+
   return (
     <div className="screen match-screen">
-      <Background bg="maru" time="night" />
+      {oppArt ? <PhotoBackdrop src={oppArt} dim={0.62} /> : <Background bg="maru" time="night" />}
       <div className="layer board" ref={boardRef}>
         {/* ── 상대 ── */}
         <div

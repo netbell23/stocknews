@@ -9,13 +9,28 @@
  *  - 서비스 워커 등록 (오프라인 플레이)
  */
 
-/** 실제 보이는 높이를 --app-h 로 내려준다. CSS 에서 100vh 대신 이걸 쓴다. */
+/**
+ * 실제 보이는 높이를 --app-h 로 내려준다. CSS 에서 100vh 대신 이걸 쓴다.
+ *
+ * resize 이벤트만 믿으면 안 된다. 창 크기가 바뀌었는데 resize 가 오지 않는
+ * 경우가 실제로 있다 (화면 분할, 회전 직후, 데스크톱 앱의 뷰포트 변경).
+ * 그러면 --app-h 가 옛 높이에 멈춰서 판이 화면보다 짧아지고,
+ * 맨 아래 줄인 내 손패가 화면 밖으로 밀려 안 보인다.
+ * ResizeObserver 는 이벤트와 무관하게 실제 크기 변화를 잡으므로 이쪽을 믿는다.
+ */
 function syncViewportHeight(): void {
+  let last = -1;
   const set = () => {
-    const h = window.visualViewport?.height ?? window.innerHeight;
+    const h = Math.round(window.visualViewport?.height ?? window.innerHeight);
+    if (h === last || h <= 0) return;
+    last = h;
     document.documentElement.style.setProperty('--app-h', `${h}px`);
   };
   set();
+
+  if (typeof ResizeObserver !== 'undefined') {
+    new ResizeObserver(set).observe(document.documentElement);
+  }
   window.addEventListener('resize', set, { passive: true });
   window.addEventListener('orientationchange', () => setTimeout(set, 200), { passive: true });
   window.visualViewport?.addEventListener('resize', set, { passive: true });

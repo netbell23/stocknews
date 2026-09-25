@@ -4,7 +4,8 @@ import { isUnlocked, minStake, rewardFor, TENANTS, toneOf, unlockHint } from '..
 import type { Tenant } from '../data/types';
 import type { SaveData } from '../save/storage';
 import { ALLOWANCE, clearedStages, isStuck } from '../save/storage';
-import { Background, currentTimeOfDay, GameLogo, Meter, Portrait, SEASON_LABEL } from './parts';
+import { charArtSrc } from '../art/artFiles';
+import { Background, currentTimeOfDay, GameLogo, Meter, PhotoBackdrop, Portrait, SEASON_LABEL } from './parts';
 
 const EMPTY = { affection: 0, clearedStage: 0, wins: 0, losses: 0, dating: false };
 
@@ -53,9 +54,11 @@ export default function HomeScreen({
     return lines[(t.order + p.clearedStage) % lines.length];
   }, [t, tone, p.clearedStage]);
 
+  const featureArt = open ? charArtSrc(t.id, 'full') : null;
+
   return (
     <div className="screen">
-      <Background bg="maru" time={time} />
+      {featureArt ? <PhotoBackdrop src={featureArt} /> : <Background bg="maru" time={time} />}
       <div className="layer lobby">
         <div className="rail">
           <GameLogo className="rail-logo" />

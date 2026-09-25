@@ -84,6 +84,20 @@ export function Portrait({
   );
 }
 
+/**
+ * 원화에서 뽑아낸 배경.
+ *
+ * 인물 사진은 저마다 제 방을 달고 온다. 그런데 뒤에 코드로 그린 마루를 깔면
+ * 따뜻한 조명의 사진 위에 서늘한 밤 그림이 겹쳐 두 세계가 따로 논다.
+ * 그래서 그 인물의 사진을 흐리게 확대해 배경으로 쓴다 —
+ * 말 그대로 같은 방이라 색이 어긋날 수가 없다.
+ */
+export function PhotoBackdrop({ src, dim = 0.55 }: { src: string; dim?: number }) {
+  return (
+    <div className="photo-bed" style={{ backgroundImage: `url("${src}")`, ['--bed-dim' as string]: dim }} />
+  );
+}
+
 export function Background({ bg, time }: { bg: BackgroundId; time: TimeOfDay }) {
   return <div className="bg-layer" style={{ backgroundImage: `url("${backgroundDataUri(bg, time)}")` }} />;
 }
