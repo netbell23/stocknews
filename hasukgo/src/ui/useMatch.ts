@@ -23,6 +23,7 @@ import type { Card, GameEvent, GameState, PlayerId, RuleOptions } from '../engin
 import { paramsFor, toneOf } from '../data/tenants';
 import type { Tenant, Tone } from '../data/types';
 import type { Expression } from '../scenario/types';
+import { banterKey, banterLine, NO_TAKE, type Take } from './banter';
 
 const HUMAN: PlayerId = 0;
 const AI: PlayerId = 1;
@@ -122,43 +123,19 @@ const EVENT_SHOUT: Partial<Record<GameEvent['type'], string>> = {
 const AFTER_FLIP: ReadonlySet<GameEvent['type']> = new Set(['ppeok', 'jappeok', 'jjok', 'ttadak', 'sseul']);
 const FLIP_LANDS_MS = 980;
 
-/*
- * 판이 도는 동안 주고받는 잔말.
- *
- * 하숙생마다 제 대사를 갖는 게 제일 좋지만 아직 안 쓰인 사람도 있으므로,
- * 공용 대사를 깔아 두고 가진 사람은 제 것을 쓰게 한다.
- */
-const GOT_LINES: Record<Tone, string[]> = {
-  low: ['이건 제가 가져갈게요.', '어, 이거 제 거죠?', '가져갑니다.'],
-  mid: ['이건 놓칠 수 없죠.', '아, 이거 기다렸어요.', '잘 들어왔네요.'],
-  high: ['이거 가져가도 안 삐질 거죠?', '오늘은 제가 좀 잘되네요.', '봤어요? 방금.'],
-};
-const BIG_GOT_LINES: Record<Tone, string[]> = {
-  low: ['어! 이거 큰 거 아니에요?', '이게 오네요.', '와, 이건 좋은데요.'],
-  mid: ['이건 진짜 큰 거예요.', '미안해요, 이건 못 양보해요.', '오늘 이거 하나로 끝날지도.'],
-  high: ['이건 자랑해도 되죠?', '놀란 표정 좀 보여줘요.', '이건 제가 가져갈게요. 나중에 갚을게요.'],
-};
-const LOST_LINES: Record<Tone, string[]> = {
-  low: ['아, 그건 제가 보고 있었는데.', '그거 가져가시네요.', '음...'],
-  mid: ['그건 좀 아픈데요.', '아까워라. 그거 노리고 있었어요.', '다음 판에 돌려받을 거예요.'],
-  high: ['그거 알고 가져간 거죠?', '치사해요. 그거 제 거였는데.', '그렇게 가져가면 삐질 거예요.'],
-};
-const BIG_LOST_LINES: Record<Tone, string[]> = {
-  low: ['어... 그건 큰 건데.', '그걸 가져가시는구나.', '아.'],
-  mid: ['그건 진짜 아파요.', '거기서 그게 나오다니.', '한 판 뒤집혔네요.'],
-  high: ['그건 좀 너무해요.', '그거 가져갈 줄 알았으면 안 뒀죠.', '오늘은 제가 지겠네요.'],
-};
-
 /** 먹은 패 장수. 직전 판과 견줘서 무슨 일이 있었는지 알아낸다 */
-function capturedCount(p: { captured: { gwang: Card[]; yeol: Card[]; tti: Card[]; pi: Card[] } }): {
-  total: number;
-  big: number;
-} {
+function capturedCount(p: { captured: { gwang: Card[]; yeol: Card[]; tti: Card[]; pi: Card[] } }): Take {
   const c = p.captured;
+  return { gwang: c.gwang.length, yeol: c.yeol.length, tti: c.tti.length, pi: c.pi.length };
+}
+
+/** 이번 턴에 늘어난 만큼 (줄어들 수는 있다 — 상납으로 피를 뺏기면) */
+function gained(now: Take, prev: Take): Take {
   return {
-    total: c.gwang.length + c.yeol.length + c.tti.length + c.pi.length,
-    // 광과 열끗은 한 장이 판을 가른다 — 크게 반응해야 하는 것들
-    big: c.gwang.length + c.yeol.length,
+    gwang: Math.max(0, now.gwang - prev.gwang),
+    yeol: Math.max(0, now.yeol - prev.yeol),
+    tti: Math.max(0, now.tti - prev.tti),
+    pi: Math.max(0, now.pi - prev.pi),
   };
 }
 
@@ -230,39 +207,49 @@ export function useMatch(opts: MatchOptions) {
 
   /** 이벤트에 맞춰 연출과 대사를 갱신 */
   /** 직전 판의 먹은 패 장수. 이번 판과 견줘 누가 무엇을 가져갔는지 안다 */
-  const lastCount = useRef({ me: { total: 0, big: 0 }, ai: { total: 0, big: 0 } });
+  const lastCount = useRef({ me: NO_TAKE, ai: NO_TAKE });
+  /** 직전 판의 점수 차(하숙생 - 나). 부호가 뒤집히면 판이 넘어간 것이다 */
+  const lastLead = useRef(0);
+  /** 방금 한 말 — 같은 말이 두 번 이어지지 않게 */
+  const lastLine = useRef('');
 
   const reactTo = useCallback(
     (next: GameState) => {
       const events = next.events;
 
       /*
-       * 패를 주고받을 때마다 얼굴이 바뀌어야 판이 살아난다.
-       * 특별한 수(뻑·쓸·따닥)가 있으면 그쪽이 우선이고, 평범하게 주고받은
-       * 턴에는 누가 무엇을 가져갔는지로 표정과 잔말을 고른다.
-       * 광·열끗은 한 장이 판을 가르므로 크게 반응한다.
+       * 패를 주고받을 때마다 얼굴과 말이 같이 바뀌어야 판이 살아난다.
+       * 특별한 수(뻑·쓸·따닥)가 있으면 표정은 그쪽이 우선이고,
+       * 무슨 말을 할지는 이번 턴에 무엇이 오갔는지가 정한다.
        */
       const now = { me: capturedCount(next.players[HUMAN]), ai: capturedCount(next.players[AI]) };
       const prev = lastCount.current;
-      const aiGot = now.ai.total - prev.ai.total;
-      const meGot = now.me.total - prev.me.total;
-      const aiGotBig = now.ai.big > prev.ai.big;
-      const meGotBig = now.me.big > prev.me.big;
+      const aiTook = gained(now.ai, prev.ai);
+      const meTook = gained(now.me, prev.me);
       lastCount.current = now;
 
+      const lead = currentScore(next, AI) - currentScore(next, HUMAN);
+      const flipped = Math.sign(lead) !== Math.sign(lastLead.current) && lead !== 0;
+      lastLead.current = lead;
+
+      const side = (p: PlayerId) => (p === AI ? 'mine' : 'yours');
+      const bonusBy = events.find((e) => e.type === 'bonus');
+      const stealBy = events.find((e) => e.type === 'steal');
+      const key = banterKey(aiTook, meTook, {
+        bonus: bonusBy ? side(bonusBy.player) : undefined,
+        steal: stealBy ? side(stealBy.player) : undefined,
+        leadFlip: flipped ? (lead > 0 ? 'ahead' : 'behind') : undefined,
+        handLeft: next.players[AI].hand.length,
+      });
+
       const special = expressionFor(events, AI);
-      if (special !== 'normal') {
-        setExpression(special);
-      } else if (aiGot > 0) {
-        // 내가(하숙생이) 먹었다 — 기쁨, 크게 먹었으면 놀리는 얼굴
-        setExpression(aiGotBig ? 'win' : 'smile');
-        setLine(pick(aiGotBig ? BIG_GOT_LINES[tone] : GOT_LINES[tone], rnd));
-      } else if (meGot > 0) {
-        // 상대(플레이어)가 가져갔다 — 크면 놀랐다가 시무룩, 작으면 뾰로통
-        setExpression(meGotBig ? 'lose' : 'sulk');
-        setLine(pick(meGotBig ? BIG_LOST_LINES[tone] : LOST_LINES[tone], rnd));
+      if (key) {
+        const said = banterLine(key, tone, rnd, lastLine.current);
+        lastLine.current = said.text;
+        setLine(said.text);
+        setExpression(special !== 'normal' ? special : said.face);
       } else {
-        setExpression('normal');
+        setExpression(special);
       }
       for (const e of events) {
         const text = EVENT_SHOUT[e.type];
@@ -284,7 +271,9 @@ export function useMatch(opts: MatchOptions) {
 
   // 판이 새로 시작하면 기준도 새로 잡는다
   useEffect(() => {
-    lastCount.current = { me: { total: 0, big: 0 }, ai: { total: 0, big: 0 } };
+    lastCount.current = { me: NO_TAKE, ai: NO_TAKE };
+    lastLead.current = 0;
+    lastLine.current = '';
   }, [seed]);
 
   /** 화면 연출이 끝날 때까지 기다렸다가 움직인다 */
