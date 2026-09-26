@@ -12,9 +12,9 @@ import type { Card, PlayerId, RuleOptions, Settlement } from '../engine/types';
 import type { PlayerProfile } from '../ai/ai';
 import type { Tenant } from '../data/types';
 import { LOSS_FACTOR } from '../save/storage';
-import { charArtSrc, hasCharArt } from '../art/artFiles';
+import { hasCharArt } from '../art/artFiles';
 import { scorePlayer } from '../engine/score';
-import { Background, CardBack, CardView, cardSrcNow, PhotoBackdrop, Portrait } from './parts';
+import { Background, CardBack, CardView, cardSrcNow, Portrait } from './parts';
 import { useCardFlight } from './useCardFlight';
 import { AI_THROW_MS, useMatch } from './useMatch';
 
@@ -611,8 +611,6 @@ export default function MatchScreen({
     );
   };
 
-  const oppArt = charArtSrc(tenant.id, 'full');
-
   /** 고/스톱을 물을 때 펼쳐 보여줄 내 점수 내역 */
   const myTally = useMemo(() => {
     const b = scorePlayer(s.players[HUMAN], s.rules);
@@ -626,7 +624,7 @@ export default function MatchScreen({
 
   return (
     <div className="screen match-screen">
-      {oppArt ? <PhotoBackdrop src={oppArt} dim={0.62} /> : <Background bg="maru" time="night" />}
+      <Background bg="maru" time="night" />
       <div className="layer board" ref={boardRef}>
         {/* ── 상대 ── */}
         <div

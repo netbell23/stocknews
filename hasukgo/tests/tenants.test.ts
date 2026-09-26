@@ -42,7 +42,8 @@ describe('하숙생 데이터 무결성', () => {
 
   it('전원 성인이고 방 번호가 있다', () => {
     for (const t of TENANTS) {
-      expect(t.age).toBeGreaterThanOrEqual(22);
+      // 캐릭터 카드가 21세부터 쓴다 (만 21세 = 성인). 하한만 내렸고 성인 규칙은 그대로다
+      expect(t.age).toBeGreaterThanOrEqual(21);
       expect(t.age).toBeLessThanOrEqual(29);
       expect(t.room.length).toBeGreaterThan(0);
       expect(t.job.length).toBeGreaterThan(0);

@@ -4,7 +4,7 @@ import { advance, choose, fastForward, startScenario, type ScenarioState } from 
 import type { Scene } from '../scenario/types';
 import type { Tenant } from '../data/types';
 import { charArtSrc } from '../art/artFiles';
-import { Background, PhotoBackdrop, Portrait } from './parts';
+import { Background, Portrait } from './parts';
 
 export interface NovelResult {
   affectionDelta: number;
@@ -103,7 +103,7 @@ export default function NovelScreen({
 
   return (
     <div className={`screen novel-screen ${art ? 'photo' : ''}`} onClick={next}>
-      {art ? <PhotoBackdrop src={art} dim={0.5} /> : <Background bg={v.bg} time={v.time} />}
+      <Background bg={v.bg} time={v.time} />
       <div className="layer">
         <div className="topbar" onClick={(e) => e.stopPropagation()}>
           <h1>{scene.title}</h1>

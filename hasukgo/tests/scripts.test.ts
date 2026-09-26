@@ -215,7 +215,7 @@ describe('세계관', () => {
     const pro = scenes['prologue'];
     expect(pro).toBeTruthy();
     const speakers = pro.steps.flatMap((x) => (x.kind === 'say' ? [x.speaker] : []));
-    expect(speakers).toContain('은서');
+    expect(speakers).toContain('지은');
   });
 
   it('세계관을 바꾼 뒤 살아 있는 어머니가 남아 있지 않다', () => {

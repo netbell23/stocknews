@@ -11,6 +11,33 @@
 import type { Expression } from '../scenario/types';
 import { CHAR_FILES, KEY_FILES } from './artFiles.gen';
 
+/*
+ * 하숙생 id → 원화 id.
+ *
+ * 2026-09-26 에 캐릭터 카드를 새로 받아 열다섯 명의 이름과 성격이 바뀌었다.
+ * 그런데 시나리오 150장면이 옛 id 로 엮여 있어서, id 를 한꺼번에 갈아치우면
+ * 이야기가 통째로 끊긴다. 그래서 보이는 이름과 그림만 먼저 새것으로 바꾸고
+ * id 는 그대로 두었다. 이 표가 그 사이를 잇는다.
+ * 시나리오를 새 인물에 맞춰 다시 쓸 때 이 표는 사라진다.
+ */
+const ART_ID: Record<string, string> = {
+  eunseo: 'jieun',
+  hayeong: 'sua',
+  jiwoo: 'nayeon',
+  sea: 'ria',
+  sua: 'hana',
+  minji: 'seoyeon',
+  gaeun: 'rubi',
+  narae: 'chaea',
+  seyeon: 'sora',
+  dohee: 'gain',
+  nayun: 'minji',
+  yoon: 'arin',
+  // 예린·하린·다빈은 이름이 그대로라 표에 없다
+};
+
+const artId = (tenantId: string) => ART_ID[tenantId] ?? tenantId;
+
 /** Vite 가 심어주는 배포 기준 경로 (`/stocknews/hasukgo/play/`) */
 const BASE = import.meta.env.BASE_URL || '/';
 
@@ -41,13 +68,14 @@ const NEAREST: Partial<Record<Expression, Expression[]>> = {
  * 표정 → 기본 순으로 실제로 있는 파일만 고른다.
  */
 export function charArtSrc(tenantId: string, shot: Shot, expression?: Expression): string | null {
+  const id = artId(tenantId);
   const suffix = shot === 'face' ? '_face' : '';
   const wanted = expression && expression !== 'normal' ? (NEAREST[expression] ?? [expression]) : [];
   const names = [
-    ...wanted.map((e) => `${tenantId}${suffix}_${e}.webp`),
-    `${tenantId}${suffix}.webp`,
+    ...wanted.map((e) => `${id}${suffix}_${e}.webp`),
+    `${id}${suffix}.webp`,
     // 얼굴 컷이 아직 없으면 전신이라도 쓴다 (칩 쪽에서 잘라 보여준다)
-    shot === 'face' ? `${tenantId}.webp` : null,
+    shot === 'face' ? `${id}.webp` : null,
   ].filter((n): n is string => n !== null);
 
   for (const n of names) if (CHAR_FILES.has(n)) return url('char', n);
@@ -56,7 +84,7 @@ export function charArtSrc(tenantId: string, shot: Shot, expression?: Expression
 
 /** 이 하숙생이 원화를 갖고 있는가 (레이아웃을 사진용으로 바꿀지 결정할 때 쓴다) */
 export function hasCharArt(tenantId: string): boolean {
-  return CHAR_FILES.has(`${tenantId}.webp`);
+  return CHAR_FILES.has(`${artId(tenantId)}.webp`);
 }
 
 /** 타이틀 키아트 같은 낱장 그림 */
