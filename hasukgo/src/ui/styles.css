@@ -74,6 +74,16 @@ input {
 }
 
 /* 세로 모드 모바일 우선. 넓은 화면에서는 가운데 정렬된 390px 프레임. */
+/*
+ * 판이 벌어지려면 480px 프레임을 풀어야 한다. 승부·대화 중일 때만 푼다.
+ * 가로뿐 아니라 세로에서도 푼다 — 태블릿을 세워 들면 폭이 800px 넘는데
+ * 480px 기둥에 갇히면 양옆이 까맣게 남는다.
+ * 1100px 에서 멈추는 건, 그 이상 벌리면 눈이 판을 한 번에 못 담기 때문이다.
+ */
+.app.wide {
+  max-width: min(100%, 1100px);
+}
+
 .app {
   position: relative;
   width: 100%;
@@ -771,15 +781,20 @@ button {
   gap: 4px;
   padding: 4px;
   height: 100%;
+  /*
+   * 세로 배치. 하숙생을 한 줄 통째로 쓰던 것을 왼쪽 칸으로 키우고,
+   * 그 옆에 상대가 먹은 패를 붙였다. 위아래로만 쌓으면 하숙생이
+   * 띠처럼 납작해져서 표정이 안 보인다.
+   */
   grid-template-areas:
-    'opp'
-    'oppcap'
-    'field'
-    'mycap'
-    'side'
-    'hand';
-  grid-template-rows: auto auto minmax(0, 1fr) auto auto auto;
-  --pile-overlap: -20px;
+    'opp   oppcap'
+    'field field'
+    'mycap mycap'
+    'hand  hand'
+    'side  side';
+  grid-template-columns: minmax(84px, 34%) minmax(0, 1fr);
+  grid-template-rows: auto minmax(0, 1fr) auto auto auto;
+  --pile-overlap: calc(var(--pile-card-w) * -0.82);
   /*
    * 같은 월끼리 벌리는 간격. 겹쳐 쌓으면 뒤 패의 도안이 가려져 뭘 먹을지 안 보인다.
    * 실제 판처럼 나란히 펼쳐 놓는다.
@@ -794,10 +809,19 @@ button {
   /* 상대 손패(뒷면)는 장수만 알면 되므로 촘촘히 겹친다 */
   --ohand-overlap: calc(var(--card-h, 69px) * -0.34);
   /*
-   * 화패 크기를 화면 높이에 매단다. 바닥에는 두 줄 + 더미가 들어가야 하는데
-   * 크기를 고정하면 640px 짜리 작은 폰에서 위아래가 잘린다.
+   * 화패 크기는 화면의 높이와 폭 **둘 다**에 매단다.
+   * 높이만 보면 넓고 낮은 창에서 패가 가로로 넘치고, 폭만 보면
+   * 좁고 긴 창에서 바닥 두 줄이 잘린다. 둘 중 작은 쪽을 따른다.
    */
-  --card-h: clamp(52px, 11.6vh, 104px);
+  /*
+   * 폭 쪽 계수는 융이 일곱 칸이라는 데서 나온다.
+   * 융 ≈ 화면 폭, 한 칸 ≈ 폭/7, 카드 세로 = 가로 ÷ 0.667 → 대략 21vw.
+   * 이보다 빡빡하게 잡으면 세로 화면에서 패가 손톱만 해진다.
+   */
+  --card-h: clamp(44px, min(11.6vh, 21vw), 108px);
+  --card-w: calc(var(--card-h) * 0.667);
+  /* 더미에 겹쳐 쌓는 작은 패도 같이 자란다 */
+  --pile-card-w: clamp(18px, calc(var(--card-h) * 0.34), 34px);
 }
 
 .board-opp {
@@ -1048,8 +1072,8 @@ button {
 }
 
 .pile-card {
-  width: 24px;
-  height: 36px;
+  width: var(--pile-card-w, 24px);
+  height: calc(var(--pile-card-w, 24px) * 1.5);
   border-radius: 3px;
   flex: 0 0 auto;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
@@ -1574,14 +1598,30 @@ button {
 }
 
 /* ── 내 손패 ── */
+/*
+ * 한 줄로 쥔다. 줄바꿈을 허용하면 열 장이 두세 줄로 접혀서 손패가 융보다
+ * 넓어진다 — 판이 아니라 패가 화면을 차지한다.
+ * 자리가 남으면 벌리고, 모자라면 실제로 손에 쥔 것처럼 겹친다.
+ * --hand-n 은 손패 장수. MatchScreen 이 넣어준다.
+ */
 .board-hand {
   display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
+  flex-wrap: nowrap;
   justify-content: center;
-  align-content: center;
+  align-items: center;
   padding: 6px;
   border-radius: 10px;
+}
+
+.hand-slot {
+  flex: 0 0 auto;
+}
+
+.hand-slot + .hand-slot {
+  margin-left: min(
+    4px,
+    calc((100% - 12px - var(--hand-n, 10) * var(--card-w)) / max(1, var(--hand-n, 10) - 1))
+  );
 }
 
 /* ── 화패 ── */
@@ -1636,13 +1676,14 @@ button {
  * 먹은 패는 왼쪽 기둥, 바닥은 가운데, 점수판은 오른쪽.
  */
 @media (min-aspect-ratio: 1/1) {
-  /* 판이 벌어지려면 480px 프레임을 풀어야 한다. 승부 중일 때만 푼다. */
-  .app.wide {
-    max-width: none;
-  }
 
   .board {
-    --card-h: clamp(54px, 15.5vh, 116px);
+    /*
+     * 가로에서는 융이 가운데 칸만 쓴다 (양옆 패널 ≈ 360px).
+     * 남는 폭의 1/7 이 한 칸이라 대략 13.5vw. 높이가 먼저 걸리는 게 보통이고,
+     * 폭 항은 초광폭에서 패만 커지는 걸 막는 안전장치다.
+     */
+    --card-h: clamp(48px, min(15.5vh, 13.5vw), 124px);
     /*
      * 하숙생은 왼쪽, 먹은 패는 오른쪽, 셈은 맨 아래.
      * 먹은 패가 오른쪽으로 날아가므로, 가운데 더미에서 뒤집은 패는

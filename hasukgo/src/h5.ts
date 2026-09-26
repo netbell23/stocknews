@@ -28,13 +28,36 @@ function syncViewportHeight(): void {
   };
   set();
 
+  /*
+   * documentElement 를 지켜보면 안 된다. 내용이 화면보다 길어지는 순간
+   * 그 높이는 화면이 아니라 내용을 따라가서, 창이 줄어도 값이 안 바뀐다 —
+   * 정작 --app-h 가 틀어지는 바로 그 상황에서 감시자가 울지 않는다.
+   * 화면에 딱 붙는 보이지 않는 조각을 하나 띄워 그걸 지켜본다.
+   */
   if (typeof ResizeObserver !== 'undefined') {
-    new ResizeObserver(set).observe(document.documentElement);
+    const probe = document.createElement('div');
+    probe.setAttribute('aria-hidden', 'true');
+    probe.style.cssText =
+      'position:fixed;inset:0;pointer-events:none;visibility:hidden;z-index:-1';
+    document.body.appendChild(probe);
+    new ResizeObserver(set).observe(probe);
   }
   window.addEventListener('resize', set, { passive: true });
   window.addEventListener('orientationchange', () => setTimeout(set, 200), { passive: true });
   window.visualViewport?.addEventListener('resize', set, { passive: true });
   window.visualViewport?.addEventListener('scroll', set, { passive: true });
+
+  /*
+   * 마지막 그물.
+   *
+   * 위의 것들은 전부 브라우저가 알려줘야 도는 것들이고, 알려주지 않는
+   * 경우가 실제로 있다 — ResizeObserver 콜백은 화면을 그리는 흐름에 실려
+   * 오므로 탭이 가려져 있으면 오지 않고, resize 이벤트도 환경에 따라
+   * 빠진다. 이 값이 틀어지면 판이 화면보다 길어져 손패가 밖으로 밀리는데,
+   * 그건 게임이 안 되는 수준의 고장이라 한 번 더 받쳐둔다.
+   * 값이 같으면 즉시 빠져나오므로 비용은 비교에 그친다.
+   */
+  window.setInterval(set, 500);
 }
 
 /**

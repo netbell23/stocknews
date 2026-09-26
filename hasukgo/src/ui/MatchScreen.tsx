@@ -770,7 +770,7 @@ export default function MatchScreen({
         </div>
 
         {/* ── 내 손패 ── */}
-        <div className="board-hand">
+        <div className="board-hand" style={{ ['--hand-n' as string]: me.hand.length }}>
           {me.hand.map((c) => (
             <div
               key={c.id}
