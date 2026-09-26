@@ -12,7 +12,7 @@ import type { Card, PlayerId, RuleOptions, Settlement } from '../engine/types';
 import type { PlayerProfile } from '../ai/ai';
 import type { Tenant } from '../data/types';
 import { LOSS_FACTOR } from '../save/storage';
-import { hasCharArt } from '../art/artFiles';
+import { charArtSrc, hasCharArt } from '../art/artFiles';
 import { scorePlayer } from '../engine/score';
 import { Background, CardBack, CardView, cardSrcNow, Portrait } from './parts';
 import { useCardFlight, slamLeft, slamSideIsRight } from './useCardFlight';
@@ -279,6 +279,8 @@ export default function MatchScreen({
    * 하숙생 차례에 줄어들면, 보고 있는 사이에 시간이 날아간다.
    */
   const myMove = canPlay || mustChoose || view.askGoStop;
+  /** 상대 칸 뒤에 깔 그림 — 지금 짓고 있는 표정과 같은 장이라야 따로 놀지 않는다 */
+  const oppArt = charArtSrc(tenant.id, 'full', startled ? 'surprise' : view.expression);
   const [auto, setAuto] = useState(false);
   const [left, setLeft] = useState(TURN_MS);
   /** 국면이 바뀔 때마다 시계를 되감는다 */
@@ -736,6 +738,10 @@ export default function MatchScreen({
         {/* ── 상대 ── */}
         <div
           className={`board-opp ${startled ? 'startled' : ''} ${hasCharArt(tenant.id) ? 'has-photo' : ''}`}
+          style={{
+            // 같은 그림을 흐리게 깔아 칸을 메운다 — 뒤가 비면 사람만 떠 보인다
+            ['--opp-art' as string]: oppArt ? `url("${oppArt}")` : undefined,
+          }}
         >
           <Portrait
             tenant={tenant}

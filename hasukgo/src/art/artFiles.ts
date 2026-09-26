@@ -37,6 +37,27 @@ const NEAREST: Partial<Record<Expression, Expression[]>> = {
 };
 
 /**
+ * 시트에서 잘못 잘린 칸.
+ *
+ * 표정 시트를 격자로 자를 때 이 셋만 가로로 반 칸씩 밀렸다. 그래서 파일은
+ * 멀쩡히 있는데 얼굴이 프레임 밖으로 나가 머리카락과 소매만 남았다.
+ * 파일이 있느냐로는 걸러낼 수 없으므로 여기 적어 두고 없는 셈 친다.
+ * 원본 시트를 다시 받아 제대로 자르면 이 표는 통째로 지운다.
+ */
+const MISCUT: Record<string, readonly string[]> = {
+  nayeon: ['normal', 'surprise', 'lose'],
+  hana: ['normal', 'lose', 'sulk'],
+  sora: ['normal', 'surprise', 'lose'],
+};
+
+/** 못 쓰는 칸 대신 세울 표정 — 셋 다 이 칸은 성했고, 무표정에 가장 가깝다 */
+const STAND_IN = 'serious';
+
+function miscut(tenantId: string, expression: string): boolean {
+  return MISCUT[tenantId]?.includes(expression) ?? false;
+}
+
+/**
  * 이 하숙생의 원화 주소. 없으면 null — 부르는 쪽이 SVG 로 되돌아가면 된다.
  * 표정 → 기본 순으로 실제로 있는 파일만 고른다.
  */
@@ -44,11 +65,15 @@ export function charArtSrc(tenantId: string, shot: Shot, expression?: Expression
   const id = tenantId;
   const suffix = shot === 'face' ? '_face' : '';
   const wanted = expression && expression !== 'normal' ? (NEAREST[expression] ?? [expression]) : [];
+  // 원하는 표정 → 기본 → (잘린 인물이면) 성한 대역 순
+  const order = [...wanted, 'normal', ...(MISCUT[id] ? [STAND_IN] : [])];
   const names = [
-    ...wanted.map((e) => `${id}${suffix}_${e}.webp`),
-    `${id}${suffix}.webp`,
+    ...order
+      .filter((e) => !miscut(id, e))
+      .map((e) => (e === 'normal' ? `${id}${suffix}.webp` : `${id}${suffix}_${e}.webp`)),
     // 얼굴 컷이 아직 없으면 전신이라도 쓴다 (칩 쪽에서 잘라 보여준다)
-    shot === 'face' ? `${id}.webp` : null,
+    shot === 'face' && !miscut(id, 'normal') ? `${id}.webp` : null,
+    shot === 'face' && MISCUT[id] ? `${id}_${STAND_IN}.webp` : null,
   ].filter((n): n is string => n !== null);
 
   for (const n of names) if (CHAR_FILES.has(n)) return url('char', n);
