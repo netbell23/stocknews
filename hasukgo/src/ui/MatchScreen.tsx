@@ -722,8 +722,32 @@ export default function MatchScreen({
           <CapturedPiles captured={me.captured} side="내 것" flying={animBusy} stagedId={staged?.id} />
         </div>
 
-        {/* ── 점수판 ── */}
+        {/* ── 오른쪽 기둥: 두 사람의 패 정보 ── */}
         <div className="board-side">
+          <div className="pcard opp">
+            <div className="pcard-head">
+              <span className="pcard-name">{tenant.name}</span>
+              {opp.goCount > 0 && <span className="badge">{opp.goCount}고</span>}
+            </div>
+            <div className="pcard-score">
+              {view.oppScore}
+              <small>점</small>
+            </div>
+            <div className="pcard-sub">점당 {tenant.rate}P</div>
+          </div>
+
+          <div className="pcard me">
+            <div className="pcard-head">
+              <span className="pcard-name">나</span>
+              {me.goCount > 0 && <span className="badge">{me.goCount}고</span>}
+            </div>
+            <div className="pcard-score">
+              {view.myScore}
+              <small>점</small>
+            </div>
+            <div className="pcard-sub">{points.toLocaleString()} P</div>
+          </div>
+
           <div className="scorebox">
             <div className="scorebox-row">
               <b>{view.myScore}</b>
@@ -760,13 +784,7 @@ export default function MatchScreen({
             </button>
           )}
 
-          <div className="me-chip">
-            <div className="chip-name">
-              나
-              {me.goCount > 0 && <span className="badge">{me.goCount}고</span>}
-            </div>
-            <div className="chip-points">{points.toLocaleString()} P</div>
-          </div>
+
         </div>
 
         {/* ── 내 손패 ── */}

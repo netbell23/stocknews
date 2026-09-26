@@ -1690,13 +1690,20 @@ button {
      * 왼쪽으로 내려앉는다(slamSideIsRight). 두 길이 아예 갈린다 —
      * 전에는 둘 다 왼쪽이라 날아가는 패가 뒤집은 패를 스치고 지나갔다.
      */
+    /*
+     * 상용 맞고 판의 관례를 따른다 — 먹은 패는 융의 위아래 가장자리에
+     * 가로로 늘어놓고, 오른쪽 기둥에 두 사람의 패 정보를 쌓는다.
+     * 옆 패널에 세로로 세워두면 광·띠·열·피가 세로로 눌려 장수가 안 읽힌다.
+     * 하숙생은 왼쪽 그대로 — 이 게임에서 제일 크게 보여야 하는 것이다.
+     */
     grid-template-areas:
-      'opp  field oppcap'
-      'opp  field mycap'
-      'hand hand  hand'
-      'side side  side';
-    grid-template-columns: minmax(158px, 210px) minmax(0, 1fr) minmax(96px, 150px);
-    grid-template-rows: minmax(0, 1.45fr) minmax(0, 1fr) auto auto;
+      'opp  oppcap side'
+      'opp  field  side'
+      'opp  field  side'
+      'opp  mycap  side'
+      'hand hand   hand';
+    grid-template-columns: minmax(150px, 200px) minmax(0, 1fr) minmax(132px, 176px);
+    grid-template-rows: auto minmax(0, 1fr) minmax(0, 1fr) auto auto;
     --pile-overlap: -16px;
   }
 
@@ -1723,22 +1730,11 @@ button {
     align-self: end;
   }
 
+  /* 먹은 패는 가로 줄 그대로 — 세로로 세우면 장수가 안 읽힌다 */
   .piles {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 2px;
-    height: 100%;
-  }
-
-  .piles-head {
     flex-direction: row;
-    justify-content: space-between;
-    align-items: baseline;
-    width: auto;
-  }
-
-  .pile {
-    flex: 0 0 auto;
+    align-items: center;
+    gap: 6px;
   }
 
   .pile-cards {
@@ -1746,25 +1742,27 @@ button {
   }
 
   /*
-   * 셈은 이제 맨 아래 가로 띠다. 세로 기둥이던 시절의 규칙(세로로 쌓기)을
-   * 그대로 두면 넓은 띠 안에서 글자만 가운데 뭉쳐 허전해진다.
+   * 점수는 오른쪽 기둥의 패 카드가 맡는다. 하숙생 명패에도 같은 숫자를
+   * 띄우면 같은 걸 두 번 읽게 된다 — 왼쪽은 이름과 말만 남긴다.
    */
+  .board-opp .chip-score {
+    display: none;
+  }
+
+  /* 오른쪽 기둥 — 상대 카드가 위, 내 카드가 아래 */
   .board-side {
-    flex-direction: row;
-    align-items: center;
-    justify-content: space-between;
-    gap: 14px;
+    flex-direction: column;
+    align-items: stretch;
+    justify-content: flex-start;
+    gap: 6px;
   }
 
   .scorebox {
-    text-align: left;
-    display: flex;
-    align-items: baseline;
-    gap: 10px;
+    text-align: center;
   }
 
   .scorebox-row {
-    justify-content: flex-start;
+    justify-content: center;
   }
 
   .turnline {
@@ -2718,5 +2716,68 @@ button {
   from {
     transform: scale(0.5) rotate(-12deg);
     opacity: 0;
+  }
+}
+
+/* ── 두 사람의 패 정보 카드 ────────────────
+ * 상용 맞고 판처럼 이름·점수·판돈을 한 덩이로 묶어 오른쪽에 쌓는다.
+ * 점수가 양쪽에 따로 서 있어야 누가 앞서는지 한눈에 읽힌다.
+ */
+.pcard {
+  flex: 0 0 auto;
+  padding: 5px 9px 6px;
+  border-radius: 10px;
+  background: linear-gradient(180deg, rgba(58, 40, 28, 0.94), rgba(22, 14, 10, 0.94));
+  border: 1.5px solid #6b3410;
+  box-shadow: inset 0 1px 0 rgba(240, 185, 60, 0.3);
+}
+
+.pcard.me {
+  border-color: var(--lamp-dim);
+  box-shadow: inset 0 1px 0 rgba(240, 185, 60, 0.5), 0 0 0 1px rgba(240, 185, 60, 0.2);
+}
+
+.pcard-head {
+  display: flex;
+  align-items: baseline;
+  gap: 5px;
+}
+
+.pcard-name {
+  font-size: 12.5px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.pcard-score {
+  font-size: 24px;
+  font-weight: 900;
+  line-height: 1.05;
+  color: var(--lamp);
+}
+
+.pcard-score small {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--paper-dim);
+  margin-left: 2px;
+}
+
+.pcard-sub {
+  font-size: 10.5px;
+  color: var(--paper-dim);
+}
+
+/* 세로 화면에서는 기둥이 없다 — 가로 띠 안에 나란히 눕힌다 */
+@media not all and (min-aspect-ratio: 1/1) {
+  .pcard {
+    display: flex;
+    align-items: baseline;
+    gap: 7px;
+    padding: 4px 9px;
+  }
+
+  .pcard-score {
+    font-size: 19px;
   }
 }
