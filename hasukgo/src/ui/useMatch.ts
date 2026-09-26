@@ -448,6 +448,27 @@ export function useMatch(opts: MatchOptions) {
     busy,
   };
 
+  /**
+   * 내 차례를 대신 둔다.
+   *
+   * 자동치기와 시간 초과가 같은 손을 쓴다 — 시간이 다 됐을 때 아무 패나
+   * 던지면 판이 망가지므로, 하숙생을 움직이는 그 판단을 그대로 빌려 쓴다.
+   * 다만 고/스톱만은 늘 스톱이다. 남이 대신 지르는 고는 억울하다.
+   */
+  const autoMove = useCallback(() => {
+    if (state.turn !== HUMAN && state.phase !== 'awaitGoStop') return;
+    if (state.phase === 'awaitPlay') {
+      const d = chooseCard(state, params, rngRef.current, EMPTY_PROFILE);
+      if (d.cardId) play(d.cardId, d.bomb);
+      return;
+    }
+    if (state.phase === 'awaitChoice') {
+      choose(chooseCapture(state, params, rngRef.current));
+      return;
+    }
+    if (state.phase === 'awaitGoStop') goStop('stop');
+  }, [state, params, play, choose, goStop]);
+
   return {
     view,
     play,
@@ -455,6 +476,7 @@ export function useMatch(opts: MatchOptions) {
     goStop,
     shake,
     setGukjin,
+    autoMove,
     shakeable: shakeableMonths(state, HUMAN),
     bombable: bombableMonths(state, HUMAN),
   };

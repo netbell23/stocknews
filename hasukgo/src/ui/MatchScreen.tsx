@@ -15,7 +15,7 @@ import { LOSS_FACTOR } from '../save/storage';
 import { hasCharArt } from '../art/artFiles';
 import { scorePlayer } from '../engine/score';
 import { Background, CardBack, CardView, cardSrcNow, Portrait } from './parts';
-import { useCardFlight , slamLeft, slamSideIsRight } from './useCardFlight';
+import { useCardFlight, slamLeft, slamSideIsRight } from './useCardFlight';
 import { AI_THROW_MS, useMatch } from './useMatch';
 
 const HUMAN: PlayerId = 0;
@@ -25,6 +25,15 @@ const HUMAN: PlayerId = 0;
  * (REVEAL_HIT_MS 2000ms × HIT_AT 0.45) 이 끝나는 지점에 맞춰 뻑을 묶는다.
  */
 export const PPEOK_BIND_MS = 980;
+
+/*
+ * 내 차례에 주어지는 시간. 넉넉하게 둔다 — 이 게임은 판을 읽는 재미가
+ * 반이라 쫓기면 재미가 준다. 다 쓰면 자동치기가 한 번 대신 둔다.
+ */
+const TURN_MS = 25000;
+const TICK_MS = 100;
+/** 자동치기를 켰을 때 한 수 사이의 뜸 */
+const AUTO_MS = 700;
 
 /*
  * 보너스패를 바닥에 내려놓고 보여주는 시간.
@@ -161,7 +170,7 @@ export default function MatchScreen({
   const busyTimer = useRef(0);
   const busyUntilRef = useRef(0);
 
-  const { view, play, choose, goStop, shake, shakeable, bombable } = useMatch({
+  const { view, play, choose, goStop, shake, shakeable, bombable, autoMove } = useMatch({
     tenant,
     stage,
     affection,
@@ -217,10 +226,19 @@ export default function MatchScreen({
    * 엔진은 동기라 그냥 두면 손을 떼는 순간 결과가 다 끝나 있다. 그래서 꽂히는 순간까지
    * 상태 반영을 미루고, 꽂힌 자리를 FLIP 의 출발점으로 넘겨 이어 붙인다.
    */
-  const [hero, setHero] = useState<{ card: Card; from: DOMRect; to: DOMRect; bomb: boolean } | null>(null);
-  const [impact, setImpact] = useState<{ key: number; x: number; y: number; w: number; h: number } | null>(
-    null,
-  );
+  const [hero, setHero] = useState<{
+    card: Card;
+    from: DOMRect;
+    to: DOMRect;
+    bomb: boolean;
+  } | null>(null);
+  const [impact, setImpact] = useState<{
+    key: number;
+    x: number;
+    y: number;
+    w: number;
+    h: number;
+  } | null>(null);
   const heroRef = useRef<HTMLImageElement>(null);
   const aiHeroRef = useRef<HTMLImageElement>(null);
   /** 내가 잘 맞췄을 때 하숙생이 움찔하는 연출 */
@@ -252,6 +270,39 @@ export default function MatchScreen({
   const mustChoose = s.turn === HUMAN && s.phase === 'awaitChoice';
   /** 고르는 중이면 "무엇을 맞출 패인지"를 같이 보여줘야 한다 */
   const pending = mustChoose ? s.pendingChoice : null;
+
+  /*
+   * 내 차례 시계와 자동치기.
+   *
+   * 둘은 같은 손을 쓴다 — 시간이 다 되면 자동치기가 한 번 대신 둔다.
+   * 시계는 내가 실제로 둘 수 있을 때만 흐른다. 연출이 도는 동안이나
+   * 하숙생 차례에 줄어들면, 보고 있는 사이에 시간이 날아간다.
+   */
+  const myMove = canPlay || mustChoose || view.askGoStop;
+  const [auto, setAuto] = useState(false);
+  const [left, setLeft] = useState(TURN_MS);
+  /** 국면이 바뀔 때마다 시계를 되감는다 */
+  const moveKey = `${s.phase}-${s.turn}-${me.hand.length}-${s.field.length}`;
+  useEffect(() => {
+    setLeft(TURN_MS);
+  }, [moveKey]);
+
+  useEffect(() => {
+    if (!myMove || auto) return;
+    const id = window.setInterval(() => setLeft((v) => Math.max(0, v - TICK_MS)), TICK_MS);
+    return () => window.clearInterval(id);
+  }, [myMove, auto, moveKey]);
+
+  /*
+   * 대신 두는 손은 하나다 — 자동치기를 켰거나 시계가 다 됐을 때.
+   * 갱신 함수 안에서 두면 StrictMode가 두 번 불러 한 수가 두 번 나간다.
+   */
+  useEffect(() => {
+    if (!myMove) return;
+    if (!auto && left > 0) return;
+    const id = window.setTimeout(autoMove, auto ? AUTO_MS : 0);
+    return () => window.clearTimeout(id);
+  }, [myMove, auto, left, autoMove]);
 
   /** 낸 패가 내려앉을 자리 — 같은 월이 바닥에 있으면 그 위, 없으면 바닥 한가운데 */
   const landingRect = (c: Card): DOMRect | null => {
@@ -326,10 +377,24 @@ export default function MatchScreen({
 
     const anim = el.animate(
       [
-        { transform: 'translate(0,0) scale(1) rotate(0deg)', offset: 0, easing: 'cubic-bezier(.2,.9,.25,1)' },
-        { transform: `translate(${upX}px, ${upY}px) scale(2.5) rotate(-7deg)`, offset: 0.42 },
-        { transform: `translate(${upX}px, ${upY - 6}px) scale(2.45) rotate(-5deg)`, offset: 0.6, easing: 'cubic-bezier(.7,0,.9,.6)' },
-        { transform: `translate(${dnX}px, ${dnY}px) scale(${(land * 1.06).toFixed(3)}) rotate(2deg)`, offset: 1 },
+        {
+          transform: 'translate(0,0) scale(1) rotate(0deg)',
+          offset: 0,
+          easing: 'cubic-bezier(.2,.9,.25,1)',
+        },
+        {
+          transform: `translate(${upX}px, ${upY}px) scale(2.5) rotate(-7deg)`,
+          offset: 0.42,
+        },
+        {
+          transform: `translate(${upX}px, ${upY - 6}px) scale(2.45) rotate(-5deg)`,
+          offset: 0.6,
+          easing: 'cubic-bezier(.7,0,.9,.6)',
+        },
+        {
+          transform: `translate(${dnX}px, ${dnY}px) scale(${(land * 1.06).toFixed(3)}) rotate(2deg)`,
+          offset: 1,
+        },
       ],
       { duration: 560, fill: 'forwards' },
     );
@@ -374,7 +439,9 @@ export default function MatchScreen({
     const root = boardRef.current;
     if (!el || !root) return;
     const slots = root.querySelectorAll<HTMLElement>('.opp-hand .ohand-slot');
-    const src = (slots[slots.length - 1] ?? root.querySelector<HTMLElement>('.opp-hand'))?.getBoundingClientRect();
+    const src = (
+      slots[slots.length - 1] ?? root.querySelector<HTMLElement>('.opp-hand')
+    )?.getBoundingClientRect();
     const to = landingRect(t.card);
     if (!src || !to || src.width === 0) return;
     const b = root.getBoundingClientRect();
@@ -390,8 +457,15 @@ export default function MatchScreen({
 
     const anim = el.animate(
       [
-        { transform: 'translate(0,0) scale(1) rotateY(180deg)', offset: 0, easing: 'cubic-bezier(.2,.9,.25,1)' },
-        { transform: `translate(${upX}px, ${upY}px) scale(2.4) rotateY(0deg) rotate(6deg)`, offset: 0.46 },
+        {
+          transform: 'translate(0,0) scale(1) rotateY(180deg)',
+          offset: 0,
+          easing: 'cubic-bezier(.2,.9,.25,1)',
+        },
+        {
+          transform: `translate(${upX}px, ${upY}px) scale(2.4) rotateY(0deg) rotate(6deg)`,
+          offset: 0.46,
+        },
         {
           transform: `translate(${upX}px, ${upY - 6}px) scale(2.35) rotate(4deg)`,
           offset: 0.66,
@@ -452,7 +526,10 @@ export default function MatchScreen({
     };
     const pool = lines[sh.text];
     if (!pool) return;
-    setTaunt({ key: sh.key, text: pool[Math.floor(Math.random() * pool.length)] });
+    setTaunt({
+      key: sh.key,
+      text: pool[Math.floor(Math.random() * pool.length)],
+    });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [view.shout?.key]);
 
@@ -525,7 +602,15 @@ export default function MatchScreen({
    * 패가 화면 밖으로 사라진다 — 고를 패가 안 보여 판이 멈춘 것처럼 된다.
    */
   const fieldScale =
-    s.field.length <= 8 ? 1 : s.field.length <= 10 ? 0.86 : s.field.length <= 12 ? 0.74 : s.field.length <= 16 ? 0.62 : 0.52;
+    s.field.length <= 8
+      ? 1
+      : s.field.length <= 10
+        ? 0.86
+        : s.field.length <= 12
+          ? 0.74
+          : s.field.length <= 16
+            ? 0.62
+            : 0.52;
 
   const topRow = fieldSlots.slice(0, COLS);
   const bottomRow = fieldSlots.slice(COLS);
@@ -561,10 +646,7 @@ export default function MatchScreen({
     const id = window.setTimeout(() => setShownKey(ppeokKey), ppeokBindDelay(shownKey, ppeokKey));
     return () => window.clearTimeout(id);
   }, [ppeokKey, shownKey]);
-  const ppeokShown = useMemo(
-    () => new Set(shownKey ? shownKey.split(',').map(Number) : []),
-    [shownKey],
-  );
+  const ppeokShown = useMemo(() => new Set(shownKey ? shownKey.split(',').map(Number) : []), [shownKey]);
 
   /*
    * 새로 들어온 보너스패를 한 박자 바닥에 세워 둔다.
@@ -595,29 +677,29 @@ export default function MatchScreen({
     // 뻑 더미는 묶여 있는 한 덩어리다. 펼쳐 놓으면 같은 월이 여러 장인 것과 구분이 안 된다
     const isPpeok = ppeokShown.has(g.month);
     return (
-    <div className={`fstack ${isPpeok ? 'ppeok' : ''}`} key={g.month}>
-      {g.cards.map((c, i) => {
-        const isCandidate = mustChoose && s.pendingChoice?.candidates.some((x) => x.id === c.id);
-        return (
-          <div
-            className={`fslot ${isCandidate ? 'candidate' : ''} ${hintMonth === c.month ? 'match' : ''}`}
-            key={c.id}
-            style={{
-              marginLeft: i === 0 ? 0 : isPpeok ? 'var(--ppeok-overlap)' : 'var(--stack-overlap)',
-              zIndex: i,
-            }}
-          >
-            <CardView
-              card={c}
-              zone="field"
-              selectable={!!isCandidate}
-              onClick={() => isCandidate && choose(c.id)}
-            />
-          </div>
-        );
-      })}
-      {isPpeok && <span className="fstack-tag">뻑 {g.cards.length}장</span>}
-    </div>
+      <div className={`fstack ${isPpeok ? 'ppeok' : ''}`} key={g.month}>
+        {g.cards.map((c, i) => {
+          const isCandidate = mustChoose && s.pendingChoice?.candidates.some((x) => x.id === c.id);
+          return (
+            <div
+              className={`fslot ${isCandidate ? 'candidate' : ''} ${hintMonth === c.month ? 'match' : ''}`}
+              key={c.id}
+              style={{
+                marginLeft: i === 0 ? 0 : isPpeok ? 'var(--ppeok-overlap)' : 'var(--stack-overlap)',
+                zIndex: i,
+              }}
+            >
+              <CardView
+                card={c}
+                zone="field"
+                selectable={!!isCandidate}
+                onClick={() => isCandidate && choose(c.id)}
+              />
+            </div>
+          );
+        })}
+        {isPpeok && <span className="fstack-tag">뻑 {g.cards.length}장</span>}
+      </div>
     );
   };
 
@@ -625,9 +707,24 @@ export default function MatchScreen({
   const myTally = useMemo(() => {
     const b = scorePlayer(s.players[HUMAN], s.rules);
     const rows: Array<{ label: string; score: number; note?: string }> = [];
-    if (b.gwangScore > 0) rows.push({ label: '광', score: b.gwangScore, note: b.gwangLabel ?? undefined });
-    if (b.ttiScore > 0) rows.push({ label: '띠', score: b.ttiScore, note: b.ttiLabels.join(' · ') || undefined });
-    if (b.yeolScore > 0) rows.push({ label: '열', score: b.yeolScore, note: b.yeolLabels.join(' · ') || undefined });
+    if (b.gwangScore > 0)
+      rows.push({
+        label: '광',
+        score: b.gwangScore,
+        note: b.gwangLabel ?? undefined,
+      });
+    if (b.ttiScore > 0)
+      rows.push({
+        label: '띠',
+        score: b.ttiScore,
+        note: b.ttiLabels.join(' · ') || undefined,
+      });
+    if (b.yeolScore > 0)
+      rows.push({
+        label: '열',
+        score: b.yeolScore,
+        note: b.yeolLabels.join(' · ') || undefined,
+      });
     if (b.piScore > 0) rows.push({ label: '피', score: b.piScore, note: `${b.piCount}장` });
     return rows;
   }, [s]);
@@ -671,7 +768,11 @@ export default function MatchScreen({
         <div className="board-field">
           <div className="opp-hand" aria-label={`${tenant.name}의 남은 패 ${opp.hand.length}장`}>
             {opp.hand.map((c, i) => (
-              <div className="ohand-slot" key={c.id} style={{ marginLeft: i === 0 ? 0 : 'var(--ohand-overlap)' }}>
+              <div
+                className="ohand-slot"
+                key={c.id}
+                style={{ marginLeft: i === 0 ? 0 : 'var(--ohand-overlap)' }}
+              >
                 <CardBack small />
               </div>
             ))}
@@ -681,6 +782,7 @@ export default function MatchScreen({
             className={`felt ${slam ? 'slam' : ''} ${mustChoose ? 'choosing' : ''}`}
             style={{ ['--field-scale' as string]: fieldScale }}
           >
+            <span className="stake">점당 {tenant.rate}P</span>
             <div className="field-row">{topRow.map(renderSlot)}</div>
             <div className="field-mid">
               {pending && (
@@ -733,7 +835,7 @@ export default function MatchScreen({
               {view.oppScore}
               <small>점</small>
             </div>
-            <div className="pcard-sub">점당 {tenant.rate}P</div>
+            <div className="pcard-sub">손패 {opp.hand.length}장</div>
           </div>
 
           <div className="pcard me">
@@ -764,27 +866,41 @@ export default function MatchScreen({
             </div>
           </div>
 
-          <div className="turnline">
-            {selected && bombable.includes(me.hand.find((c) => c.id === selected)?.month ?? 0)
-              ? '한 번 더 누르면 폭탄'
-              : animBusy || hero
-              ? ''
-              : canPlay
-                ? '낼 패를 고르세요'
-                : view.busy
-                  ? `${tenant.name}의 차례…`
-                  : mustChoose
-                    ? '가져올 패를 고르세요'
-                    : ''}
-          </div>
+          <div className="turnrow">
+            <div className="turnline">
+              {selected && bombable.includes(me.hand.find((c) => c.id === selected)?.month ?? 0)
+                ? '한 번 더 누르면 폭탄'
+                : animBusy || hero
+                  ? ''
+                  : canPlay
+                    ? '낼 패를 고르세요'
+                    : view.busy
+                      ? `${tenant.name}의 차례…`
+                      : mustChoose
+                        ? '가져올 패를 고르세요'
+                        : ''}
+            </div>
 
-          {shakeable.length > 0 && canPlay && (
-            <button className="btn shake" onClick={() => shake(shakeable[0])}>
-              흔들기 {MONTH_NAMES[shakeable[0]] ?? shakeable[0]}
+            {shakeable.length > 0 && canPlay && (
+              <button className="btn shake" onClick={() => shake(shakeable[0])}>
+                흔들기 {MONTH_NAMES[shakeable[0]] ?? shakeable[0]}
+              </button>
+            )}
+
+            {/* 남은 시간 — 내가 둘 수 있을 때만 흐른다 */}
+            <div className={`turnclock ${myMove && !auto ? 'on' : ''} ${left <= 5000 ? 'hurry' : ''}`}>
+              <i style={{ width: `${Math.round((left / TURN_MS) * 100)}%` }} />
+              <span>{myMove && !auto ? `${Math.ceil(left / 1000)}초` : '—'}</span>
+            </div>
+
+            <button
+              className={`btn autobtn ${auto ? 'on' : ''}`}
+              onClick={() => setAuto((v) => !v)}
+              aria-pressed={auto}
+            >
+              자동치기 {auto ? '켬' : '끔'}
             </button>
-          )}
-
-
+          </div>
         </div>
 
         {/* ── 내 손패 ── */}
@@ -817,7 +933,12 @@ export default function MatchScreen({
             className="hero-card"
             src={cardSrcNow(hero.card)}
             alt={hero.card.name}
-            style={{ left: hero.from.left, top: hero.from.top, width: hero.from.width, height: hero.from.height }}
+            style={{
+              left: hero.from.left,
+              top: hero.from.top,
+              width: hero.from.width,
+              height: hero.from.height,
+            }}
             draggable={false}
           />
         )}
@@ -835,7 +956,14 @@ export default function MatchScreen({
           <span className="impact" key={impact.key} style={{ left: impact.x, top: impact.y }}>
             <i />
             <i />
-            <b style={{ width: impact.w, height: impact.h, marginLeft: -impact.w / 2, marginTop: -impact.h / 2 }} />
+            <b
+              style={{
+                width: impact.w,
+                height: impact.h,
+                marginLeft: -impact.w / 2,
+                marginTop: -impact.h / 2,
+              }}
+            />
           </span>
         )}
 
@@ -873,8 +1001,8 @@ export default function MatchScreen({
               </strong>
               <br />
               <span style={{ color: 'var(--paper-dim)', fontSize: 13 }}>
-                고를 하면 점수가 오르지만, 상대가 이기면 고박으로 두 배를 물어줍니다. 점당 {tenant.rate}P
-                라 크게 뒤집히면 그만큼 나갑니다.
+                고를 하면 점수가 오르지만, 상대가 이기면 고박으로 두 배를 물어줍니다. 점당 {tenant.rate}P 라
+                크게 뒤집히면 그만큼 나갑니다.
               </span>
             </div>
             <div className="gostop-btns">
@@ -925,7 +1053,11 @@ function ResultPanel({
   const rate = tenant.rate;
   return (
     <div className="result">
-      <h2 style={{ color: outcome.won ? 'var(--lamp)' : outcome.draw ? 'var(--paper-dim)' : 'var(--accent)' }}>
+      <h2
+        style={{
+          color: outcome.won ? 'var(--lamp)' : outcome.draw ? 'var(--paper-dim)' : 'var(--accent)',
+        }}
+      >
         {outcome.draw ? '나가리' : outcome.won ? '승리' : '패배'}
       </h2>
       {st && <div className="total">{st.total}점</div>}
@@ -996,7 +1128,12 @@ function ResultPanel({
         </div>
       )}
       <div style={{ display: 'flex', gap: 10, alignItems: 'center', marginTop: 6 }}>
-        <Portrait tenant={tenant} expression={outcome.won ? 'lose' : 'win'} outfit={0} style={{ height: 90 }} />
+        <Portrait
+          tenant={tenant}
+          expression={outcome.won ? 'lose' : 'win'}
+          outfit={0}
+          style={{ height: 90 }}
+        />
       </div>
       <button className="btn primary wide" style={{ maxWidth: 260 }} onClick={onNext}>
         계속
