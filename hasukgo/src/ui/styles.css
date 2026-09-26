@@ -1643,13 +1643,19 @@ button {
 
   .board {
     --card-h: clamp(54px, 15.5vh, 116px);
+    /*
+     * 하숙생은 왼쪽, 먹은 패는 오른쪽, 셈은 맨 아래.
+     * 먹은 패가 오른쪽으로 날아가므로, 가운데 더미에서 뒤집은 패는
+     * 왼쪽으로 내려앉는다(slamSideIsRight). 두 길이 아예 갈린다 —
+     * 전에는 둘 다 왼쪽이라 날아가는 패가 뒤집은 패를 스치고 지나갔다.
+     */
     grid-template-areas:
-      'oppcap field opp'
-      'mycap  field side'
-      'hand   hand  side';
-    grid-template-columns: minmax(96px, 150px) minmax(0, 1fr) minmax(158px, 210px);
-    /* 첫 줄이 더 큰 건 오른쪽 캐릭터 패널 몫이다 — 사진이 기둥만큼 서야 한다 */
-    grid-template-rows: minmax(0, 1.45fr) minmax(0, 1fr) auto;
+      'opp  field oppcap'
+      'opp  field mycap'
+      'hand hand  hand'
+      'side side  side';
+    grid-template-columns: minmax(158px, 210px) minmax(0, 1fr) minmax(96px, 150px);
+    grid-template-rows: minmax(0, 1.45fr) minmax(0, 1fr) auto auto;
     --pile-overlap: -16px;
   }
 
@@ -1698,18 +1704,26 @@ button {
     flex: 1;
   }
 
+  /*
+   * 셈은 이제 맨 아래 가로 띠다. 세로 기둥이던 시절의 규칙(세로로 쌓기)을
+   * 그대로 두면 넓은 띠 안에서 글자만 가운데 뭉쳐 허전해진다.
+   */
   .board-side {
-    flex-direction: column;
-    align-items: stretch;
-    justify-content: center;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
   }
 
   .scorebox {
-    text-align: center;
+    text-align: left;
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
   }
 
   .scorebox-row {
-    justify-content: center;
+    justify-content: flex-start;
   }
 
   .turnline {
