@@ -2,12 +2,12 @@
   "version": 1,
   "tenants": [
     {
-      "id": "eunseo",
+      "id": "jieun",
       "order": 1,
       "name": "지은",
       "nickname": "막내",
       "age": 22,
-      "job": "시각디자인과 2학년",
+      "job": "사진영상학과 1학년",
       "room": "201호",
       "season": "spring",
       "personality": [
@@ -16,7 +16,7 @@
         "장난기"
       ],
       "styleLabel": "아직 규칙을 외우는 중. 뭘 낼지 모르겠으면 그냥 낸다",
-      "backstory": "오늘도… 같이 한 판 할래요? 지는 건 싫지만요.",
+      "backstory": "이 집 막내. 언니들 틈에서 제일 먼저 마루에 나와 앉아 있다.",
       "style": {
         "weights": {
           "pi": 1.1
@@ -179,62 +179,62 @@
       "events": [
         {
           "stage": 1,
-          "scriptId": "eunseo_01",
-          "title": "옆방 사람",
+          "scriptId": "jieun_01",
+          "title": "마루에 먼저 나와 있는 사람",
           "hasChoice": false
         },
         {
           "stage": 2,
-          "scriptId": "eunseo_02",
-          "title": "하숙집 규칙 세 가지",
+          "scriptId": "jieun_02",
+          "title": "막내의 규칙 세 가지",
           "hasChoice": false
         },
         {
           "stage": 3,
-          "scriptId": "eunseo_03",
-          "title": "은서의 취향",
+          "scriptId": "jieun_03",
+          "title": "카메라를 들고 다니는 이유",
           "hasChoice": false
         },
         {
           "stage": 4,
-          "scriptId": "eunseo_04",
-          "title": "새벽 두 시의 라면",
+          "scriptId": "jieun_04",
+          "title": "잘 찍는다는 말",
           "hasChoice": true
         },
         {
           "stage": 5,
-          "scriptId": "eunseo_05",
-          "title": "빨래 걷기 당번",
+          "scriptId": "jieun_05",
+          "title": "첫 과제 촬영",
           "hasChoice": true
         },
         {
           "stage": 6,
-          "scriptId": "eunseo_06",
-          "title": "편의점 앞 벤치",
+          "scriptId": "jieun_06",
+          "title": "언니들 몰래",
           "hasChoice": true
         },
         {
           "stage": 7,
-          "scriptId": "eunseo_07",
-          "title": "과제가 안 풀리는 밤",
+          "scriptId": "jieun_07",
+          "title": "필름 한 통",
           "hasChoice": false
         },
         {
           "stage": 8,
-          "scriptId": "eunseo_08",
-          "title": "은서가 서울에 온 이유",
+          "scriptId": "jieun_08",
+          "title": "전시 전날",
           "hasChoice": false
         },
         {
           "stage": 9,
-          "scriptId": "eunseo_09",
-          "title": "오해는 짧게",
-          "hasChoice": true
+          "scriptId": "jieun_09",
+          "title": "벽에 걸린 사진",
+          "hasChoice": false
         },
         {
           "stage": 10,
-          "scriptId": "eunseo_10",
-          "title": "마지막 판, 첫 마음",
+          "scriptId": "jieun_10",
+          "title": "마지막 한 장",
           "hasChoice": true
         }
       ],
@@ -263,12 +263,12 @@
       }
     },
     {
-      "id": "hayeong",
+      "id": "sua",
       "order": 2,
       "name": "수아",
       "nickname": "요리",
       "age": 21,
-      "job": "조리학과 4학년",
+      "job": "조리학과 2학년",
       "room": "202호",
       "season": "spring",
       "personality": [
@@ -277,7 +277,7 @@
         "살뜰함"
       ],
       "styleLabel": "피부터 쌓는다. 화려하진 않은데 정신 차리면 피박",
-      "backstory": "맛있는 거 먹으면 기분이 좋아지잖아요?",
+      "backstory": "부엌이 넓은 집을 찾아 왔다. 밤마다 뭔가를 굽는다.",
       "style": {
         "weights": {
           "pi": 1.7,
@@ -442,62 +442,62 @@
       "events": [
         {
           "stage": 1,
-          "scriptId": "hayeong_01",
-          "title": "부엌은 내 구역",
+          "scriptId": "sua_01",
+          "title": "부엌에서 나는 냄새",
           "hasChoice": false
         },
         {
           "stage": 2,
-          "scriptId": "hayeong_02",
-          "title": "냉장고 칸 배분",
+          "scriptId": "sua_02",
+          "title": "설거지 당번표",
           "hasChoice": false
         },
         {
           "stage": 3,
-          "scriptId": "hayeong_03",
-          "title": "간을 못 맞추는 사람",
+          "scriptId": "sua_03",
+          "title": "실패한 시폰 케이크",
           "hasChoice": false
         },
         {
           "stage": 4,
-          "scriptId": "hayeong_04",
-          "title": "장 보러 가는 길",
+          "scriptId": "sua_04",
+          "title": "단맛을 못 느끼는 날",
           "hasChoice": true
         },
         {
           "stage": 5,
-          "scriptId": "hayeong_05",
-          "title": "실습 과제 시식단",
+          "scriptId": "sua_05",
+          "title": "시장 가는 길",
           "hasChoice": true
         },
         {
           "stage": 6,
-          "scriptId": "hayeong_06",
-          "title": "비 오는 날의 부침개",
+          "scriptId": "sua_06",
+          "title": "레시피 노트",
           "hasChoice": true
         },
         {
           "stage": 7,
-          "scriptId": "hayeong_07",
-          "title": "졸업하면 뭐 할 거야",
+          "scriptId": "sua_07",
+          "title": "손을 데었다",
           "hasChoice": false
         },
         {
           "stage": 8,
-          "scriptId": "hayeong_08",
-          "title": "하영이 요리를 시작한 날",
+          "scriptId": "sua_08",
+          "title": "실기 시험 전날",
           "hasChoice": false
         },
         {
           "stage": 9,
-          "scriptId": "hayeong_09",
-          "title": "누구 몫이었을까",
-          "hasChoice": true
+          "scriptId": "sua_09",
+          "title": "맛을 본 사람",
+          "hasChoice": false
         },
         {
           "stage": 10,
-          "scriptId": "hayeong_10",
-          "title": "한 사람을 위한 상",
+          "scriptId": "sua_10",
+          "title": "마지막 접시",
           "hasChoice": true
         }
       ],
@@ -526,12 +526,12 @@
       }
     },
     {
-      "id": "jiwoo",
+      "id": "nayeon",
       "order": 3,
       "name": "나연",
       "nickname": "문학",
       "age": 22,
-      "job": "미대 대학원생",
+      "job": "문예창작과 2학년",
       "room": "203호",
       "season": "spring",
       "personality": [
@@ -540,7 +540,7 @@
         "속깊음"
       ],
       "styleLabel": "띠만 본다. 홍단 청단 나오면 눈빛이 달라진다",
-      "backstory": "좋은 이야기… 같이 나누고 싶어요.",
+      "backstory": "조용한 방이 필요했다. 밤에만 글이 써진다고 한다.",
       "style": {
         "weights": {
           "tti": 1.8,
@@ -707,62 +707,62 @@
       "events": [
         {
           "stage": 1,
-          "scriptId": "jiwoo_01",
-          "title": "새벽 세 시의 마루",
+          "scriptId": "nayeon_01",
+          "title": "새벽 세 시의 타자 소리",
           "hasChoice": false
         },
         {
           "stage": 2,
-          "scriptId": "jiwoo_02",
-          "title": "조용히 해달라는 부탁",
+          "scriptId": "nayeon_02",
+          "title": "문장을 고르는 사람",
           "hasChoice": false
         },
         {
           "stage": 3,
-          "scriptId": "jiwoo_03",
-          "title": "지우의 색",
+          "scriptId": "nayeon_03",
+          "title": "첫 독자",
           "hasChoice": false
         },
         {
           "stage": 4,
-          "scriptId": "jiwoo_04",
-          "title": "옥상에서 본 새벽",
+          "scriptId": "nayeon_04",
+          "title": "안 써지는 밤",
           "hasChoice": true
         },
         {
           "stage": 5,
-          "scriptId": "jiwoo_05",
-          "title": "모델 좀 서줄래",
+          "scriptId": "nayeon_05",
+          "title": "서점까지 걸어서",
           "hasChoice": true
         },
         {
           "stage": 6,
-          "scriptId": "jiwoo_06",
-          "title": "24시간 카페 원정",
+          "scriptId": "nayeon_06",
+          "title": "이름을 빌려드릴게요",
           "hasChoice": true
         },
         {
           "stage": 7,
-          "scriptId": "jiwoo_07",
-          "title": "그림이 안 그려질 때",
+          "scriptId": "nayeon_07",
+          "title": "합평회",
           "hasChoice": false
         },
         {
           "stage": 8,
-          "scriptId": "jiwoo_08",
-          "title": "떨어진 공모전",
+          "scriptId": "nayeon_08",
+          "title": "투고 마감 전날",
           "hasChoice": false
         },
         {
           "stage": 9,
-          "scriptId": "jiwoo_09",
-          "title": "누가 모델이야",
-          "hasChoice": true
+          "scriptId": "nayeon_09",
+          "title": "실린 이야기",
+          "hasChoice": false
         },
         {
           "stage": 10,
-          "scriptId": "jiwoo_10",
-          "title": "완성된 그림",
+          "scriptId": "nayeon_10",
+          "title": "마지막 문장",
           "hasChoice": true
         }
       ],
@@ -791,12 +791,12 @@
       }
     },
     {
-      "id": "sea",
+      "id": "ria",
       "order": 4,
       "name": "리아",
       "nickname": "러닝",
       "age": 21,
-      "job": "운동처방학과 2학년",
+      "job": "스포츠과학과 1학년",
       "room": "204호",
       "season": "spring",
       "personality": [
@@ -805,7 +805,7 @@
         "직진"
       ],
       "styleLabel": "손이 먼저 나간다. 생각하기 전에 내고, 피를 쓸어간다",
-      "backstory": "오늘 한 판 끝나면 저랑 같이 뛰러 갈래요?",
+      "backstory": "새벽에 뛰려고 들어왔다. 기숙사는 다섯 시에 문이 안 열린다.",
       "style": {
         "weights": {
           "pi": 1.6,
@@ -821,7 +821,7 @@
       },
       "unlock": [
         {
-          "tenantId": "hayeong",
+          "tenantId": "sua",
           "stage": 5
         }
       ],
@@ -976,61 +976,61 @@
       "events": [
         {
           "stage": 1,
-          "scriptId": "sea_01",
+          "scriptId": "ria_01",
           "title": "새벽 다섯 시의 발소리",
           "hasChoice": false
         },
         {
           "stage": 2,
-          "scriptId": "sea_02",
+          "scriptId": "ria_02",
           "title": "기숙사 문은 여섯 시에 열린다",
           "hasChoice": false
         },
         {
           "stage": 3,
-          "scriptId": "sea_03",
+          "scriptId": "ria_03",
           "title": "페이스 조절",
           "hasChoice": true
         },
         {
           "stage": 4,
-          "scriptId": "sea_04",
+          "scriptId": "ria_04",
           "title": "무릎",
           "hasChoice": true
         },
         {
           "stage": 5,
-          "scriptId": "sea_05",
+          "scriptId": "ria_05",
           "title": "같이 뛸래요?",
           "hasChoice": true
         },
         {
           "stage": 6,
-          "scriptId": "sea_06",
+          "scriptId": "ria_06",
           "title": "기록이 안 줄어요",
           "hasChoice": true
         },
         {
           "stage": 7,
-          "scriptId": "sea_07",
+          "scriptId": "ria_07",
           "title": "비 오는 날의 러닝머신",
           "hasChoice": false
         },
         {
           "stage": 8,
-          "scriptId": "sea_08",
+          "scriptId": "ria_08",
           "title": "대회 전날",
           "hasChoice": true
         },
         {
           "stage": 9,
-          "scriptId": "sea_09",
+          "scriptId": "ria_09",
           "title": "완주",
           "hasChoice": false
         },
         {
           "stage": 10,
-          "scriptId": "sea_10",
+          "scriptId": "ria_10",
           "title": "결승선",
           "hasChoice": true
         }
@@ -1060,12 +1060,12 @@
       }
     },
     {
-      "id": "sua",
+      "id": "hana",
       "order": 5,
       "name": "하나",
       "nickname": "분위기",
       "age": 22,
-      "job": "체육교육과 4학년",
+      "job": "실용무용과 2학년",
       "room": "301호",
       "season": "summer",
       "personality": [
@@ -1074,7 +1074,7 @@
         "러블리"
       ],
       "styleLabel": "7점만 넘으면 무조건 고. 멈추는 법을 배운 적이 없다",
-      "backstory": "오늘도 같이 한 판 할래요? 분위기는 제가 띄울게요.",
+      "backstory": "연습실보다 마루가 편하다고 한다. 음악만 있으면 어디서든 춘다.",
       "style": {
         "weights": {
           "gwang": 1.2,
@@ -1089,7 +1089,7 @@
       },
       "unlock": [
         {
-          "tenantId": "eunseo",
+          "tenantId": "jieun",
           "stage": 5
         }
       ],
@@ -1244,62 +1244,62 @@
       "events": [
         {
           "stage": 1,
-          "scriptId": "sua_01",
-          "title": "3층에서 내려온 사람",
+          "scriptId": "hana_01",
+          "title": "마루에서 춤추는 사람",
           "hasChoice": false
         },
         {
           "stage": 2,
-          "scriptId": "sua_02",
-          "title": "새벽 여섯 시의 발소리",
+          "scriptId": "hana_02",
+          "title": "음악 소리 좀 줄여",
           "hasChoice": false
         },
         {
           "stage": 3,
-          "scriptId": "sua_03",
-          "title": "수아의 승부욕",
+          "scriptId": "hana_03",
+          "title": "거울이 없는 연습",
           "hasChoice": false
         },
         {
           "stage": 4,
-          "scriptId": "sua_04",
-          "title": "같이 뛸래?",
+          "scriptId": "hana_04",
+          "title": "발목",
           "hasChoice": true
         },
         {
           "stage": 5,
-          "scriptId": "sua_05",
-          "title": "여름 옥상, 수박",
+          "scriptId": "hana_05",
+          "title": "축제 무대 구경",
           "hasChoice": true
         },
         {
           "stage": 6,
-          "scriptId": "sua_06",
-          "title": "삔 발목",
+          "scriptId": "hana_06",
+          "title": "안무가 안 나와요",
           "hasChoice": true
         },
         {
           "stage": 7,
-          "scriptId": "sua_07",
-          "title": "임용까지 남은 시간",
+          "scriptId": "hana_07",
+          "title": "박수 없는 리허설",
           "hasChoice": false
         },
         {
           "stage": 8,
-          "scriptId": "sua_08",
-          "title": "그만둔 선수 생활",
+          "scriptId": "hana_08",
+          "title": "공연 전날",
           "hasChoice": false
         },
         {
           "stage": 9,
-          "scriptId": "sua_09",
-          "title": "말 안 한 이유",
-          "hasChoice": true
+          "scriptId": "hana_09",
+          "title": "객석에서 보기",
+          "hasChoice": false
         },
         {
           "stage": 10,
-          "scriptId": "sua_10",
-          "title": "마지막 고",
+          "scriptId": "hana_10",
+          "title": "마지막 박자",
           "hasChoice": true
         }
       ],
@@ -1328,12 +1328,12 @@
       }
     },
     {
-      "id": "minji",
+      "id": "seoyeon",
       "order": 6,
       "name": "서연",
       "nickname": "반장",
       "age": 22,
-      "job": "취업준비생",
+      "job": "행정학과 2학년",
       "room": "302호",
       "season": "summer",
       "personality": [
@@ -1342,7 +1342,7 @@
         "단정함"
       ],
       "styleLabel": "기대값으로 친다. 스톱 타이밍이 소름 돋게 정확하다",
-      "backstory": "공부도, 게임도, 제대로 하자?",
+      "backstory": "하숙집 반장. 당번표와 공과금 장부를 혼자 쥐고 있다.",
       "style": {
         "weights": {
           "pi": 1.2,
@@ -1357,7 +1357,7 @@
       },
       "unlock": [
         {
-          "tenantId": "hayeong",
+          "tenantId": "sua",
           "stage": 5
         }
       ],
@@ -1512,62 +1512,62 @@
       "events": [
         {
           "stage": 1,
-          "scriptId": "minji_01",
-          "title": "불 켜진 302호",
+          "scriptId": "seoyeon_01",
+          "title": "반장이 부르는 회의",
           "hasChoice": false
         },
         {
           "stage": 2,
-          "scriptId": "minji_02",
-          "title": "공용 프린터 규칙",
+          "scriptId": "seoyeon_02",
+          "title": "당번표는 왜 지켜야 하나",
           "hasChoice": false
         },
         {
           "stage": 3,
-          "scriptId": "minji_03",
-          "title": "민지의 계산법",
+          "scriptId": "seoyeon_03",
+          "title": "공과금 고지서",
           "hasChoice": false
         },
         {
           "stage": 4,
-          "scriptId": "minji_04",
-          "title": "면접 복장 골라주기",
+          "scriptId": "seoyeon_04",
+          "title": "완벽하지 않은 날",
           "hasChoice": true
         },
         {
           "stage": 5,
-          "scriptId": "minji_05",
-          "title": "탈락 메일이 온 밤",
+          "scriptId": "seoyeon_05",
+          "title": "서류 떼러 가는 길",
           "hasChoice": true
         },
         {
           "stage": 6,
-          "scriptId": "minji_06",
-          "title": "편의점 야식 회의",
+          "scriptId": "seoyeon_06",
+          "title": "대신 맡아줄게요",
           "hasChoice": true
         },
         {
           "stage": 7,
-          "scriptId": "minji_07",
-          "title": "부모님 전화",
+          "scriptId": "seoyeon_07",
+          "title": "아무도 안 지킨 주",
           "hasChoice": false
         },
         {
           "stage": 8,
-          "scriptId": "minji_08",
-          "title": "포기한 전공",
+          "scriptId": "seoyeon_08",
+          "title": "발표 전날",
           "hasChoice": false
         },
         {
           "stage": 9,
-          "scriptId": "minji_09",
-          "title": "합격한 친구",
-          "hasChoice": true
+          "scriptId": "seoyeon_09",
+          "title": "장부를 넘기던 손",
+          "hasChoice": false
         },
         {
           "stage": 10,
-          "scriptId": "minji_10",
-          "title": "계산에 없던 답",
+          "scriptId": "seoyeon_10",
+          "title": "마지막 회의",
           "hasChoice": true
         }
       ],
@@ -1596,12 +1596,12 @@
       }
     },
     {
-      "id": "gaeun",
+      "id": "rubi",
       "order": 7,
       "name": "루비",
       "nickname": "게이머",
       "age": 21,
-      "job": "실용음악과 2학년",
+      "job": "게임공학과 1학년",
       "room": "205호",
       "season": "summer",
       "personality": [
@@ -1610,7 +1610,7 @@
         "승부욕"
       ],
       "styleLabel": "박자대로 낸다. 띠를 차곡차곡 모아 단을 만든다",
-      "backstory": "오늘은 저랑 같이 이길래요? 지는 건 재미없잖아요.",
+      "backstory": "밤새 게임해도 뭐라 하지 않는 집을 찾아 왔다.",
       "style": {
         "weights": {
           "tti": 1.7,
@@ -1628,7 +1628,7 @@
       },
       "unlock": [
         {
-          "tenantId": "sua",
+          "tenantId": "hana",
           "stage": 5
         }
       ],
@@ -1640,7 +1640,7 @@
       "lines": {
         "matchStart": {
           "low": [
-            "안녕하세요. 저 노래하는 가은이에요.",
+            "안녕하세요. 저 노래하는 루비이에요.",
             "한 판 해요. 저 이거 처음이에요.",
             "시끄러웠으면 미리 죄송해요."
           ],
@@ -1783,62 +1783,62 @@
       "events": [
         {
           "stage": 1,
-          "scriptId": "gaeun_01",
-          "title": "벽 너머의 노래",
+          "scriptId": "rubi_01",
+          "title": "새벽까지 켜진 모니터",
           "hasChoice": false
         },
         {
           "stage": 2,
-          "scriptId": "gaeun_02",
-          "title": "가사가 안 써져요",
+          "scriptId": "rubi_02",
+          "title": "헤드폰을 벗는 시간",
           "hasChoice": false
         },
         {
           "stage": 3,
-          "scriptId": "gaeun_03",
-          "title": "합주실 열쇠",
-          "hasChoice": true
+          "scriptId": "rubi_03",
+          "title": "팀원이 나갔다",
+          "hasChoice": false
         },
         {
           "stage": 4,
-          "scriptId": "gaeun_04",
-          "title": "음이탈",
+          "scriptId": "rubi_04",
+          "title": "승률이 떨어진다",
           "hasChoice": true
         },
         {
           "stage": 5,
-          "scriptId": "gaeun_05",
-          "title": "버스킹 구경",
+          "scriptId": "rubi_05",
+          "title": "피시방 원정",
           "hasChoice": true
         },
         {
           "stage": 6,
-          "scriptId": "gaeun_06",
-          "title": "녹음 파일",
+          "scriptId": "rubi_06",
+          "title": "한 판만 더",
           "hasChoice": true
         },
         {
           "stage": 7,
-          "scriptId": "gaeun_07",
-          "title": "목이 안 나오는 날",
+          "scriptId": "rubi_07",
+          "title": "연패",
           "hasChoice": false
         },
         {
           "stage": 8,
-          "scriptId": "gaeun_08",
-          "title": "첫 공연 초대",
-          "hasChoice": true
+          "scriptId": "rubi_08",
+          "title": "대회 예선 전날",
+          "hasChoice": false
         },
         {
           "stage": 9,
-          "scriptId": "gaeun_09",
-          "title": "객석 맨 뒷줄",
+          "scriptId": "rubi_09",
+          "title": "관전석",
           "hasChoice": false
         },
         {
           "stage": 10,
-          "scriptId": "gaeun_10",
-          "title": "마지막 곡",
+          "scriptId": "rubi_10",
+          "title": "마지막 한 판",
           "hasChoice": true
         }
       ],
@@ -1867,12 +1867,12 @@
       }
     },
     {
-      "id": "narae",
+      "id": "chaea",
       "order": 8,
       "name": "채아",
       "nickname": "반항",
       "age": 22,
-      "job": "천문학과 대학원생",
+      "job": "사진학과 2학년",
       "room": "303호",
       "season": "summer",
       "personality": [
@@ -1881,7 +1881,7 @@
         "시크함"
       ],
       "styleLabel": "광만 쫓는다. 비광까지 끌어모아 5광을 노린다",
-      "backstory": "너무 가까이 오진 마… 그래도 옆에 있어도 돼.",
+      "backstory": "밤에 걸어 다니며 사진을 찍는다. 말은 거의 하지 않는다.",
       "style": {
         "weights": {
           "gwang": 2.0,
@@ -1897,7 +1897,7 @@
       },
       "unlock": [
         {
-          "tenantId": "jiwoo",
+          "tenantId": "nayeon",
           "stage": 5
         }
       ],
@@ -2052,62 +2052,62 @@
       "events": [
         {
           "stage": 1,
-          "scriptId": "narae_01",
-          "title": "옥상에 사람이 있다",
+          "scriptId": "chaea_01",
+          "title": "새벽에 나가는 사람",
           "hasChoice": false
         },
         {
           "stage": 2,
-          "scriptId": "narae_02",
-          "title": "옥상 사용 규칙",
+          "scriptId": "chaea_02",
+          "title": "말을 안 하는 건 아니야",
           "hasChoice": false
         },
         {
           "stage": 3,
-          "scriptId": "narae_03",
-          "title": "나래가 세는 것",
+          "scriptId": "chaea_03",
+          "title": "필름 카메라",
           "hasChoice": false
         },
         {
           "stage": 4,
-          "scriptId": "narae_04",
-          "title": "망원경 나르기",
+          "scriptId": "chaea_04",
+          "title": "현상에 실패한 밤",
           "hasChoice": true
         },
         {
           "stage": 5,
-          "scriptId": "narae_05",
-          "title": "여름 유성우",
+          "scriptId": "chaea_05",
+          "title": "야간 산책",
           "hasChoice": true
         },
         {
           "stage": 6,
-          "scriptId": "narae_06",
-          "title": "비 오는 날의 옥상",
+          "scriptId": "chaea_06",
+          "title": "너는 찍지 마",
           "hasChoice": true
         },
         {
           "stage": 7,
-          "scriptId": "narae_07",
-          "title": "연구실에 남는 이유",
+          "scriptId": "chaea_07",
+          "title": "사진이 안 나온다",
           "hasChoice": false
         },
         {
           "stage": 8,
-          "scriptId": "narae_08",
-          "title": "관측이 실패한 밤",
+          "scriptId": "chaea_08",
+          "title": "공모전 마감 전날",
           "hasChoice": false
         },
         {
           "stage": 9,
-          "scriptId": "narae_09",
-          "title": "옥상의 다른 발소리",
-          "hasChoice": true
+          "scriptId": "chaea_09",
+          "title": "한 장만 남기고",
+          "hasChoice": false
         },
         {
           "stage": 10,
-          "scriptId": "narae_10",
-          "title": "다섯 번째 별",
+          "scriptId": "chaea_10",
+          "title": "마지막 셔터",
           "hasChoice": true
         }
       ],
@@ -2141,7 +2141,7 @@
       "name": "예린",
       "nickname": "힐링",
       "age": 22,
-      "job": "회계법인 1년차",
+      "job": "사회복지학과 2학년",
       "room": "304호",
       "season": "autumn",
       "personality": [
@@ -2150,7 +2150,7 @@
         "포용력"
       ],
       "styleLabel": "박은 절대 안 쓴다. 손해 나는 수를 두지 않는다",
-      "backstory": "힘들면 언제든 여기 와서 쉬어도 돼요… 내가 있잖아?",
+      "backstory": "남 챙기는 게 버릇이다. 정작 제 얘기는 잘 안 한다.",
       "style": {
         "weights": {
           "pi": 1.35,
@@ -2166,7 +2166,7 @@
       },
       "unlock": [
         {
-          "tenantId": "sua",
+          "tenantId": "hana",
           "stage": 5
         }
       ],
@@ -2322,61 +2322,61 @@
         {
           "stage": 1,
           "scriptId": "yerin_01",
-          "title": "가장 늦게 들어오는 사람",
+          "title": "괜찮냐고 먼저 묻는 사람",
           "hasChoice": false
         },
         {
           "stage": 2,
           "scriptId": "yerin_02",
-          "title": "공과금 정산의 밤",
+          "title": "따뜻한 걸 먹이는 버릇",
           "hasChoice": false
         },
         {
           "stage": 3,
           "scriptId": "yerin_03",
-          "title": "예린의 원칙",
+          "title": "누구한테 기대요?",
           "hasChoice": false
         },
         {
           "stage": 4,
           "scriptId": "yerin_04",
-          "title": "야근 마중",
+          "title": "혼자 우는 밤",
           "hasChoice": true
         },
         {
           "stage": 5,
           "scriptId": "yerin_05",
-          "title": "가을 축제 초대권",
+          "title": "봉사 나가는 날",
           "hasChoice": true
         },
         {
           "stage": 6,
           "scriptId": "yerin_06",
-          "title": "감기 걸린 회계사",
+          "title": "오늘은 제가 챙길게요",
           "hasChoice": true
         },
         {
           "stage": 7,
           "scriptId": "yerin_07",
-          "title": "회사를 그만둘까",
+          "title": "다 받아주다 지친 날",
           "hasChoice": false
         },
         {
           "stage": 8,
           "scriptId": "yerin_08",
-          "title": "숫자를 믿게 된 이유",
+          "title": "실습 평가 전날",
           "hasChoice": false
         },
         {
           "stage": 9,
           "scriptId": "yerin_09",
-          "title": "회사 선배의 연락",
-          "hasChoice": true
+          "title": "기댄 자리",
+          "hasChoice": false
         },
         {
           "stage": 10,
           "scriptId": "yerin_10",
-          "title": "계산 밖의 항목",
+          "title": "마지막 한마디",
           "hasChoice": true
         }
       ],
@@ -2410,7 +2410,7 @@
       "name": "하린",
       "nickname": "공대",
       "age": 23,
-      "job": "건축공학과 4학년",
+      "job": "기계공학과 4학년",
       "room": "206호",
       "season": "autumn",
       "personality": [
@@ -2419,7 +2419,7 @@
         "톡톡튐"
       ],
       "styleLabel": "남은 패를 센다. 내가 뭘 들고 있는지 계산해서 막는다",
-      "backstory": "문제 생기면 선배 부르면 되잖아? 내가 다 해결해 줄게.",
+      "backstory": "졸업설계 때문에 밤을 샌다. 도면 펼 책상이 큰 방이 필요했다.",
       "style": {
         "weights": {
           "gwang": 1.2,
@@ -2435,7 +2435,7 @@
       },
       "unlock": [
         {
-          "tenantId": "narae",
+          "tenantId": "chaea",
           "stage": 5
         }
       ],
@@ -2674,12 +2674,12 @@
       }
     },
     {
-      "id": "seyeon",
+      "id": "sora",
       "order": 11,
       "name": "소라",
       "nickname": "패션",
       "age": 22,
-      "job": "연극영화과 4학년",
+      "job": "의상디자인과 2학년",
       "room": "305호",
       "season": "autumn",
       "personality": [
@@ -2688,7 +2688,7 @@
         "화려함"
       ],
       "styleLabel": "표정과 대사로 흔든다. 고를 외쳐도 진짜인지 알 수 없다",
-      "backstory": "좋은 사람들과 더 특별한 시간 보낼래?",
+      "backstory": "옷을 만든다. 비싸 보이는 것과 좋은 것은 다르다고 말한다.",
       "style": {
         "weights": {
           "tti": 1.25,
@@ -2704,7 +2704,7 @@
       },
       "unlock": [
         {
-          "tenantId": "minji",
+          "tenantId": "seoyeon",
           "stage": 5
         }
       ],
@@ -2859,62 +2859,62 @@
       "events": [
         {
           "stage": 1,
-          "scriptId": "seyeon_01",
-          "title": "복도에서 대사 외우는 사람",
+          "scriptId": "sora_01",
+          "title": "복도에 걸린 옷",
           "hasChoice": false
         },
         {
           "stage": 2,
-          "scriptId": "seyeon_02",
-          "title": "소음 민원",
+          "scriptId": "sora_02",
+          "title": "싼 옷을 입지 않는 이유",
           "hasChoice": false
         },
         {
           "stage": 3,
-          "scriptId": "seyeon_03",
-          "title": "세연의 연기론",
+          "scriptId": "sora_03",
+          "title": "시침핀",
           "hasChoice": false
         },
         {
           "stage": 4,
-          "scriptId": "seyeon_04",
-          "title": "대사 상대역",
+          "scriptId": "sora_04",
+          "title": "맞지 않는 치수",
           "hasChoice": true
         },
         {
           "stage": 5,
-          "scriptId": "seyeon_05",
-          "title": "가을 정기공연 티켓",
+          "scriptId": "sora_05",
+          "title": "원단 시장",
           "hasChoice": true
         },
         {
           "stage": 6,
-          "scriptId": "seyeon_06",
-          "title": "무대 뒤 도시락",
+          "scriptId": "sora_06",
+          "title": "한 벌만 만들어줘",
           "hasChoice": true
         },
         {
           "stage": 7,
-          "scriptId": "seyeon_07",
-          "title": "오디션에서 떨어진 날",
+          "scriptId": "sora_07",
+          "title": "런웨이에서 넘어졌다",
           "hasChoice": false
         },
         {
           "stage": 8,
-          "scriptId": "seyeon_08",
-          "title": "연기를 시작한 이유",
+          "scriptId": "sora_08",
+          "title": "졸업 패션쇼 전날",
           "hasChoice": false
         },
         {
           "stage": 9,
-          "scriptId": "seyeon_09",
-          "title": "상대역과의 소문",
-          "hasChoice": true
+          "scriptId": "sora_09",
+          "title": "무대 뒤",
+          "hasChoice": false
         },
         {
           "stage": 10,
-          "scriptId": "seyeon_10",
-          "title": "대본에 없는 대사",
+          "scriptId": "sora_10",
+          "title": "마지막 한 벌",
           "hasChoice": true
         }
       ],
@@ -2948,7 +2948,7 @@
       "name": "다빈",
       "nickname": "여신",
       "age": 22,
-      "job": "아동학과 3학년",
+      "job": "유아교육과 2학년",
       "room": "307호",
       "season": "autumn",
       "personality": [
@@ -2957,7 +2957,7 @@
         "청순함"
       ],
       "styleLabel": "위험하면 일찍 접는다. 작게, 여러 번 이긴다",
-      "backstory": "오늘도… 같이 한 판 할래요? 조용히 앉아만 있어도 좋아요.",
+      "backstory": "실습 유치원이 가까워서 왔다고 했지만, 사실은 혼자가 무서웠다.",
       "style": {
         "weights": {
           "pi": 1.2,
@@ -3212,12 +3212,12 @@
       }
     },
     {
-      "id": "dohee",
+      "id": "gain",
       "order": 13,
       "name": "가인",
       "nickname": "안경",
       "age": 23,
-      "job": "대학원 조교",
+      "job": "문헌정보학과 4학년",
       "room": "306호",
       "season": "autumn",
       "personality": [
@@ -3226,7 +3226,7 @@
         "지적임"
       ],
       "styleLabel": "네 손패를 읽는다. 흔들기와 폭탄을 서슴없이 쓴다",
-      "backstory": "공부도 좋지만… 가끔은 같이 쉬어가요.",
+      "backstory": "도서관에서 살다시피 한다. 일정표 없이는 하루가 안 굴러간다.",
       "style": {
         "weights": {
           "gwang": 1.25,
@@ -3242,7 +3242,7 @@
       },
       "unlock": [
         {
-          "tenantId": "narae",
+          "tenantId": "chaea",
           "stage": 5
         }
       ],
@@ -3384,7 +3384,7 @@
           ],
           "high": [
             "나 선배 노릇 그만하고 싶어졌어.",
-            "이름으로 불러줄래? 도희라고.",
+            "이름으로 불러줄래? 가인라고.",
             "오늘은 후배 말고 그냥 너랑 있고 싶어."
           ]
         },
@@ -3397,62 +3397,62 @@
       "events": [
         {
           "stage": 1,
-          "scriptId": "dohee_01",
-          "title": "같은 과 선배였다",
+          "scriptId": "gain_01",
+          "title": "도서관이 닫는 시간",
           "hasChoice": false
         },
         {
           "stage": 2,
-          "scriptId": "dohee_02",
-          "title": "하숙집 최고참의 조언",
+          "scriptId": "gain_02",
+          "title": "일정표에 없는 시간",
           "hasChoice": false
         },
         {
           "stage": 3,
-          "scriptId": "dohee_03",
-          "title": "도희가 읽는 것",
+          "scriptId": "gain_03",
+          "title": "연체된 책",
           "hasChoice": false
         },
         {
           "stage": 4,
-          "scriptId": "dohee_04",
-          "title": "조교실 심부름",
+          "scriptId": "gain_04",
+          "title": "계획이 무너진 날",
           "hasChoice": true
         },
         {
           "stage": 5,
-          "scriptId": "dohee_05",
-          "title": "캠퍼스 벤치, 낙엽",
+          "scriptId": "gain_05",
+          "title": "서고 정리",
           "hasChoice": true
         },
         {
           "stage": 6,
-          "scriptId": "dohee_06",
-          "title": "논문 마감 전야",
+          "scriptId": "gain_06",
+          "title": "오늘은 계획 없이",
           "hasChoice": true
         },
         {
           "stage": 7,
-          "scriptId": "dohee_07",
-          "title": "계속 공부할 거냐는 질문",
+          "scriptId": "gain_07",
+          "title": "아무것도 못 읽은 주",
           "hasChoice": false
         },
         {
           "stage": 8,
-          "scriptId": "dohee_08",
-          "title": "도희가 하숙집에 온 해",
+          "scriptId": "gain_08",
+          "title": "임용 시험 전날",
           "hasChoice": false
         },
         {
           "stage": 9,
-          "scriptId": "dohee_09",
-          "title": "선배라는 거리",
-          "hasChoice": true
+          "scriptId": "gain_09",
+          "title": "대출 기록",
+          "hasChoice": false
         },
         {
           "stage": 10,
-          "scriptId": "dohee_10",
-          "title": "이름으로 불러줘",
+          "scriptId": "gain_10",
+          "title": "마지막 대출",
           "hasChoice": true
         }
       ],
@@ -3481,12 +3481,12 @@
       }
     },
     {
-      "id": "nayun",
+      "id": "minji",
       "order": 14,
       "name": "민지",
       "nickname": "옆집",
       "age": 22,
-      "job": "간호학과 4학년",
+      "job": "간호학과 2학년",
       "room": "308호",
       "season": "winter",
       "personality": [
@@ -3495,7 +3495,7 @@
         "따뜻함"
       ],
       "styleLabel": "상대를 본다. 내가 뭘 노리는지 먼저 알아챈다",
-      "backstory": "오늘도… 같이 한 판 할래요? 늦게까지 있어도 괜찮아요.",
+      "backstory": "옆방 선배. 실습 끝나고 돌아오면 늘 마루에 불이 켜져 있었다.",
       "style": {
         "weights": {
           "yeol": 1.3,
@@ -3512,7 +3512,7 @@
       },
       "unlock": [
         {
-          "tenantId": "seyeon",
+          "tenantId": "sora",
           "stage": 5
         }
       ],
@@ -3667,61 +3667,61 @@
       "events": [
         {
           "stage": 1,
-          "scriptId": "nayun_01",
+          "scriptId": "minji_01",
           "title": "새벽 세 시의 불빛",
           "hasChoice": false
         },
         {
           "stage": 2,
-          "scriptId": "nayun_02",
+          "scriptId": "minji_02",
           "title": "물 한 잔",
           "hasChoice": false
         },
         {
           "stage": 3,
-          "scriptId": "nayun_03",
+          "scriptId": "minji_03",
           "title": "야간 실습",
           "hasChoice": true
         },
         {
           "stage": 4,
-          "scriptId": "nayun_04",
+          "scriptId": "minji_04",
           "title": "손이 떨리는 날",
           "hasChoice": true
         },
         {
           "stage": 5,
-          "scriptId": "nayun_05",
+          "scriptId": "minji_05",
           "title": "환자 이야기",
           "hasChoice": true
         },
         {
           "stage": 6,
-          "scriptId": "nayun_06",
+          "scriptId": "minji_06",
           "title": "국가고시 D-100",
           "hasChoice": true
         },
         {
           "stage": 7,
-          "scriptId": "nayun_07",
+          "scriptId": "minji_07",
           "title": "잠 못 드는 밤",
           "hasChoice": false
         },
         {
           "stage": 8,
-          "scriptId": "nayun_08",
+          "scriptId": "minji_08",
           "title": "면접 전날",
           "hasChoice": true
         },
         {
           "stage": 9,
-          "scriptId": "nayun_09",
+          "scriptId": "minji_09",
           "title": "첫 출근",
           "hasChoice": false
         },
         {
           "stage": 10,
-          "scriptId": "nayun_10",
+          "scriptId": "minji_10",
           "title": "돌아올 데",
           "hasChoice": true
         }
@@ -3751,12 +3751,12 @@
       }
     },
     {
-      "id": "yoon",
+      "id": "arin",
       "order": 15,
       "name": "아린",
       "nickname": "우아",
       "age": 23,
-      "job": "정체 불명 (하숙집 최장기 거주자)",
+      "job": "미술사학과 4학년",
       "room": "별채",
       "season": "winter",
       "personality": [
@@ -3765,7 +3765,7 @@
         "고혹적임"
       ],
       "styleLabel": "판 전체가 보인다. 그리고 네 습관까지 기억한다",
-      "backstory": "서두르지 말아요…, 좋은 시간은 천천히 즐겨야 하니까.",
+      "backstory": "별채에 산다. 이 집에서 제일 오래된 사람이고, 제일 말이 적다.",
       "style": {
         "weights": {
           "gwang": 1.3,
@@ -3786,11 +3786,11 @@
           "stage": 5
         },
         {
-          "tenantId": "seyeon",
+          "tenantId": "sora",
           "stage": 5
         },
         {
-          "tenantId": "dohee",
+          "tenantId": "gain",
           "stage": 5
         }
       ],
@@ -3945,62 +3945,62 @@
       "events": [
         {
           "stage": 1,
-          "scriptId": "yoon_01",
-          "title": "별채의 불빛",
+          "scriptId": "arin_01",
+          "title": "별채에 불이 켜진다",
           "hasChoice": false
         },
         {
           "stage": 2,
-          "scriptId": "yoon_02",
-          "title": "삼십 년의 규칙",
+          "scriptId": "arin_02",
+          "title": "서두르지 않는 사람",
           "hasChoice": false
         },
         {
           "stage": 3,
-          "scriptId": "yoon_03",
-          "title": "윤이 기억하는 것",
+          "scriptId": "arin_03",
+          "title": "찻물 끓는 소리",
           "hasChoice": false
         },
         {
           "stage": 4,
-          "scriptId": "yoon_04",
-          "title": "첫눈 오는 마루",
+          "scriptId": "arin_04",
+          "title": "기다리는 데 익숙한 사람",
           "hasChoice": true
         },
         {
           "stage": 5,
-          "scriptId": "yoon_05",
-          "title": "오래된 화투 한 벌",
+          "scriptId": "arin_05",
+          "title": "야경 보러 가는 길",
           "hasChoice": true
         },
         {
           "stage": 6,
-          "scriptId": "yoon_06",
-          "title": "할머니가 남긴 장부",
+          "scriptId": "arin_06",
+          "title": "오래된 그림 이야기",
           "hasChoice": true
         },
         {
           "stage": 7,
-          "scriptId": "yoon_07",
-          "title": "이 집을 떠나지 못한 이유",
+          "scriptId": "arin_07",
+          "title": "아무도 오지 않은 밤",
           "hasChoice": false
         },
         {
           "stage": 8,
-          "scriptId": "yoon_08",
-          "title": "삼십 년 전 그 판",
+          "scriptId": "arin_08",
+          "title": "졸업 논문 전날",
           "hasChoice": false
         },
         {
           "stage": 9,
-          "scriptId": "yoon_09",
-          "title": "마지막 하숙생",
-          "hasChoice": true
+          "scriptId": "arin_09",
+          "title": "천천히 온 사람",
+          "hasChoice": false
         },
         {
           "stage": 10,
-          "scriptId": "yoon_10",
-          "title": "하숙집의 겨울",
+          "scriptId": "arin_10",
+          "title": "마지막 잔",
           "hasChoice": true
         }
       ],

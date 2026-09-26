@@ -135,9 +135,9 @@ export default function App() {
     const pending: Array<{ id: string; when: boolean }> = [
       { id: 'world', when: true },
       { id: 'prologue', when: true },
-      { id: 'season_summer', when: isUnlocked(getTenant('sua'), cl) },
+      { id: 'season_summer', when: isUnlocked(getTenant('hana'), cl) },
       { id: 'season_autumn', when: isUnlocked(getTenant('yerin'), cl) },
-      { id: 'season_winter', when: isUnlocked(getTenant('yoon'), cl) },
+      { id: 'season_winter', when: isUnlocked(getTenant('arin'), cl) },
     ];
     for (const p of pending) {
       if (!p.when || d.seenScenes.includes(p.id)) continue;
@@ -155,7 +155,7 @@ export default function App() {
         setScreen({
           name: 'novel',
           scene,
-          tenant: scene.id === 'prologue' ? getTenant('eunseo') : null,
+          tenant: scene.id === 'prologue' ? getTenant('jieun') : null,
           after: 'home',
         });
       } else {

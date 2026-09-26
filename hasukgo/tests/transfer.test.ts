@@ -11,12 +11,12 @@ function filledSave(): SaveData {
   const s = emptySave();
   s.points = 1234;
   s.deviceId = 'aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee';
-  s.tenants.eunseo = { affection: 100, clearedStage: 10, wins: 12, losses: 3, dating: true };
-  s.tenants.hayeong = { affection: 40, clearedStage: 4, wins: 5, losses: 6, dating: false };
+  s.tenants.jieun = { affection: 100, clearedStage: 10, wins: 12, losses: 3, dating: true };
+  s.tenants.sua = { affection: 40, clearedStage: 4, wins: 5, losses: 6, dating: false };
   s.seenScenes = ['prologue', 'eunseo_01', 'eunseo_10'];
   s.unlockedCG = ['eunseo_ending'];
   s.recentGames = [
-    { tenantId: 'eunseo', stage: 10, won: true, payout: 735, playerWentGo: true, focus: 'gwang', score: 21 },
+    { tenantId: 'jieun', stage: 10, won: true, payout: 735, playerWentGo: true, focus: 'gwang', score: 21 },
   ];
   s.stats = { totalGames: 26, wins: 17, losses: 9, bestScore: 21, pointsWon: 4200, pointsLost: 1800, biggestPot: 735 };
   s.settings.rules = { ttiScoring: 'specSheet', bonusPiCount: 3 };
@@ -43,8 +43,8 @@ describe('백업 코드', () => {
     expect(r.ok).toBe(true);
     if (!r.ok) return;
     expect(r.backup.save.points).toBe(1234);
-    expect(r.backup.save.tenants.eunseo).toEqual(save.tenants.eunseo);
-    expect(r.backup.save.tenants.hayeong).toEqual(save.tenants.hayeong);
+    expect(r.backup.save.tenants.jieun).toEqual(save.tenants.jieun);
+    expect(r.backup.save.tenants.sua).toEqual(save.tenants.sua);
     expect(r.backup.save.seenScenes).toEqual(save.seenScenes);
     expect(r.backup.save.unlockedCG).toEqual(save.unlockedCG);
     expect(r.backup.save.recentGames).toEqual(save.recentGames);
@@ -100,15 +100,15 @@ describe('백업 코드', () => {
   it('하숙생이 추가돼도 옛 백업을 읽을 수 있다', async () => {
     const save = filledSave();
     // 아직 존재하지 않는 하숙생만 들어있는 옛 저장본을 흉내낸다
-    const old = { ...save, tenants: { eunseo: save.tenants.eunseo } };
+    const old = { ...save, tenants: { jieun: save.tenants.jieun } };
     const code = await makeBackup(old as SaveData, 'dev');
     const r = await readBackup(code);
     expect(r.ok).toBe(true);
     if (!r.ok) return;
     // 빠진 하숙생은 초기값으로 채워진다
     expect(Object.keys(r.backup.save.tenants).length).toBeGreaterThan(1);
-    expect(r.backup.save.tenants.yoon.clearedStage).toBe(0);
-    expect(r.backup.save.tenants.eunseo.clearedStage).toBe(10);
+    expect(r.backup.save.tenants.arin.clearedStage).toBe(0);
+    expect(r.backup.save.tenants.jieun.clearedStage).toBe(10);
   });
 
   it('진행 요약이 사람이 읽을 수 있게 나온다', () => {

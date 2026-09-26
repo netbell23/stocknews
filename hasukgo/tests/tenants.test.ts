@@ -102,7 +102,7 @@ describe('해금 구조', () => {
   it('1~3번은 처음부터 해금이고 나머지는 잠겨 있다', () => {
     const none: Record<string, number> = {};
     const open = TENANTS.filter((t) => isUnlocked(t, none));
-    expect(open.map((t) => t.id)).toEqual(['eunseo', 'hayeong', 'jiwoo']);
+    expect(open.map((t) => t.id)).toEqual(['jieun', 'sua', 'nayeon']);
   });
 
   it('해금 조건은 항상 자기보다 앞 순번의 5단계다', () => {
@@ -123,8 +123,8 @@ describe('해금 구조', () => {
   });
 
   it('최종 히로인 윤은 가을 3인을 모두 거쳐야 열린다', () => {
-    const yoon = getTenant('yoon');
-    expect(yoon.unlock.map((u) => u.tenantId).sort()).toEqual(['dohee', 'seyeon', 'yerin']);
+    const arin = getTenant('arin');
+    expect(arin.unlock.map((u) => u.tenantId).sort()).toEqual(['gain', 'sora', 'yerin']);
   });
 });
 
@@ -164,18 +164,18 @@ describe('보상과 난이도', () => {
   it('기획한 스타일이 파라미터에 실제로 반영됐다', () => {
     const p = (id: string) => paramsFor(getTenant(id), 5);
     // 하영: 피 위주
-    expect(p('hayeong').weights.pi).toBeGreaterThan(p('hayeong').weights.gwang);
+    expect(p('sua').weights.pi).toBeGreaterThan(p('sua').weights.gwang);
     // 지우: 띠 수집
-    expect(p('jiwoo').weights.tti).toBeGreaterThan(p('jiwoo').weights.pi);
+    expect(p('nayeon').weights.tti).toBeGreaterThan(p('nayeon').weights.pi);
     // 나래: 광 사냥
-    expect(p('narae').weights.gwang).toBeGreaterThan(p('narae').weights.pi);
+    expect(p('chaea').weights.gwang).toBeGreaterThan(p('chaea').weights.pi);
     // 수아: 공격적 고
-    expect(p('sua').greed).toBeGreaterThan(p('minji').greed);
+    expect(p('hana').greed).toBeGreaterThan(p('seoyeon').greed);
     // 민지/예린: 정확한 스톱
-    expect(p('minji').stopScore).toBeLessThan(p('sua').stopScore);
+    expect(p('seoyeon').stopScore).toBeLessThan(p('hana').stopScore);
     // 도희/윤: 추론
-    expect(p('dohee').inference).toBeGreaterThan(p('eunseo').inference);
-    expect(p('yoon').inference).toBeGreaterThanOrEqual(p('dohee').inference);
+    expect(p('gain').inference).toBeGreaterThan(p('jieun').inference);
+    expect(p('arin').inference).toBeGreaterThanOrEqual(p('gain').inference);
   });
 });
 
@@ -196,12 +196,12 @@ describe('실제 대국 난이도 (하숙생 스타일 반영)', () => {
   const REFERENCE: Seat = { params: { ...curveParams(10, 10), greed: 0.25 } };
 
   it('은서 1단계보다 윤 10단계가 확실히 강하다', () => {
-    const r = playSeries([seatOf('eunseo', 1), seatOf('yoon', 10)], 500, 5150);
+    const r = playSeries([seatOf('jieun', 1), seatOf('arin', 10)], 500, 5150);
     expect(1 - r.winRate0).toBeGreaterThan(0.6);
   });
 
   it('같은 하숙생이라도 10단계가 1단계보다 강하다', () => {
-    const r = playSeries([seatOf('sua', 1), seatOf('sua', 10)], 500, 6160);
+    const r = playSeries([seatOf('hana', 1), seatOf('hana', 10)], 500, 6160);
     expect(1 - r.winRate0).toBeGreaterThan(0.55);
   });
 
@@ -221,14 +221,14 @@ describe('실제 대국 난이도 (하숙생 스타일 반영)', () => {
    * 첫 상대와 마지막 상대 사이가 얼마나 벌어져 있는지를 못으로 박아 둔다.
    */
   it('첫 상대와 마지막 상대의 승률이 30%p 이상 벌어진다', () => {
-    const first = playSeries([REFERENCE, seatOf('eunseo', 1)], 400, 8200).winRate0;
-    const last = playSeries([REFERENCE, seatOf('yoon', 10)], 400, 8200).winRate0;
+    const first = playSeries([REFERENCE, seatOf('jieun', 1)], 400, 8200).winRate0;
+    const last = playSeries([REFERENCE, seatOf('arin', 10)], 400, 8200).winRate0;
     expect(first - last, `은서1 ${first} · 윤10 ${last}`).toBeGreaterThan(0.3);
   });
 
   it('모든 하숙생이 10단계에서 무한루프 없이 판을 끝낸다', () => {
     for (const t of TENANTS) {
-      const r = playSeries([seatOf(t.id, 10), seatOf('eunseo', 1)], 60, 7000 + t.order);
+      const r = playSeries([seatOf(t.id, 10), seatOf('jieun', 1)], 60, 7000 + t.order);
       expect(r.wins[0] + r.wins[1] + r.draws, t.id).toBe(60);
     }
   });
