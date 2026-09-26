@@ -599,20 +599,16 @@ export default function MatchScreen({
   }, [s.field, SLOT_ORDER]);
 
   /*
-   * 바닥이 붐비면 카드를 줄인다.
-   * 융은 높이가 정해져 있고 넘친 줄은 잘려 나가므로, 크기를 그대로 두면
-   * 패가 화면 밖으로 사라진다 — 고를 패가 안 보여 판이 멈춘 것처럼 된다.
+   * 바닥패는 크기를 바꾸지 않는다.
+   *
+   * 예전에는 바닥이 붐비면 패를 줄였다. 자리가 흐르는 배치였을 때는
+   * 그래야 안 잘렸지만, 지금은 일곱 칸 두 줄로 자리가 못박혀 있어 장수가
+   * 늘어도 칸은 그대로다. 그런데도 줄이면 두 가지가 망가진다 —
+   * 날아가던 패가 중간에 크기가 바뀌어 착지점이 어긋나고(레이어가 튄다),
+   * 방금 낸 패가 바닥에 닿는 순간 작아져 같은 패로 안 보인다.
+   * 크기는 화면 크기만 따라간다.
    */
-  const fieldScale =
-    s.field.length <= 8
-      ? 1
-      : s.field.length <= 10
-        ? 0.86
-        : s.field.length <= 12
-          ? 0.74
-          : s.field.length <= 16
-            ? 0.62
-            : 0.52;
+  const fieldScale = 1;
 
   const topRow = fieldSlots.slice(0, COLS);
   const bottomRow = fieldSlots.slice(COLS);
@@ -679,7 +675,16 @@ export default function MatchScreen({
     // 뻑 더미는 묶여 있는 한 덩어리다. 펼쳐 놓으면 같은 월이 여러 장인 것과 구분이 안 된다
     const isPpeok = ppeokShown.has(g.month);
     return (
-      <div className={`fstack ${isPpeok ? 'ppeok' : ''}`} key={g.month}>
+      <div
+        className={`fstack ${isPpeok ? 'ppeok' : ''} ${
+          mustChoose && g.cards.some((c) => s.pendingChoice?.candidates.some((x) => x.id === c.id))
+            ? 'has-cand'
+            : ''
+        } ${hintMonth === g.month ? 'has-match' : ''}`}
+        // 무더기가 넓을수록 옆 칸을 침범한다 — 넓은 쪽이 위로 온다
+        data-n={Math.min(4, g.cards.length)}
+        key={g.month}
+      >
         {g.cards.map((c, i) => {
           const isCandidate = mustChoose && s.pendingChoice?.candidates.some((x) => x.id === c.id);
           return (

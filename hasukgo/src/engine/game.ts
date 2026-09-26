@@ -461,6 +461,13 @@ function finishTurn(n: GameState): GameState {
   const handsEmpty = n.players[0].hand.length === 0 && n.players[1].hand.length === 0;
 
   if (canStop) {
+    /*
+     * 낼 패가 없으면 고는 성립하지 않는다.
+     * 고는 "한 바퀴 더 돌겠다"는 선언인데 돌 패가 없다. 그대로 물어보면
+     * 고를 누른 사람이 이겨 놓은 판을 나가리로 날린다 — 규칙이 막아야 할 함정이지
+     * 고민거리가 아니다. 물어보지 않고 스톱으로 닫는다.
+     */
+    if (!canDeclareGo(n, p)) return stopNow(n, p);
     n.phase = 'awaitGoStop';
     return n;
   }
@@ -475,24 +482,33 @@ function finishTurn(n: GameState): GameState {
   return n;
 }
 
+/** 고를 부를 수 있는 자리인가 — 내 손에 패가 남았고 더미도 남았을 때만 */
+export function canDeclareGo(s: GameState, p: PlayerId): boolean {
+  return s.players[p].hand.length > 0 && s.deck.length > 0;
+}
+
+/** 스톱으로 판을 닫는다 (declareStop 의 알맹이) */
+function stopNow(n: GameState, p: PlayerId): GameState {
+  n.phase = 'ended';
+  n.settlement = settle(n.players, p, n.rules, n.roundMultiplier);
+  n.events.push({ type: 'stop', player: p });
+  n.log.push(`P${p} 스톱 -> ${n.settlement.total}점`);
+  return n;
+}
+
 /** 고 선언 */
 export function declareGo(s: GameState): GameState {
   if (s.phase !== 'awaitGoStop') return s;
   const n = clone(s);
   const p = n.turn;
   const me = n.players[p];
+  // 낼 패가 없는데 고가 들어왔다면 규칙이 허락하지 않는 수다 — 스톱으로 받는다
+  if (!canDeclareGo(n, p)) return stopNow(n, p);
   me.goCount++;
   me.scoreAtLastGo = scorePlayer(me, n.rules).base;
   n.events.push({ type: 'go', player: p, detail: `${me.goCount}고` });
   n.log.push(`P${p} ${me.goCount}고`);
 
-  const handsEmpty = n.players[0].hand.length === 0 && n.players[1].hand.length === 0;
-  if (handsEmpty || n.deck.length === 0) {
-    n.phase = 'ended';
-    n.settlement = settleNagari();
-    n.log.push('나가리 (고 후 패 소진)');
-    return n;
-  }
   passTurn(n, p);
   return n;
 }
@@ -500,13 +516,7 @@ export function declareGo(s: GameState): GameState {
 /** 스톱 선언 */
 export function declareStop(s: GameState): GameState {
   if (s.phase !== 'awaitGoStop') return s;
-  const n = clone(s);
-  const p = n.turn;
-  n.phase = 'ended';
-  n.settlement = settle(n.players, p, n.rules, n.roundMultiplier);
-  n.events.push({ type: 'stop', player: p });
-  n.log.push(`P${p} 스톱 -> ${n.settlement.total}점`);
-  return n;
+  return stopNow(clone(s), s.turn);
 }
 
 /** 국진 용도 설정 */

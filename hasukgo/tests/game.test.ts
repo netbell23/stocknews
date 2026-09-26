@@ -304,7 +304,8 @@ describe('고 / 스톱', () => {
     const gwangs = deck.filter((c) => c.kind === 'gwang' && !c.isBiGwang).slice(0, 3);
     const pis = deck.filter((c) => c.kind === 'pi' && c.piValue === 1 && c.month !== 1).slice(0, 13);
     const s = makeState({
-      hand0: [piOf(1, 0)],
+      // 고를 물으려면 손에 낼 패가 남아 있어야 한다
+      hand0: [piOf(1, 0), piOf(12, 0)],
       hand1: [piOf(7, 0)],
       field: [card('송학 홍단')],
       deck: [card('모란 나비'), piOf(9, 0)],
@@ -317,6 +318,42 @@ describe('고 / 스톱', () => {
     expect(stopped.phase).toBe('ended');
     expect(stopped.settlement?.winner).toBe(0);
     expect(stopped.settlement!.total).toBeGreaterThanOrEqual(7);
+  });
+
+  /*
+   * 고는 "한 바퀴 더 돌겠다"는 선언이다. 돌 패가 없는데 물어보면
+   * 고를 누른 사람이 이겨 놓은 판을 나가리로 날린다.
+   */
+  it('마지막 패로 점수를 냈으면 고를 묻지 않고 스톱으로 닫는다', () => {
+    const gwangs = deck.filter((c) => c.kind === 'gwang' && !c.isBiGwang).slice(0, 3);
+    const pis = deck.filter((c) => c.kind === 'pi' && c.piValue === 1 && c.month !== 1).slice(0, 13);
+    const s = makeState({
+      hand0: [piOf(1, 0)],
+      hand1: [piOf(7, 0)],
+      field: [card('송학 홍단')],
+      deck: [card('모란 나비'), piOf(9, 0)],
+      captured0: [...gwangs, ...pis],
+    });
+    const n = playCard(s, piOf(1, 0).id);
+    expect(n.phase).toBe('ended');
+    expect(n.settlement?.winner).toBe(0);
+    expect(n.settlement!.total).toBeGreaterThanOrEqual(7);
+    expect(n.events.some((e) => e.type === 'nagari')).toBe(false);
+  });
+
+  it('고가 들어와도 낼 패가 없으면 나가리 대신 스톱이 된다', () => {
+    const gwangs = deck.filter((c) => c.kind === 'gwang' && !c.isBiGwang).slice(0, 3);
+    const pis = deck.filter((c) => c.kind === 'pi' && c.piValue === 1 && c.month !== 1).slice(0, 13);
+    const s = makeState({
+      hand0: [],
+      hand1: [piOf(7, 0)],
+      field: [card('송학 홍단')],
+      deck: [card('모란 나비')],
+      captured0: [...gwangs, ...pis],
+    });
+    const forced = declareGo({ ...s, phase: 'awaitGoStop', turn: 0 });
+    expect(forced.phase).toBe('ended');
+    expect(forced.settlement?.winner).toBe(0);
   });
 
   it('고를 선언하면 턴이 넘어가고 goCount가 오른다', () => {

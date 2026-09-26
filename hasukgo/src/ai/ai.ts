@@ -108,7 +108,8 @@ export function chooseCard(
 
   // 실수: 확률적으로 아무 패나 낸다
   if (rng.next() < params.mistakeRate) {
-    const c = rng.pick(hand);
+    const blind = hand.filter((c) => fieldMatches(s, c.month).length === 0);
+    const c = rng.pick(blind.length > 0 ? blind : hand);
     return { cardId: c.id, bomb: false, score: 0 };
   }
 
@@ -244,12 +245,25 @@ export function decideGoStop(
   const oppScore = scorePlayer(s.players[opp], s.rules).base;
   const cardsLeft = s.players[me].hand.length;
 
+  /*
+   * 더 먹을 길이 안 보이면 무조건 스톱 — 실수 구간보다 먼저 본다.
+   *
+   * 고는 "한 바퀴 더 돌겠다"는 선언이다. 그런데 손패 중 바닥과 맞는 게
+   * 하나도 없으면 내 힘으로는 한 장도 못 가져온다. 뒤집기 운만 남는데,
+   * 그 사이 점수가 안 오르면 이겨 놓은 판이 나가리로 날아간다.
+   * 위험을 못 읽는 것(실력)과 이건 다르다. 초보도 이건 안 한다.
+   */
+  const field = s.field;
+  const canTakeMore = s.players[me].hand.some((c) => field.some((f) => f.month === c.month));
+  if (cardsLeft <= 1 && !canTakeMore) return { action: 'stop', confidence: 0.95 };
+  if (!canTakeMore) return { action: 'stop', confidence: 0.8 };
+
   // 실수 구간: 판을 보지 않고 성향대로 지른다
   if (rng.next() < params.mistakeRate) {
     return { action: rng.next() < params.greed ? 'go' : 'stop', confidence: 0.2 };
   }
 
-  // 칠 패가 없으면 고는 그냥 손해다
+  // 칠 패가 한 장뿐이면 고는 대개 손해다 (실수 구간은 여기까지 올 수 있다)
   if (cardsLeft <= 1) return { action: 'stop', confidence: 0.85 };
   // 이미 충분히 크면 접는다
   if (myScore >= params.stopScore) return { action: 'stop', confidence: 0.9 };
