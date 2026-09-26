@@ -15,7 +15,7 @@ import { LOSS_FACTOR } from '../save/storage';
 import { hasCharArt } from '../art/artFiles';
 import { scorePlayer } from '../engine/score';
 import { Background, CardBack, CardView, cardSrcNow, Portrait } from './parts';
-import { useCardFlight , slamLeft } from './useCardFlight';
+import { useCardFlight , slamLeft, slamSideIsRight } from './useCardFlight';
 import { AI_THROW_MS, useMatch } from './useMatch';
 
 const HUMAN: PlayerId = 0;
@@ -266,7 +266,10 @@ export default function MatchScreen({
          * 반만 덮어서 두 장이 다 읽히게 한다 (뒤집은 패도 같은 비율로 때린다).
          */
         const r = el.getBoundingClientRect();
-        return new DOMRect(slamLeft(r.left, r.width), r.top, r.width, r.height);
+        // 내가 먹은 패는 「내 것」 더미로 간다. 그 반대쪽에 내려놓아야 길이 안 겹친다.
+        const pile = root.querySelector<HTMLElement>('.board-mycap')?.getBoundingClientRect();
+        const toRight = slamSideIsRight(r.left, pile?.left ?? r.left);
+        return new DOMRect(slamLeft(r.left, r.width, toRight), r.top, r.width, r.height);
       }
     }
     const felt = root.querySelector<HTMLElement>('.felt');

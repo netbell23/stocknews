@@ -78,6 +78,8 @@ const REVEAL_MS = 1200;
 const REVEAL_HIT_MS = 2000;
 /** 그 안에서 내리치는 순간이 언제인지 (0~1) */
 const HIT_AT = 0.45;
+/** 때린 패가 바닥에 붙어 있다가 더미로 떠나는 순간 (0~1) */
+const HIT_LEAVE_AT = 0.66;
 /** 뒤집기 연출이 있는 턴에는 먹는 연출이 그 뒤에 와야 한다 */
 const SWEEP_WAIT_AFTER_REVEAL = 1280;
 
@@ -112,12 +114,20 @@ export const HIT_OVERLAP = 0.5;
  * 때리는 패가 내려앉을 왼쪽 좌표.
  *
  * 맞는 패에 정확히 포개면 밑에 뭐가 있었는지 안 보인다. 그렇다고 나란히
- * 놓으면 맞아떨어진 건지 그냥 옆에 둔 건지 구분이 안 된다.
- * 반만 덮는다 — 쉬는 자리(--stack-overlap)도 같은 비율이라, 때린 모양
- * 그대로 눌러앉는다.
+ * 놓으면 맞아떨어진 건지 그냥 옆에 둔 건지 구분이 안 된다. 반만 덮는다.
+ *
+ * 어느 쪽으로 반을 덮느냐가 중요하다. 먹은 패는 곧 더미 쪽으로 날아가는데,
+ * 그 길목에 내려놓으면 날아가는 패가 때린 패를 스치고 지나간다 —
+ * z-index 를 아무리 올려도 겹쳐 보이는 건 그래서다.
+ * 더미 반대쪽에 내려놓으면 애초에 길이 겹치지 않는다.
  */
-export function slamLeft(mateLeft: number, cardWidth: number): number {
-  return mateLeft + cardWidth * HIT_OVERLAP;
+export function slamLeft(mateLeft: number, cardWidth: number, toRight = true): number {
+  return mateLeft + cardWidth * HIT_OVERLAP * (toRight ? 1 : -1);
+}
+
+/** 더미가 왼쪽에 있으면 오른쪽에, 오른쪽에 있으면 왼쪽에 내려놓는다 */
+export function slamSideIsRight(mateLeft: number, pileLeft: number): boolean {
+  return pileLeft <= mateLeft;
 }
 
 /** 같은 순간에 시작했을 때의 우선순위 */
@@ -214,7 +224,12 @@ export function useCardFlight(
         const w2 = before.get(other);
         if (!w2 || w2.zone !== 'field') continue;
         hitTargets.set(cid, w2.rect);
-        waitOverride.set(other, REVEAL_HIT_MS * HIT_AT + 220);
+        /*
+         * 맞은 패는 때린 패와 같이 떠나야 한다. 전에는 때린 패가 아직
+         * 위에 앉아 있는데 밑에 깔린 패가 먼저 빠져나가서, 둘이 겹친 채
+         * 엇갈려 보였다. 때린 패가 일어서는 바로 그 순간에 맞춘다.
+         */
+        waitOverride.set(other, REVEAL_HIT_MS * HIT_LEAVE_AT);
         break;
       }
     }
@@ -295,7 +310,9 @@ export function useCardFlight(
            * 같은 비율로 겹치므로, 때린 모양 그대로 눌러앉는다.
            */
           const centered = hit.left + hit.width / 2 - rect.width / 2;
-          const hx = slamLeft(centered, rect.width) - rect.left;
+          // rect 는 이 패가 최종으로 앉을 자리 — 곧 더미다. 그 반대쪽에 내려놓는다.
+          const toRight = slamSideIsRight(centered, rect.left);
+          const hx = slamLeft(centered, rect.width, toRight) - rect.left;
           const hy = hit.top + hit.height / 2 - rect.height / 2 - rect.top;
           const onto = `translate(${hx.toFixed(1)}px, ${hy.toFixed(1)}px)`;
           const a = el.animate(
@@ -307,8 +324,8 @@ export function useCardFlight(
               // 내리친다
               { transform: `${onto} scale(1.1) rotate(3deg)`, offset: HIT_AT },
               { transform: `${onto} scale(1) rotate(0deg)`, offset: HIT_AT + 0.06, easing: 'ease-out' },
-              // 붙어 있다가
-              { transform: `${onto} scale(1)`, offset: 0.66, easing: 'cubic-bezier(.45,0,.2,1)' },
+              // 반만 겹친 채로 붙어 있다가
+              { transform: `${onto} scale(1)`, offset: HIT_LEAVE_AT, easing: 'cubic-bezier(.45,0,.2,1)' },
               { transform: 'none', offset: 1 },
             ],
             { duration: REVEAL_HIT_MS, fill: 'backwards' },
