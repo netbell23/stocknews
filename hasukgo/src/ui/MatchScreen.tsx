@@ -15,7 +15,7 @@ import { LOSS_FACTOR } from '../save/storage';
 import { hasCharArt } from '../art/artFiles';
 import { scorePlayer } from '../engine/score';
 import { Background, CardBack, CardView, cardSrcNow, Portrait } from './parts';
-import { useCardFlight } from './useCardFlight';
+import { useCardFlight , slamLeft } from './useCardFlight';
 import { AI_THROW_MS, useMatch } from './useMatch';
 
 const HUMAN: PlayerId = 0;
@@ -260,7 +260,14 @@ export default function MatchScreen({
     const mate = s.field.find((f) => f.month === c.month);
     if (mate) {
       const el = root.querySelector<HTMLElement>(`[data-cid="${mate.id}"]`);
-      if (el) return el.getBoundingClientRect();
+      if (el) {
+        /*
+         * 맞는 패 위에 정확히 포개면 밑에 뭐가 있었는지 안 보인다.
+         * 반만 덮어서 두 장이 다 읽히게 한다 (뒤집은 패도 같은 비율로 때린다).
+         */
+        const r = el.getBoundingClientRect();
+        return new DOMRect(slamLeft(r.left, r.width), r.top, r.width, r.height);
+      }
     }
     const felt = root.querySelector<HTMLElement>('.felt');
     if (!felt) return null;

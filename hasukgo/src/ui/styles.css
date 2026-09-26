@@ -1316,7 +1316,11 @@ button {
  */
 .hero-card {
   position: fixed;
-  z-index: 60;
+  /*
+   * 내가 든 패도 때리는 동안은 맨 위다. 바닥패 슬롯이 연출 중에 900 까지
+   * 올라가므로 그보다 높아야 맞는 패에 가려지지 않는다.
+   */
+  z-index: 950;
   pointer-events: none;
   border-radius: 6px;
   transform-origin: 50% 50%;

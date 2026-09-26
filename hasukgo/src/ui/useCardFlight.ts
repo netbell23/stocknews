@@ -97,6 +97,29 @@ function zAt(delay: number, bias = 0): number {
   return 40 + Math.round(delay / 5) + bias;
 }
 
+/*
+ * 내리치는 패는 그 턴 내내 맨 위다.
+ * 시작 시각으로만 높이를 매기면, 뒤에 출발한 「먹어가는 패」가 아직
+ * 내려오는 중인 패 위로 지나간다 — 맞고 있는 패가 때리는 패를 덮는 꼴이다.
+ * 때리는 쪽이 위에 있어야 맞았다는 게 보인다.
+ */
+const Z_SLAM = 900;
+
+/** 맞는 패를 얼마나 덮을 것인가. 0.5 면 절반만 겹친다 — 둘 다 읽힌다. */
+export const HIT_OVERLAP = 0.5;
+
+/**
+ * 때리는 패가 내려앉을 왼쪽 좌표.
+ *
+ * 맞는 패에 정확히 포개면 밑에 뭐가 있었는지 안 보인다. 그렇다고 나란히
+ * 놓으면 맞아떨어진 건지 그냥 옆에 둔 건지 구분이 안 된다.
+ * 반만 덮는다 — 쉬는 자리(--stack-overlap)도 같은 비율이라, 때린 모양
+ * 그대로 눌러앉는다.
+ */
+export function slamLeft(mateLeft: number, cardWidth: number): number {
+  return mateLeft + cardWidth * HIT_OVERLAP;
+}
+
 /** 같은 순간에 시작했을 때의 우선순위 */
 const Z_LAND = 0;
 const Z_SWEEP = 2;
@@ -266,7 +289,13 @@ export function useCardFlight(
 
         // 먹을 바닥패가 있으면: 들어올려 보여주고 → 내리치고 → 같이 간다
         if (hit) {
-          const hx = hit.left + hit.width / 2 - rect.width / 2 - rect.left;
+          /*
+           * 정확히 포개면 밑에 뭐가 있었는지 안 보인다.
+           * 반만 덮어서 두 장이 다 읽히게 한다. 쉬는 자리(--stack-overlap)도
+           * 같은 비율로 겹치므로, 때린 모양 그대로 눌러앉는다.
+           */
+          const centered = hit.left + hit.width / 2 - rect.width / 2;
+          const hx = slamLeft(centered, rect.width) - rect.left;
           const hy = hit.top + hit.height / 2 - rect.height / 2 - rect.top;
           const onto = `translate(${hx.toFixed(1)}px, ${hy.toFixed(1)}px)`;
           const a = el.animate(
@@ -284,7 +313,7 @@ export function useCardFlight(
             ],
             { duration: REVEAL_HIT_MS, fill: 'backwards' },
           );
-          lift(el, a, zAt(0, Z_REVEAL));
+          lift(el, a, Z_SLAM);
           onImpact?.(hit, REVEAL_HIT_MS * HIT_AT);
           mark(0, REVEAL_HIT_MS);
           continue;
